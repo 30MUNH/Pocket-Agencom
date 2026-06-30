@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -11,4 +5,352 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  user
+  staff
+  admin
+}
+
+enum AccountStatus {
+  active
+  inactive
+  banned
+}
+
+enum PlanStatus {
+  draft
+  saved
+  reviewed
+  approved
+  need_revision
+}
+
+enum TemplateType {
+  social_post
+  banner
+  video_script
+  playbook
+  checklist
+}
+
+enum TemplateStatus {
+  active
+  inactive
+}
+
+enum KolType {
+  nano_koc
+  micro_kol
+  local_influencer
+  reviewer
+  livestream_seller
+  content_creator
+}
+
+enum KolStatus {
+  active
+  inactive
+  pending
+}
+
+enum ServiceType {
+  tiktok_video
+  instagram_reels
+  facebook_post
+  story_post
+  livestream
+  product_review
+  unboxing
+  combo
+}
+
+enum BookingStatus {
+  pending
+  staff_reviewing
+  need_more_info
+  approved
+  confirmed
+  in_progress
+  content_submitted
+  completed
+  cancelled
+}
+
+enum TicketStatus {
+  open
+  in_progress
+  resolved
+  escalated
+  closed
+}
+
+enum TicketCategory {
+  account
+  marketing_plan
+  booking
+  payment
+  technical
+  other
+}
+
+enum NotificationType {
+  system
+  plan
+  booking
+  support
+}
+
+model User {
+  id           Int           @id @default(autoincrement())
+  name         String
+  email        String        @unique
+  passwordHash String        @map("password_hash")
+  phone        String?
+  avatarUrl    String?       @map("avatar_url")
+  role         UserRole      @default(user)
+  status       AccountStatus @default(active)
+  createdAt    DateTime      @default(now()) @map("created_at")
+  updatedAt    DateTime      @default(now()) @updatedAt @map("updated_at")
+
+  businessProfile  BusinessProfile?
+  marketingPlans   MarketingPlan[]  @relation("UserPlans")
+  reviewedPlans    MarketingPlan[]  @relation("ReviewedPlans")
+  createdTemplates Template[]
+  createdKols      KolProfile[]
+  bookings         KolBooking[]     @relation("UserBookings")
+  assignedBookings KolBooking[]     @relation("StaffBookings")
+  bookingReviews   BookingReview[]
+  tickets          SupportTicket[]  @relation("UserTickets")
+  assignedTickets  SupportTicket[]  @relation("StaffTickets")
+  notifications    Notification[]
+
+  @@map("users")
+}
+
+model BusinessProfile {
+  id                 Int      @id @default(autoincrement())
+  userId             Int      @unique @map("user_id")
+  businessName       String?  @map("business_name")
+  businessType       String   @map("business_type")
+  productDescription String   @map("product_description")
+  targetCustomer     String   @map("target_customer")
+  marketingGoal      String?  @map("marketing_goal")
+  budgetRange        String?  @map("budget_range")
+  location           String?
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @default(now()) @updatedAt @map("updated_at")
+
+  user           User            @relation(fields: [userId], references: [id])
+  marketingPlans MarketingPlan[]
+
+  @@map("business_profiles")
+}
+
+model MarketingPlan {
+  id                Int        @id @default(autoincrement())
+  userId            Int        @map("user_id")
+  businessProfileId Int        @map("business_profile_id")
+  goal              String
+  campaignType      String?    @map("campaign_type")
+  budget            Decimal?
+  contentIdeas      String?    @map("content_ideas")
+  videoScripts      String?    @map("video_scripts")
+  checklist         String?
+  playbook          String?
+  status            PlanStatus @default(saved)
+  reviewedById      Int?       @map("reviewed_by")
+  createdAt         DateTime   @default(now()) @map("created_at")
+  updatedAt         DateTime   @default(now()) @updatedAt @map("updated_at")
+
+  user            User            @relation("UserPlans", fields: [userId], references: [id])
+  businessProfile BusinessProfile @relation(fields: [businessProfileId], references: [id])
+  reviewedBy      User?           @relation("ReviewedPlans", fields: [reviewedById], references: [id])
+
+  @@map("marketing_plans")
+}
+
+model Template {
+  id           Int            @id @default(autoincrement())
+  title        String
+  category     String?
+  type         TemplateType
+  description  String?
+  fileUrl      String?        @map("file_url")
+  previewImage String?        @map("preview_image")
+  createdById  Int            @map("created_by")
+  status       TemplateStatus @default(active)
+  createdAt    DateTime       @default(now()) @map("created_at")
+  updatedAt    DateTime       @default(now()) @updatedAt @map("updated_at")
+
+  createdBy User @relation(fields: [createdById], references: [id])
+
+  @@map("templates")
+}
+
+model KolProfile {
+  id                 Int       @id @default(autoincrement())
+  name               String
+  avatarUrl          String?   @map("avatar_url")
+  coverUrl           String?   @map("cover_url")
+  bio                String?
+  kolType            KolType   @map("kol_type")
+  niche              String
+  location           String?
+  followerCount      Int       @default(0) @map("follower_count")
+  engagementRate     Decimal   @default(0) @map("engagement_rate")
+  rating             Decimal   @default(0)
+  completedCampaigns Int       @default(0) @map("completed_campaigns")
+  audienceGender     String?   @map("audience_gender")
+  audienceAgeRange   String?   @map("audience_age_range")
+  audienceLocation   String?   @map("audience_location")
+  audienceInterests  String?   @map("audience_interests")
+  priceFrom          Decimal?  @map("price_from")
+  isVerified         Boolean   @default(false) @map("is_verified")
+  status             KolStatus @default(active)
+  createdById        Int?      @map("created_by")
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @default(now()) @updatedAt @map("updated_at")
+
+  createdBy         User?                 @relation(fields: [createdById], references: [id])
+  platformAccounts  KolPlatformAccount[]
+  servicePackages   KolServicePackage[]
+  availabilitySlots KolAvailabilitySlot[]
+  bookings          KolBooking[]
+  reviews           BookingReview[]
+
+  @@map("kol_profiles")
+}
+
+model KolPlatformAccount {
+  id              Int      @id @default(autoincrement())
+  kolId           Int      @map("kol_id")
+  platform        String
+  profileUrl      String?  @map("profile_url")
+  username        String?
+  followerCount   Int?     @map("follower_count")
+  engagementRate  Decimal? @map("engagement_rate")
+  averageViews    Int?     @map("average_views")
+  averageLikes    Int?     @map("average_likes")
+  averageComments Int?     @map("average_comments")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  kol KolProfile @relation(fields: [kolId], references: [id])
+
+  @@map("kol_platform_accounts")
+}
+
+model KolServicePackage {
+  id             Int            @id @default(autoincrement())
+  kolId          Int            @map("kol_id")
+  packageName    String         @map("package_name")
+  serviceType    ServiceType    @map("service_type")
+  description    String?
+  deliverables   String?
+  deliveryTime   String?        @map("delivery_time")
+  revisionPolicy String?        @map("revision_policy")
+  price          Decimal
+  status         TemplateStatus @default(active)
+  createdAt      DateTime       @default(now()) @map("created_at")
+  updatedAt      DateTime       @default(now()) @updatedAt @map("updated_at")
+
+  kol      KolProfile   @relation(fields: [kolId], references: [id])
+  bookings KolBooking[]
+
+  @@map("kol_service_packages")
+}
+
+model KolAvailabilitySlot {
+  id            Int      @id @default(autoincrement())
+  kolId         Int      @map("kol_id")
+  availableDate DateTime @map("available_date") @db.Date
+  startTime     String?  @map("start_time")
+  endTime       String?  @map("end_time")
+  isAvailable   Boolean  @default(true) @map("is_available")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  kol KolProfile @relation(fields: [kolId], references: [id])
+
+  @@map("kol_availability_slots")
+}
+
+model KolBooking {
+  id                  Int           @id @default(autoincrement())
+  userId              Int           @map("user_id")
+  kolId               Int           @map("kol_id")
+  packageId           Int           @map("package_id")
+  assignedStaffId     Int?          @map("assigned_staff_id")
+  campaignName        String        @map("campaign_name")
+  campaignGoal        String?       @map("campaign_goal")
+  productName         String        @map("product_name")
+  productDescription  String?       @map("product_description")
+  productCategory     String?       @map("product_category")
+  targetCustomer      String?       @map("target_customer")
+  campaignPlatform    String?       @map("campaign_platform")
+  campaignDate        DateTime?     @map("campaign_date") @db.Date
+  budget              Decimal?
+  contentRequirements String?       @map("content_requirements")
+  doAndDontNotes      String?       @map("do_and_dont_notes")
+  deliveryAddress     String?       @map("delivery_address")
+  referenceLink       String?       @map("reference_link")
+  productImages       String?       @map("product_images")
+  status              BookingStatus @default(pending)
+  createdAt           DateTime      @default(now()) @map("created_at")
+  updatedAt           DateTime      @default(now()) @updatedAt @map("updated_at")
+
+  user          User              @relation("UserBookings", fields: [userId], references: [id])
+  kol           KolProfile        @relation(fields: [kolId], references: [id])
+  package       KolServicePackage @relation(fields: [packageId], references: [id])
+  assignedStaff User?             @relation("StaffBookings", fields: [assignedStaffId], references: [id])
+  reviews       BookingReview[]
+
+  @@map("kol_bookings")
+}
+
+model BookingReview {
+  id        Int      @id @default(autoincrement())
+  bookingId Int      @map("booking_id")
+  userId    Int      @map("user_id")
+  kolId     Int      @map("kol_id")
+  rating    Decimal
+  comment   String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  booking KolBooking @relation(fields: [bookingId], references: [id])
+  user    User       @relation(fields: [userId], references: [id])
+  kol     KolProfile @relation(fields: [kolId], references: [id])
+
+  @@map("booking_reviews")
+}
+
+model SupportTicket {
+  id              Int            @id @default(autoincrement())
+  userId          Int            @map("user_id")
+  assignedStaffId Int?           @map("assigned_staff_id")
+  subject         String
+  message         String
+  category        TicketCategory @default(other)
+  status          TicketStatus   @default(open)
+  createdAt       DateTime       @default(now()) @map("created_at")
+  updatedAt       DateTime       @default(now()) @updatedAt @map("updated_at")
+
+  user          User  @relation("UserTickets", fields: [userId], references: [id])
+  assignedStaff User? @relation("StaffTickets", fields: [assignedStaffId], references: [id])
+
+  @@map("support_tickets")
+}
+
+model Notification {
+  id        Int              @id @default(autoincrement())
+  userId    Int              @map("user_id")
+  title     String
+  message   String?
+  type      NotificationType @default(system)
+  isRead    Boolean          @default(false) @map("is_read")
+  createdAt DateTime         @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("notifications")
 }
