@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Pocket Agencom - Template Library</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@600&amp;family=Plus+Jakarta+Sans:wght@400;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "tertiary-container": "#211a1b",
+                        "surface-tint": "#625b6c",
+                        "on-tertiary": "#ffffff",
+                        "surface-dim": "#d9dadb",
+                        "on-primary-fixed": "#1e1927",
+                        "on-tertiary-fixed": "#211a1b",
+                        "on-secondary": "#ffffff",
+                        "on-error-container": "#93000a",
+                        "primary-fixed-dim": "#ccc3d7",
+                        "background": "#f8f9fa",
+                        "on-secondary-container": "#735f61",
+                        "on-error": "#ffffff",
+                        "secondary-fixed-dim": "#dac0c2",
+                        "error": "#ba1a1a",
+                        "on-secondary-fixed-variant": "#544244",
+                        "on-primary-container": "#888193",
+                        "tertiary": "#000000",
+                        "surface-container-low": "#f3f4f5",
+                        "on-surface": "#191c1d",
+                        "surface-container": "#edeeef",
+                        "surface-container-lowest": "#ffffff",
+                        "on-background": "#191c1d",
+                        "secondary": "#6d595b",
+                        "primary": "#000000",
+                        "inverse-on-surface": "#f0f1f2",
+                        "secondary-container": "#f7dcde",
+                        "inverse-primary": "#ccc3d7",
+                        "on-primary-fixed-variant": "#4a4454",
+                        "on-tertiary-fixed-variant": "#4d4546",
+                        "outline-variant": "#cac5cc",
+                        "on-surface-variant": "#49454b",
+                        "secondary-fixed": "#f7dcde",
+                        "primary-container": "#1e1927",
+                        "on-primary": "#ffffff",
+                        "surface-bright": "#f8f9fa",
+                        "surface-container-highest": "#e1e3e4",
+                        "on-secondary-fixed": "#26181a",
+                        "surface-variant": "#e1e3e4",
+                        "surface": "#f8f9fa",
+                        "error-container": "#ffdad6",
+                        "primary-fixed": "#e9dff3",
+                        "tertiary-fixed": "#eddfe0",
+                        "surface-container-high": "#e7e8e9",
+                        "inverse-surface": "#2e3132",
+                        "on-tertiary-container": "#8c8182",
+                        "tertiary-fixed-dim": "#d0c3c5",
+                        "outline": "#7a767c"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "1rem",
+                        "lg": "2rem",
+                        "xl": "3rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "section-padding-desktop": "64px",
+                        "container-max": "1280px",
+                        "sidebar-width": "280px",
+                        "gutter": "24px",
+                        "unit": "8px",
+                        "section-padding-mobile": "24px"
+                    },
+                    "fontFamily": {
+                        "body-md": ["Plus Jakarta Sans"],
+                        "display-lg": ["Plus Jakarta Sans"],
+                        "headline-md": ["Plus Jakarta Sans"],
+                        "body-lg": ["Plus Jakarta Sans"],
+                        "label-sm": ["Hanken Grotesk"],
+                        "display-lg-mobile": ["Plus Jakarta Sans"]
+                    },
+                    "fontSize": {
+                        "body-md": ["16px", { "lineHeight": "1.6", "fontWeight": "400" }],
+                        "display-lg": ["48px", { "lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "headline-md": ["24px", { "lineHeight": "1.4", "fontWeight": "600" }],
+                        "body-lg": ["18px", { "lineHeight": "1.6", "fontWeight": "400" }],
+                        "label-sm": ["13px", { "lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "display-lg-mobile": ["32px", { "lineHeight": "1.25", "fontWeight": "700" }]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-background font-body-md text-on-surface flex h-screen overflow-hidden antialiased">
+<!-- SideNavBar -->
+<aside class="hidden lg:flex flex-col w-[280px] py-8 gap-4 bg-surface-container-lowest dark:bg-tertiary-container shadow-[4px_0_24px_rgba(255,143,163,0.08)] z-40 fixed left-0 top-0 h-screen">
+<div class="px-6 mb-8 flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center shrink-0">
+<img class="w-6 h-6 object-contain" data-alt="A minimalist vector logo of a stylized geometric house intertwined with a leaf, rendered in soft charcoal grey and pastel pink tones, set against a pure white background to convey professional nurturing marketing support." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD_5TwxWv2S8TV-19e3INpB7k8F7aFASBxY3uxKHYxr68U2wlXiKxuKJGsv6M_y3Z6FU97vN2SHbUZSlZu-xyiWoQhe5EveeIbpS_CQ-Q3bay6ngCJ-rpB6XGuOqCMKuEr26cLCzyiEOmZCbe3_JNNmdDU6d_WqeJpq2NhdIxylt8fJ5-tQPCcGLgejqhYqx_VQ-PlN1TL8Id0O56NfgSIiN09jiY8R-ML3syQ_u7MeHKGdV8gqBlsHfV3yyrPC29JpPeSzjbFnWfU"/>
+</div>
+<div>
+<h1 class="text-headline-md font-headline-md font-extrabold text-primary tracking-tight">Pocket Agencom</h1>
+<p class="text-label-sm font-label-sm text-on-surface-variant">Marketing Support</p>
+</div>
+</div>
+<nav class="flex-1 flex flex-col gap-2">
+<!-- Dashboard (Inactive) -->
+<a class="flex items-center text-on-surface-variant hover:text-primary px-10 py-3 hover:bg-secondary-container/30 rounded-full transition-colors" href="#">
+<span class="material-symbols-outlined mr-4" data-icon="dashboard">dashboard</span>
+<span class="text-label-sm font-label-sm">Dashboard</span>
+</a>
+<!-- Marketing Kit (Inactive) -->
+<a class="flex items-center text-on-surface-variant hover:text-primary px-10 py-3 hover:bg-secondary-container/30 rounded-full transition-colors" href="#">
+<span class="material-symbols-outlined mr-4" data-icon="auto_awesome">auto_awesome</span>
+<span class="text-label-sm font-label-sm">Marketing Kit</span>
+</a>
+<!-- My Plans (Inactive) -->
+<a class="flex items-center text-on-surface-variant hover:text-primary px-10 py-3 hover:bg-secondary-container/30 rounded-full transition-colors" href="#">
+<span class="material-symbols-outlined mr-4" data-icon="assignment">assignment</span>
+<span class="text-label-sm font-label-sm">My Plans</span>
+</a>
+<!-- Template Library (Active) -->
+<a class="relative flex items-center bg-secondary-container text-on-secondary-container rounded-full mx-4 py-3 px-6 before:content-[''] before:absolute before:left-0 before:w-1 before:h-8 before:bg-primary before:rounded-full translate-x-1 transition-all" href="#">
+<span class="material-symbols-outlined mr-4" data-icon="library_books">library_books</span>
+<span class="text-label-sm font-label-sm font-bold">Template Library</span>
+</a>
+<!-- Help Center (Inactive) -->
+<a class="flex items-center text-on-surface-variant hover:text-primary px-10 py-3 hover:bg-secondary-container/30 rounded-full transition-colors" href="#">
+<span class="material-symbols-outlined mr-4" data-icon="help">help</span>
+<span class="text-label-sm font-label-sm">Help Center</span>
+</a>
+<!-- Settings (Inactive) -->
+<a class="flex items-center text-on-surface-variant hover:text-primary px-10 py-3 hover:bg-secondary-container/30 rounded-full transition-colors" href="#">
+<span class="material-symbols-outlined mr-4" data-icon="settings">settings</span>
+<span class="text-label-sm font-label-sm">Settings</span>
+</a>
+</nav>
+</aside>
+<!-- Main Layout Area -->
+<div class="flex-1 flex flex-col h-screen overflow-hidden lg:ml-[280px]">
+<!-- TopNavBar -->
+<header class="flex justify-between items-center w-full px-gutter h-20 z-30 sticky top-0 backdrop-blur-xl bg-surface-container-lowest/80 dark:bg-surface-dim/80 shadow-[0_4px_24px_rgba(255,143,163,0.08)]">
+<!-- Search on left as requested by JSON -->
+<div class="flex-1 max-w-md">
+<div class="relative flex items-center w-full h-12 rounded-full bg-surface-container-low px-4 focus-within:ring-2 focus-within:ring-secondary-container transition-all">
+<span class="material-symbols-outlined text-on-surface-variant mr-3">search</span>
+<input class="bg-transparent border-none focus:ring-0 w-full text-body-md font-body-md text-on-surface placeholder:text-on-surface-variant outline-none" placeholder="Search templates..." type="text"/>
+</div>
+</div>
+<!-- Actions -->
+<div class="flex items-center gap-4 ml-auto">
+<button class="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-secondary-container/50 hover:text-primary transition-all duration-200">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="hidden md:flex items-center gap-2 bg-primary text-on-primary px-6 py-2.5 rounded-full hover:scale-95 transition-transform text-label-sm font-label-sm">
+<span class="material-symbols-outlined text-[18px]">add</span>
+                    Quick Create
+                </button>
+<div class="w-10 h-10 rounded-full overflow-hidden border-2 border-surface-container-highest cursor-pointer hover:scale-95 transition-transform shrink-0">
+<img class="w-full h-full object-cover" data-alt="A professional headshot of a confident, smiling woman in modern business casual attire. Soft, flattering studio lighting highlights her features against a crisp, high-key white background, embodying the approachable luxury of the Pocket Agencom brand." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAWLx_vJXvgyM7LIvkFyEbs5jPIDcuRwkRQ_aWxFyDOT_NKkiuy7pFJYGiA1td1G8kcFHjUkarI9Kfsj1K5pfMpYGWlWvg3wt3quI3EpiENi__A1yS7oIqtQD-AC4iwtakrH2HFG7o5AE7bL7pgDRnBtK25jK8nt1SNjvLa06z1dQsy0UUZ628VoeoJsF4SZgl_Huh1Oku_d25bIJoRCSu5HIzqggNgl704oUTUrmuD9Jvmg5L0k5XVImv2miLKnpCyOqocpjVtM8I"/>
+</div>
+</div>
+</header>
+<!-- Page Canvas -->
+<main class="flex-1 overflow-y-auto p-section-padding-mobile md:p-gutter lg:p-section-padding-desktop">
+<div class="max-w-container-max mx-auto space-y-8">
+<!-- Header & Tabs -->
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+<div>
+<h2 class="text-display-lg-mobile md:text-display-lg font-display-lg-mobile md:font-display-lg text-primary mb-2">Template Library</h2>
+<p class="text-body-lg font-body-lg text-on-surface-variant max-w-2xl">Browse our curated collection of high-converting templates designed specifically for effortless business growth.</p>
+</div>
+<!-- Filter Tabs -->
+<div class="flex overflow-x-auto pb-2 md:pb-0 gap-2 hide-scrollbar">
+<button class="whitespace-nowrap px-6 py-2.5 rounded-full bg-secondary-container text-on-secondary-container text-label-sm font-label-sm transition-all duration-200">Social Posts</button>
+<button class="whitespace-nowrap px-6 py-2.5 rounded-full bg-surface-container-lowest text-on-surface-variant hover:bg-secondary-container/30 text-label-sm font-label-sm transition-all duration-200 shadow-[0_2px_12px_rgba(255,143,163,0.04)]">Promotions</button>
+<button class="whitespace-nowrap px-6 py-2.5 rounded-full bg-surface-container-lowest text-on-surface-variant hover:bg-secondary-container/30 text-label-sm font-label-sm transition-all duration-200 shadow-[0_2px_12px_rgba(255,143,163,0.04)]">Seasonal</button>
+<button class="whitespace-nowrap px-6 py-2.5 rounded-full bg-surface-container-lowest text-on-surface-variant hover:bg-secondary-container/30 text-label-sm font-label-sm transition-all duration-200 shadow-[0_2px_12px_rgba(255,143,163,0.04)]">Video Scripts</button>
+</div>
+</div>
+<!-- Template Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-gutter">
+<!-- Card 1 -->
+<article class="bg-surface-container-lowest rounded-xl p-4 shadow-[0_4px_24px_rgba(255,143,163,0.08)] hover:-translate-y-1 transition-transform duration-300 flex flex-col group">
+<div class="w-full aspect-[4/3] rounded-lg overflow-hidden mb-4 relative bg-surface-container">
+<img class="w-full h-full object-cover" data-alt="A modern, minimalist Instagram post template design featuring a soft blush pink background, elegant sans-serif typography, and a placeholder for a lifestyle image of a chic living room interior. The aesthetic is high-end, clean, and inviting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAeoWLiQc2cI1pe1WQ522C78g06SGiMA4gncjyn5IAT7Lo-XW3Yg8GXK0bVIdCOjyBr-nE19UDBmWsR_LULyyO9QKCwkJ2aas1fxE3_CVWRwMLsMeiWBKuUdzwd5M-MKF1Oo2cSGNlXqVWkdC7q6nthTjQlU2j99D-3JE-C6PwjTBymq0S4_kUKaYu3VkPHeMkmZoLuaC8HNu31JdvsFJeXc_p0Mph9aosJJBaFt_khY9y2SaGh0FhnofaNFZ7bYtl2m2Z9WpNsxdY"/>
+<div class="absolute top-3 left-3 bg-surface-container-lowest/90 backdrop-blur-sm px-3 py-1 rounded-full text-[11px] font-label-sm text-primary uppercase tracking-wider">Social</div>
+</div>
+<div class="flex flex-col flex-1">
+<h3 class="text-headline-md font-headline-md text-primary mb-1 text-[20px]">New Listing Teaser</h3>
+<p class="text-body-md font-body-md text-on-surface-variant mb-6 line-clamp-2 text-[14px]">Generate excitement for an upcoming property with this elegant, high-contrast teaser graphic.</p>
+<div class="mt-auto flex gap-3 pt-2">
+<button class="flex-1 bg-surface-container-low text-primary py-2.5 rounded-full text-label-sm font-label-sm hover:bg-secondary-container/50 transition-colors">Preview</button>
+<button class="flex-1 bg-primary text-on-primary py-2.5 rounded-full text-label-sm font-label-sm hover:opacity-90 transition-opacity">Use Template</button>
+</div>
+</div>
+</article>
+<!-- Card 2 -->
+<article class="bg-surface-container-lowest rounded-xl p-4 shadow-[0_4px_24px_rgba(255,143,163,0.08)] hover:-translate-y-1 transition-transform duration-300 flex flex-col group">
+<div class="w-full aspect-[4/3] rounded-lg overflow-hidden mb-4 relative bg-surface-container">
+<img class="w-full h-full object-cover" data-alt="A sophisticated digital banner ad template for a luxury real estate service. The design utilizes a stark white background divided by a thin charcoal line, with elegant serif text reading 'Exclusive Market Insights' alongside a subtle pink accent geometric shape." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBORr4w69xkSB-v5sh27zZ9D6ByL2j-6Bs7cUyqQI3xwmLtCRVc42_OUQ1pU3KK3Or-6EiMeC8FTQmteQkFomqPFkKBltehjrqvLnCJytve_otfKnIACSpHaEq0-btZMBGR6z9JyvX_1CJhkQLL-8a-UWgiiE3v6NerhBfaMyDqk60vF1KQT5xlRjMUW2EOzLnnUex8Q_o8pA0GYYufT2Jic2QLHCVVnV3-8GzqUIRdv0R81I2lLAiGerzDWXEBenajV4WPzz3rVHY"/>
+<div class="absolute top-3 left-3 bg-surface-container-lowest/90 backdrop-blur-sm px-3 py-1 rounded-full text-[11px] font-label-sm text-primary uppercase tracking-wider">Promotion</div>
+</div>
+<div class="flex flex-col flex-1">
+<h3 class="text-headline-md font-headline-md text-primary mb-1 text-[20px]">Market Update Banner</h3>
+<p class="text-body-md font-body-md text-on-surface-variant mb-6 line-clamp-2 text-[14px]">Share local market insights with authority using this clean, structured banner template.</p>
+<div class="mt-auto flex gap-3 pt-2">
+<button class="flex-1 bg-surface-container-low text-primary py-2.5 rounded-full text-label-sm font-label-sm hover:bg-secondary-container/50 transition-colors">Preview</button>
+<button class="flex-1 bg-primary text-on-primary py-2.5 rounded-full text-label-sm font-label-sm hover:opacity-90 transition-opacity">Use Template</button>
+</div>
+</div>
+</article>
+<!-- Card 3 -->
+<article class="bg-surface-container-lowest rounded-xl p-4 shadow-[0_4px_24px_rgba(255,143,163,0.08)] hover:-translate-y-1 transition-transform duration-300 flex flex-col group">
+<div class="w-full aspect-[4/3] rounded-lg overflow-hidden mb-4 relative bg-surface-container flex items-center justify-center p-6 text-center">
+<div class="absolute inset-0 bg-gradient-to-br from-secondary-container/40 to-surface-container-lowest"></div>
+<div class="relative z-10 flex flex-col items-center">
+<span class="material-symbols-outlined text-[48px] text-secondary mb-3">format_quote</span>
+<p class="text-body-md font-body-md text-primary italic">"Hi [Name], thinking of making a move this spring? Let's chat..."</p>
+</div>
+<div class="absolute top-3 left-3 bg-surface-container-lowest/90 backdrop-blur-sm px-3 py-1 rounded-full text-[11px] font-label-sm text-primary uppercase tracking-wider">Script</div>
+</div>
+<div class="flex flex-col flex-1">
+<h3 class="text-headline-md font-headline-md text-primary mb-1 text-[20px]">Spring Outreach Script</h3>
+<p class="text-body-md font-body-md text-on-surface-variant mb-6 line-clamp-2 text-[14px]">A warm, no-pressure conversational script perfect for reconnecting with past clients.</p>
+<div class="mt-auto flex gap-3 pt-2">
+<button class="flex-1 bg-surface-container-low text-primary py-2.5 rounded-full text-label-sm font-label-sm hover:bg-secondary-container/50 transition-colors">Preview</button>
+<button class="flex-1 bg-primary text-on-primary py-2.5 rounded-full text-label-sm font-label-sm hover:opacity-90 transition-opacity">Use Template</button>
+</div>
+</div>
+</article>
+<!-- Card 4 -->
+<article class="bg-surface-container-lowest rounded-xl p-4 shadow-[0_4px_24px_rgba(255,143,163,0.08)] hover:-translate-y-1 transition-transform duration-300 flex flex-col group">
+<div class="w-full aspect-[4/3] rounded-lg overflow-hidden mb-4 relative bg-surface-container">
+<img class="w-full h-full object-cover" data-alt="A festive, elegant social media template for a holiday greeting. The composition features soft winter white tones, subtle silver accents, and a delicate pastel pink ribbon graphic, avoiding cliché reds and greens to maintain a luxurious brand aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCL-sfmMKoNvPth1CUrLdVasStaAEAcwxSQ3u_YhNEzlNaYd200xa9TO5XwXj2BtDF2S1BOeTMWO9etbmFEClhP9afAE0Hmo_DhI32qfY0Gtt8XkQaN2qa4waRT14XLXiSiBr-2KyJfe_9_yZ1UgsbCe4TIw0pZ-gm0eG3u2ZVREs4RWhiunCWfT2mkONrEBKPfZryBUI0XFtqdJ1SCiTGlw4IMCo93zfEYdNchL9zF6W4sLMhF0HL0k2_1k3vzRAaQJO5gGBrAQ2E"/>
+<div class="absolute top-3 left-3 bg-surface-container-lowest/90 backdrop-blur-sm px-3 py-1 rounded-full text-[11px] font-label-sm text-primary uppercase tracking-wider">Seasonal</div>
+</div>
+<div class="flex flex-col flex-1">
+<h3 class="text-headline-md font-headline-md text-primary mb-1 text-[20px]">Client Holiday Greeting</h3>
+<p class="text-body-md font-body-md text-on-surface-variant mb-6 line-clamp-2 text-[14px]">Send tasteful, brand-aligned holiday wishes without looking generic or cluttered.</p>
+<div class="mt-auto flex gap-3 pt-2">
+<button class="flex-1 bg-surface-container-low text-primary py-2.5 rounded-full text-label-sm font-label-sm hover:bg-secondary-container/50 transition-colors">Preview</button>
+<button class="flex-1 bg-primary text-on-primary py-2.5 rounded-full text-label-sm font-label-sm hover:opacity-90 transition-opacity">Use Template</button>
+</div>
+</div>
+</article>
+</div>
+</div>
+</main>
+</div>
+<style>
+        /* Utility to hide scrollbar for horizontal scrolling tabs */
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</body></html>

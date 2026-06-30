@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+
+<html class="h-full" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>KOL Management - Admin</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@600&amp;family=Plus+Jakarta+Sans:wght@400;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "tertiary": "#000000",
+                      "on-secondary-fixed": "#26181a",
+                      "surface-container-high": "#e7e8e9",
+                      "on-tertiary-container": "#8c8182",
+                      "on-background": "#191c1d",
+                      "inverse-surface": "#2e3132",
+                      "secondary-container": "#f7dcde",
+                      "primary-fixed-dim": "#ccc3d7",
+                      "primary": "#000000",
+                      "on-surface": "#191c1d",
+                      "on-secondary-container": "#735f61",
+                      "surface-container-highest": "#e1e3e4",
+                      "on-tertiary-fixed": "#211a1b",
+                      "on-tertiary": "#ffffff",
+                      "secondary-fixed-dim": "#dac0c2",
+                      "on-error-container": "#93000a",
+                      "surface-variant": "#e1e3e4",
+                      "on-primary-fixed": "#1e1927",
+                      "inverse-on-surface": "#f0f1f2",
+                      "on-secondary": "#ffffff",
+                      "surface-container": "#edeeef",
+                      "surface-tint": "#625b6c",
+                      "on-tertiary-fixed-variant": "#4d4546",
+                      "tertiary-container": "#211a1b",
+                      "secondary": "#6d595b",
+                      "on-primary-container": "#888193",
+                      "error": "#ba1a1a",
+                      "on-primary": "#ffffff",
+                      "surface-container-low": "#f3f4f5",
+                      "secondary-fixed": "#f7dcde",
+                      "primary-container": "#1e1927",
+                      "outline": "#7a767c",
+                      "inverse-primary": "#ccc3d7",
+                      "background": "#f8f9fa",
+                      "surface-bright": "#f8f9fa",
+                      "on-primary-fixed-variant": "#4a4454",
+                      "error-container": "#ffdad6",
+                      "surface-dim": "#d9dadb",
+                      "tertiary-fixed-dim": "#d0c3c5",
+                      "primary-fixed": "#e9dff3",
+                      "on-surface-variant": "#49454b",
+                      "outline-variant": "#cac5cc",
+                      "tertiary-fixed": "#eddfe0",
+                      "surface": "#f8f9fa",
+                      "on-error": "#ffffff",
+                      "surface-container-lowest": "#ffffff",
+                      "on-secondary-fixed-variant": "#544244"
+              },
+              "borderRadius": {
+                      "DEFAULT": "1rem",
+                      "lg": "2rem",
+                      "xl": "3rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "sidebar-width": "280px",
+                      "section-padding-mobile": "24px",
+                      "container-max": "1280px",
+                      "unit": "8px",
+                      "section-padding-desktop": "64px",
+                      "gutter": "24px"
+              },
+              "fontFamily": {
+                      "label-sm": [
+                              "Hanken Grotesk"
+                      ],
+                      "display-lg-mobile": [
+                              "Plus Jakarta Sans"
+                      ],
+                      "headline-md": [
+                              "Plus Jakarta Sans"
+                      ],
+                      "display-lg": [
+                              "Plus Jakarta Sans"
+                      ],
+                      "body-md": [
+                              "Plus Jakarta Sans"
+                      ],
+                      "body-lg": [
+                              "Plus Jakarta Sans"
+                      ]
+              },
+              "fontSize": {
+                      "label-sm": [
+                              "13px",
+                              {
+                                      "lineHeight": "1",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "display-lg-mobile": [
+                              "32px",
+                              {
+                                      "lineHeight": "1.25",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "headline-md": [
+                              "24px",
+                              {
+                                      "lineHeight": "1.4",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "display-lg": [
+                              "48px",
+                              {
+                                      "lineHeight": "1.2",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "body-md": [
+                              "16px",
+                              {
+                                      "lineHeight": "1.6",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "body-lg": [
+                              "18px",
+                              {
+                                      "lineHeight": "1.6",
+                                      "fontWeight": "400"
+                              }
+                      ]
+              }
+            }
+          }
+        }
+    </script>
+</head>
+<body class="bg-background text-on-background h-full font-body-md flex">
+<!-- SideNavBar -->
+<aside class="hidden md:flex flex-col w-[sidebar-width] h-screen fixed left-0 top-0 bg-surface dark:bg-surface-dim shadow-[4px_24px_rgba(255,143,163,0.08)] z-50">
+<div class="flex flex-col p-6 gap-2 h-full">
+<div class="flex items-center gap-4 mb-8">
+<img class="w-10 h-10 rounded-lg object-cover" data-alt="A clean, minimalist abstract logo for a premium workspace, set against a pristine white background. The logo relies on a sophisticated palette of soft charcoal greys and subtle petal pinks, conveying a nurturing yet highly professional aesthetic. The lighting is even and bright, consistent with a high-end light-mode user interface." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDQeF_rAZlic40PPDVzePDGqtRL0y-FmRePdyLwd443Rhl0DdiXSqtcR-S-AJ0yjoI4BsioI8VsDJSpcn9BQ6vh_zIoCKFTMRxYuTeF3FOANuN--HQGGH29I0mLM9hTzdvmknhm0m6gwoq_tsFbNqtF0jkk4DK0Qy5i3lMnVl_n1ip_bNCTaNVj9BpuwfUaVHOavdhERt0vhhHzujIDNXEAsljOvFzJdD6b_2vqBHN9jUv2MABd-KXZdCTqoC52wyQVTXjuZzZmNPw"/>
+<div>
+<h1 class="font-headline-md text-headline-md font-bold text-primary dark:text-inverse-primary">Brand Center</h1>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Micro-SME Growth</p>
+</div>
+</div>
+<nav class="flex-1 flex flex-col gap-2">
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant dark:text-outline-variant hover:bg-surface-container-high dark:hover:bg-surface-variant transition-colors duration-200 rounded-full active:scale-95 transition-transform" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">dashboard</span>
+<span class="font-body-md text-body-md">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant dark:text-outline-variant hover:bg-surface-container-high dark:hover:bg-surface-variant transition-colors duration-200 rounded-full active:scale-95 transition-transform" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">auto_fix</span>
+<span class="font-body-md text-body-md">Marketing Kit</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant dark:text-outline-variant hover:bg-surface-container-high dark:hover:bg-surface-variant transition-colors duration-200 rounded-full active:scale-95 transition-transform" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">assignment</span>
+<span class="font-body-md text-body-md">My Plans</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant dark:text-outline-variant hover:bg-surface-container-high dark:hover:bg-surface-variant transition-colors duration-200 rounded-full active:scale-95 transition-transform" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">library_books</span>
+<span class="font-body-md text-body-md">Template Library</span>
+</a>
+<a class="relative flex items-center gap-3 px-4 py-3 bg-secondary-container dark:bg-on-secondary-fixed-variant text-on-secondary-container dark:text-secondary-fixed rounded-full before:content-[''] before:absolute before:left-0 before:w-1 before:h-8 before:bg-primary before:rounded-full active:scale-95 transition-transform" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">campaign</span>
+<span class="font-body-md text-body-md">KOL Marketplace</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant dark:text-outline-variant hover:bg-surface-container-high dark:hover:bg-surface-variant transition-colors duration-200 rounded-full active:scale-95 transition-transform" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">help</span>
+<span class="font-body-md text-body-md">Help Center</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant dark:text-outline-variant hover:bg-surface-container-high dark:hover:bg-surface-variant transition-colors duration-200 rounded-full active:scale-95 transition-transform" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">settings</span>
+<span class="font-body-md text-body-md">Settings</span>
+</a>
+</nav>
+<div class="mt-auto pt-4">
+<button class="w-full py-3 bg-secondary-container text-on-secondary-container font-label-sm text-label-sm rounded-full hover:bg-tertiary-fixed transition-colors active:scale-95">Upgrade Plan</button>
+</div>
+</div>
+</aside>
+<!-- Main Content -->
+<main class="flex-1 flex flex-col md:ml-[sidebar-width] min-h-screen">
+<!-- TopNavBar -->
+<header class="docked full-width top-0 sticky z-40 bg-surface/80 dark:bg-surface-dim/80 backdrop-blur-xl shadow-sm flex justify-between items-center h-20 px-8">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-primary cursor-pointer md:hidden" style="font-variation-settings: 'FILL' 0;">menu</span>
+<span class="font-headline-md text-headline-md font-bold text-primary">Marketing Hub</span>
+</div>
+<div class="flex items-center gap-6">
+<!-- Search -->
+<div class="hidden lg:flex relative items-center">
+<span class="material-symbols-outlined absolute left-3 text-on-surface-variant" style="font-variation-settings: 'FILL' 0;">search</span>
+<input class="pl-10 pr-4 py-2 bg-surface-container-low border-none rounded-full font-body-md text-body-md focus:ring-2 focus:ring-secondary-container w-64" placeholder="Search profiles..." type="text"/>
+</div>
+<span class="material-symbols-outlined cursor-pointer transition-opacity active:opacity-70 text-on-surface-variant hover:text-primary transition-colors" style="font-variation-settings: 'FILL' 0;">notifications</span>
+<span class="material-symbols-outlined cursor-pointer transition-opacity active:opacity-70 text-on-surface-variant hover:text-primary transition-colors" style="font-variation-settings: 'FILL' 0;">chat_bubble</span>
+<img class="w-10 h-10 rounded-full object-cover cursor-pointer" data-alt="A portrait of a confident young professional woman with a warm, subtle smile, lit by soft, bright natural lighting indicative of a premium workspace. The background is a crisp, clean white, perfectly matching a high-end minimalist interface aesthetic. Her attire is smart-casual in understated neutral tones." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBqijVMjQGJ7sPtR21ySPmHyC0an0-U2ew_OUcsUf54FzOUPFP5zNt2bomcrKJvIeOp271_JHNfY19p4jMCVLRTEV9CoPEmmzswpIHmz9EPdZ0J_jh1Y7ncJE5Pe6kna4-yBu5LUZR7p8Bn6KU7vK-rcTRgdNQYHUObdCp-S2yTTRx4_72b9IShHlaXgW-H6HpzZqPz0wJJD7f1fF2RiMR18OFZB9k8qFZGRE3nx42aHpPvnQ602HMgqg53TIqbxMJPlsXhgDSFyds"/>
+</div>
+</header>
+<!-- Canvas -->
+<div class="flex-1 p-6 md:p-section-padding-desktop max-w-container-max mx-auto w-full">
+<!-- Page Header -->
+<div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+<div>
+<h2 class="font-display-lg-mobile md:font-display-lg text-display-lg-mobile md:text-display-lg text-primary">KOL Management</h2>
+<p class="font-body-lg text-body-lg text-on-surface-variant mt-2">Manage your creator database and track performance.</p>
+</div>
+<div class="flex gap-3">
+<button class="px-6 py-3 bg-secondary-container text-primary font-label-sm text-label-sm rounded-full hover:bg-tertiary-fixed transition-colors">Manage Categories</button>
+<button class="px-6 py-3 bg-primary text-on-primary font-label-sm text-label-sm rounded-full hover:opacity-90 transition-opacity flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">add</span> Add New Profile
+                    </button>
+</div>
+</div>
+<!-- Bento Grid Content -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-gutter">
+<!-- Filters Card -->
+<div class="col-span-1 lg:col-span-12 bg-surface-container-lowest rounded-3xl p-6 shadow-[4px_24px_rgba(255,143,163,0.08)] mb-4">
+<div class="flex flex-wrap gap-4 items-center justify-between">
+<div class="flex gap-4 items-center">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Filters:</span>
+<select class="bg-surface-container-low border-none rounded-full font-body-md text-body-md px-4 py-2 focus:ring-2 focus:ring-secondary-container">
+<option>Platform: All</option>
+<option>Instagram</option>
+<option>TikTok</option>
+</select>
+<select class="bg-surface-container-low border-none rounded-full font-body-md text-body-md px-4 py-2 focus:ring-2 focus:ring-secondary-container">
+<option>Tier: All</option>
+<option>Micro (10k-50k)</option>
+<option>Mid (50k-500k)</option>
+</select>
+</div>
+<div class="flex items-center gap-2">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Sort by:</span>
+<span class="font-body-md text-body-md text-primary font-semibold">Engagement Rate</span>
+</div>
+</div>
+</div>
+<!-- Profile Card 1 -->
+<div class="col-span-1 lg:col-span-6 bg-surface-container-lowest rounded-3xl p-8 shadow-[4px_24px_rgba(255,143,163,0.08)] flex flex-col gap-6 hover:-translate-y-1 transition-transform duration-300">
+<div class="flex justify-between items-start">
+<div class="flex gap-4 items-center">
+<img class="w-16 h-16 rounded-full object-cover shadow-sm" data-alt="A vibrant lifestyle portrait of a trendy female lifestyle influencer, taken with bright, flattering natural light against a pristine white studio background. She wears soft pastel colors that subtly complement a nurturing, high-end design system palette. The image feels effortless and aspirational." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDS05Gv_0-pH0K-UfGG1JjG10AyRgTS2JyqP2deiFT3hHxZ28kHYPuu-NAb9-P-v-rAP5fSS246Fj6HcIf2ZPcpfQxnX1Xn95XyA8nbTJ0YZLRxnH1ZiEEu6bvBW_BxtpKLJiQo0ga_zVNmIyjmfLdYCfl6bQ9xFp66BzyNnigbaCVifHr5SsFoVzXOy2rX0gYoxAdfcOLqtncLBdjOieFVW6glAwDqjTOTRC8AeLWXgwYou_1e9Z9TzBNNLrBmVEnVxuxn3TNSc68"/>
+<div>
+<h3 class="font-headline-md text-headline-md text-primary">Sarah Jenkins</h3>
+<p class="font-body-md text-body-md text-on-surface-variant">@sarahstyles • Fashion &amp; Lifestyle</p>
+</div>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox" value=""/>
+<div class="w-11 h-6 bg-surface-variant peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-secondary-container"></div>
+</label>
+</div>
+<div class="grid grid-cols-3 gap-4 py-4 border-y border-surface-variant/50">
+<div>
+<p class="font-label-sm text-label-sm text-on-surface-variant uppercase">Followers</p>
+<p class="font-headline-md text-headline-md text-primary mt-1">125K</p>
+</div>
+<div>
+<p class="font-label-sm text-label-sm text-on-surface-variant uppercase">Engagement</p>
+<p class="font-headline-md text-headline-md text-primary mt-1">4.2%</p>
+</div>
+<div>
+<p class="font-label-sm text-label-sm text-on-surface-variant uppercase">Avg. CPA</p>
+<p class="font-headline-md text-headline-md text-primary mt-1">$45</p>
+</div>
+</div>
+<div>
+<p class="font-label-sm text-label-sm text-on-surface-variant uppercase mb-2">Booking Analytics (30d)</p>
+<div class="h-12 w-full bg-surface-container-low rounded-lg relative overflow-hidden flex items-end px-1 gap-1">
+<div class="w-full bg-secondary-container rounded-t-sm" style="height: 30%"></div>
+<div class="w-full bg-secondary-container rounded-t-sm" style="height: 50%"></div>
+<div class="w-full bg-secondary-container rounded-t-sm" style="height: 40%"></div>
+<div class="w-full bg-secondary-container rounded-t-sm" style="height: 70%"></div>
+<div class="w-full bg-secondary-container rounded-t-sm" style="height: 60%"></div>
+<div class="w-full bg-secondary-container rounded-t-sm" style="height: 80%"></div>
+<div class="w-full bg-secondary-container rounded-t-sm" style="height: 90%"></div>
+</div>
+</div>
+<div class="flex gap-3 mt-auto">
+<button class="flex-1 py-2 bg-surface-container-low text-primary font-label-sm text-label-sm rounded-full hover:bg-surface-variant transition-colors flex justify-center items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">edit</span> Edit
+                        </button>
+<button class="flex-1 py-2 bg-surface-container-low text-primary font-label-sm text-label-sm rounded-full hover:bg-surface-variant transition-colors flex justify-center items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">payments</span> Packages
+                        </button>
+</div>
+</div>
+<!-- Profile Card 2 -->
+<div class="col-span-1 lg:col-span-6 bg-surface-container-lowest rounded-3xl p-8 shadow-[4px_24px_rgba(255,143,163,0.08)] flex flex-col gap-6 hover:-translate-y-1 transition-transform duration-300">
+<div class="flex justify-between items-start">
+<div class="flex gap-4 items-center">
+<img class="w-16 h-16 rounded-full object-cover shadow-sm" data-alt="A clean, professional headshot of a male tech influencer, lit by soft, bright lighting indicative of a premium minimalist design. He looks approachable and knowledgeable, framed against a pure white background. The overall tone is sophisticated and trustworthy." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCVbDYacTa8Apw4FVb0l5N6kMn6eHHaz4WRpt64SmZW9yGWO3QLjWdLhxkQSfNQW9fApcxhs9hvGFffKrjtH7nfUUPYf8GhYo5P-lVIo1ANfmsU31yNbotBZMQbkQcYZ38DMRaLca2AFC29pOr_EvQCPhYcbz-NyLikBfxCCOLwG9ZkPWjC7noEy05KUh90uGf1oHCp0Efhj1xQgCUm8OqyOGEZ1flhKYHfdkQ6aKUAxQ0hWWck_x3XkuJ7x_97ZgDn2z_ODPcWo_s"/>
+<div>
+<h3 class="font-headline-md text-headline-md text-primary">Marcus Chen</h3>
+<p class="font-body-md text-body-md text-on-surface-variant">@marcus_tech • Tech &amp; Gadgets</p>
+</div>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input class="sr-only peer" type="checkbox" value=""/>
+<div class="w-11 h-6 bg-surface-variant peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-secondary-container"></div>
+</label>
+</div>
+<div class="grid grid-cols-3 gap-4 py-4 border-y border-surface-variant/50 opacity-60">
+<div>
+<p class="font-label-sm text-label-sm text-on-surface-variant uppercase">Followers</p>
+<p class="font-headline-md text-headline-md text-primary mt-1">450K</p>
+</div>
+<div>
+<p class="font-label-sm text-label-sm text-on-surface-variant uppercase">Engagement</p>
+<p class="font-headline-md text-headline-md text-primary mt-1">2.8%</p>
+</div>
+<div>
+<p class="font-label-sm text-label-sm text-on-surface-variant uppercase">Avg. CPA</p>
+<p class="font-headline-md text-headline-md text-primary mt-1">$85</p>
+</div>
+</div>
+<div class="opacity-60">
+<p class="font-label-sm text-label-sm text-on-surface-variant uppercase mb-2">Booking Analytics (30d)</p>
+<div class="h-12 w-full bg-surface-container-low rounded-lg relative overflow-hidden flex items-end px-1 gap-1">
+<div class="w-full bg-surface-variant rounded-t-sm" style="height: 10%"></div>
+<div class="w-full bg-surface-variant rounded-t-sm" style="height: 15%"></div>
+<div class="w-full bg-surface-variant rounded-t-sm" style="height: 10%"></div>
+<div class="w-full bg-surface-variant rounded-t-sm" style="height: 5%"></div>
+<div class="w-full bg-surface-variant rounded-t-sm" style="height: 0%"></div>
+<div class="w-full bg-surface-variant rounded-t-sm" style="height: 0%"></div>
+<div class="w-full bg-surface-variant rounded-t-sm" style="height: 0%"></div>
+</div>
+</div>
+<div class="flex gap-3 mt-auto">
+<button class="flex-1 py-2 bg-surface-container-low text-primary font-label-sm text-label-sm rounded-full hover:bg-surface-variant transition-colors flex justify-center items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">edit</span> Edit
+                        </button>
+<button class="flex-1 py-2 bg-surface-container-low text-primary font-label-sm text-label-sm rounded-full hover:bg-surface-variant transition-colors flex justify-center items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">payments</span> Packages
+                        </button>
+</div>
+</div>
+</div>
+</div>
+</main>
+</body></html>

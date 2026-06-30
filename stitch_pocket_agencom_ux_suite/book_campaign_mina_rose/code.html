@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Booking Form - Marketing Hub</title>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@600&amp;family=Plus+Jakarta+Sans:wght@400;600;700&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Configuration -->
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "inverse-surface": "#2e3132",
+                    "on-secondary-container": "#735f61",
+                    "on-error": "#ffffff",
+                    "surface": "#f8f9fa",
+                    "on-primary": "#ffffff",
+                    "on-surface": "#191c1d",
+                    "surface-tint": "#625b6c",
+                    "secondary-fixed-dim": "#dac0c2",
+                    "surface-dim": "#d9dadb",
+                    "on-secondary-fixed-variant": "#544244",
+                    "tertiary-container": "#211a1b",
+                    "on-tertiary-container": "#8c8182",
+                    "outline": "#7a767c",
+                    "primary": "#000000",
+                    "on-background": "#191c1d",
+                    "error": "#ba1a1a",
+                    "tertiary-fixed-dim": "#d0c3c5",
+                    "on-secondary": "#ffffff",
+                    "on-primary-fixed": "#1e1927",
+                    "tertiary-fixed": "#eddfe0",
+                    "surface-container-high": "#e7e8e9",
+                    "secondary-fixed": "#f7dcde",
+                    "on-primary-container": "#888193",
+                    "inverse-primary": "#ccc3d7",
+                    "on-tertiary-fixed-variant": "#4d4546",
+                    "on-tertiary": "#ffffff",
+                    "surface-bright": "#f8f9fa",
+                    "inverse-on-surface": "#f0f1f2",
+                    "surface-variant": "#e1e3e4",
+                    "surface-container-lowest": "#ffffff",
+                    "on-secondary-fixed": "#26181a",
+                    "primary-fixed": "#e9dff3",
+                    "tertiary": "#000000",
+                    "secondary-container": "#f7dcde",
+                    "on-primary-fixed-variant": "#4a4454",
+                    "secondary": "#6d595b",
+                    "primary-container": "#1e1927",
+                    "surface-container-highest": "#e1e3e4",
+                    "on-tertiary-fixed": "#211a1b",
+                    "background": "#f8f9fa",
+                    "surface-container": "#edeeef",
+                    "on-surface-variant": "#49454b",
+                    "primary-fixed-dim": "#ccc3d7",
+                    "on-error-container": "#93000a",
+                    "error-container": "#ffdad6",
+                    "surface-container-low": "#f3f4f5",
+                    "outline-variant": "#cac5cc"
+            },
+            "borderRadius": {
+                    "DEFAULT": "1rem",
+                    "lg": "2rem",
+                    "xl": "3rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "sidebar-width": "280px",
+                    "section-padding-mobile": "24px",
+                    "container-max": "1280px",
+                    "unit": "8px",
+                    "gutter": "24px",
+                    "section-padding-desktop": "64px"
+            },
+            "fontFamily": {
+                    "body-md": [
+                            "Plus Jakarta Sans"
+                    ],
+                    "label-sm": [
+                            "Hanken Grotesk"
+                    ],
+                    "headline-md": [
+                            "Plus Jakarta Sans"
+                    ],
+                    "display-lg": [
+                            "Plus Jakarta Sans"
+                    ],
+                    "body-lg": [
+                            "Plus Jakarta Sans"
+                    ],
+                    "display-lg-mobile": [
+                            "Plus Jakarta Sans"
+                    ]
+            },
+            "fontSize": {
+                    "body-md": [
+                            "16px",
+                            {
+                                    "lineHeight": "1.6",
+                                    "fontWeight": "400"
+                            }
+                    ],
+                    "label-sm": [
+                            "13px",
+                            {
+                                    "lineHeight": "1",
+                                    "letterSpacing": "0.05em",
+                                    "fontWeight": "600"
+                            }
+                    ],
+                    "headline-md": [
+                            "24px",
+                            {
+                                    "lineHeight": "1.4",
+                                    "fontWeight": "600"
+                            }
+                    ],
+                    "display-lg": [
+                            "48px",
+                            {
+                                    "lineHeight": "1.2",
+                                    "letterSpacing": "-0.02em",
+                                    "fontWeight": "700"
+                            }
+                    ],
+                    "body-lg": [
+                            "18px",
+                            {
+                                    "lineHeight": "1.6",
+                                    "fontWeight": "400"
+                            }
+                    ],
+                    "display-lg-mobile": [
+                            "32px",
+                            {
+                                    "lineHeight": "1.25",
+                                    "fontWeight": "700"
+                            }
+                    ]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+        .soft-shadow {
+            box-shadow: 4px 24px 40px rgba(255, 143, 163, 0.08);
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background-color: #e1e3e4;
+            border-radius: 20px;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md min-h-screen antialiased flex flex-col md:flex-row custom-scrollbar">
+<!-- Top Navigation (Mobile Only) -->
+<nav class="md:hidden glass-panel w-full sticky top-0 z-50 flex items-center justify-between px-6 py-4 border-b border-surface-variant">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary text-2xl">campaign</span>
+<span class="font-headline-md text-headline-md font-bold text-primary">Marketing Hub</span>
+</div>
+<button class="text-on-surface p-2 rounded-full hover:bg-surface-variant transition-colors">
+<span class="material-symbols-outlined">menu</span>
+</button>
+</nav>
+<!-- Side Navigation (Desktop) -->
+<aside class="hidden md:flex flex-col w-[sidebar-width] h-screen fixed left-0 top-0 bg-surface z-40 border-r border-surface-variant">
+<div class="p-6 flex flex-col gap-2 h-full">
+<div class="flex items-center gap-3 px-4 py-3 mb-6">
+<span class="material-symbols-outlined text-primary text-3xl">campaign</span>
+<div class="flex flex-col">
+<span class="font-headline-md text-headline-md font-bold text-primary leading-none tracking-tight">Brand Center</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant mt-1">Micro-SME Growth</span>
+</div>
+</div>
+<nav class="flex-1 flex flex-col gap-2">
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high transition-colors duration-200 rounded-xl" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span>Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high transition-colors duration-200 rounded-xl" href="#">
+<span class="material-symbols-outlined">auto_fix</span>
+<span>Marketing Kit</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high transition-colors duration-200 rounded-xl" href="#">
+<span class="material-symbols-outlined">assignment</span>
+<span>My Plans</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high transition-colors duration-200 rounded-xl" href="#">
+<span class="material-symbols-outlined">library_books</span>
+<span>Template Library</span>
+</a>
+<a class="relative flex items-center gap-3 px-4 py-3 bg-secondary-container text-on-secondary-container rounded-full before:content-[''] before:absolute before:left-0 before:w-1 before:h-8 before:bg-primary before:rounded-full" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">campaign</span>
+<span class="font-semibold">KOL Marketplace</span>
+</a>
+</nav>
+<div class="mt-auto flex flex-col gap-2">
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high transition-colors duration-200 rounded-xl" href="#">
+<span class="material-symbols-outlined">help</span>
+<span>Help Center</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high transition-colors duration-200 rounded-xl" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span>Settings</span>
+</a>
+<div class="mt-4 p-4 bg-tertiary-fixed rounded-2xl flex flex-col items-start gap-3">
+<span class="font-label-sm text-label-sm text-on-tertiary-fixed-variant">Current Plan: Starter</span>
+<button class="w-full py-2 px-4 bg-primary text-on-primary rounded-full font-label-sm text-label-sm hover:opacity-90 transition-opacity">
+                         Upgrade Plan
+                     </button>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 w-full md:ml-[sidebar-width] min-h-screen pb-24 md:pb-8">
+<!-- Top App Bar (Desktop Only) -->
+<header class="hidden md:flex justify-between items-center h-20 px-8 glass-panel sticky top-0 z-30 shadow-sm">
+<div class="flex-1 max-w-md">
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
+<input class="w-full pl-10 pr-4 py-2 bg-surface-container-low border-none rounded-full focus:ring-2 focus:ring-secondary-container text-body-md placeholder:text-on-surface-variant/70" placeholder="Search creators, campaigns..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 text-on-surface-variant hover:text-primary transition-colors relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-error rounded-full"></span>
+</button>
+<button class="p-2 text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">chat_bubble</span>
+</button>
+<div class="w-10 h-10 rounded-full overflow-hidden border-2 border-surface-container">
+<img alt="User Profile Avatar" class="w-full h-full object-cover" data-alt="A professional headshot of a smiling young woman with dark hair in a bright modern office setting. Soft, natural lighting. High quality photography." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAQ5ipOjm-VAlUaD4oX3DmUeGadh630Q_Mp6PYEuyfOCeqfHpUzVEQUtPbf0hA8Kts9oD1YYQCGTliKOmcah-nLKWTuYDN5nxu5-POzxwdTdkk13KGxZeB2hC-7xvQRod4R3P8QkqW21-uhA9rC1re7fZkId3kBsQj55qyflSg1RN4RNCsdebAJX7oDPj00jM78S1NC7ZIhUjoJBCcQ6YzaYWREKv9j6BP4jRIvYEAY6g1bMYt_hc66JkN6H0HdQ3PaaKkk9lHT-Vg"/>
+</div>
+</div>
+</header>
+<!-- Canvas -->
+<div class="p-6 md:p-8 lg:p-12 max-w-[container-max] mx-auto w-full">
+<div class="mb-8 flex items-center gap-4">
+<a class="p-2 bg-surface-container-low rounded-full text-on-surface hover:bg-surface-container-high transition-colors inline-flex" href="#">
+<span class="material-symbols-outlined">arrow_back</span>
+</a>
+<div>
+<h1 class="font-display-lg-mobile md:font-display-lg text-display-lg-mobile md:text-display-lg text-primary">Book Campaign</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant mt-2">Finalize details for your collaboration with Mina Rose.</p>
+</div>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+<!-- Main Form Column -->
+<div class="lg:col-span-8 space-y-8">
+<!-- Section 1: Campaign Overview -->
+<section class="bg-surface-container-lowest rounded-3xl p-8 soft-shadow border border-surface-variant/50 relative overflow-hidden">
+<div class="absolute top-0 right-0 w-32 h-32 bg-secondary-fixed opacity-50 rounded-bl-full -z-10 blur-2xl"></div>
+<div class="flex items-center gap-3 mb-6">
+<div class="w-8 h-8 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center font-bold">1</div>
+<h2 class="font-headline-md text-headline-md text-primary">Campaign Overview</h2>
+</div>
+<div class="space-y-6">
+<div>
+<label class="block font-label-sm text-label-sm text-on-surface mb-2" for="campaign-name">Campaign Name <span class="text-error">*</span></label>
+<input class="w-full bg-surface-container border-none rounded-xl px-4 py-3 text-body-md focus:ring-2 focus:ring-secondary-fixed focus:bg-surface-container-lowest transition-all" id="campaign-name" placeholder="e.g., Summer Launch 2024" type="text"/>
+</div>
+<div>
+<label class="block font-label-sm text-label-sm text-on-surface mb-2" for="campaign-goal">Primary Goal</label>
+<select class="w-full bg-surface-container border-none rounded-xl px-4 py-3 text-body-md focus:ring-2 focus:ring-secondary-fixed focus:bg-surface-container-lowest transition-all appearance-none cursor-pointer" id="campaign-goal">
+<option>Brand Awareness</option>
+<option>Lead Generation</option>
+<option>Sales Conversion</option>
+<option>Product Launch</option>
+</select>
+<div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-on-surface-variant mt-8">
+<span class="material-symbols-outlined">expand_more</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Section 2: Product Info -->
+<section class="bg-surface-container-lowest rounded-3xl p-8 soft-shadow border border-surface-variant/50">
+<div class="flex items-center gap-3 mb-6">
+<div class="w-8 h-8 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center font-bold">2</div>
+<h2 class="font-headline-md text-headline-md text-primary">Product Information</h2>
+</div>
+<div class="space-y-6">
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div>
+<label class="block font-label-sm text-label-sm text-on-surface mb-2" for="product-name">Product Name <span class="text-error">*</span></label>
+<input class="w-full bg-surface-container border-none rounded-xl px-4 py-3 text-body-md focus:ring-2 focus:ring-secondary-fixed focus:bg-surface-container-lowest transition-all" id="product-name" type="text"/>
+</div>
+<div>
+<label class="block font-label-sm text-label-sm text-on-surface mb-2" for="product-category">Category</label>
+<select class="w-full bg-surface-container border-none rounded-xl px-4 py-3 text-body-md focus:ring-2 focus:ring-secondary-fixed focus:bg-surface-container-lowest transition-all appearance-none cursor-pointer" id="product-category">
+<option>Beauty &amp; Skincare</option>
+<option>Fashion &amp; Apparel</option>
+<option>Home &amp; Lifestyle</option>
+<option>Technology</option>
+</select>
+</div>
+</div>
+<div>
+<label class="block font-label-sm text-label-sm text-on-surface mb-2" for="product-desc">Product Description</label>
+<textarea class="w-full bg-surface-container border-none rounded-xl px-4 py-3 text-body-md focus:ring-2 focus:ring-secondary-fixed focus:bg-surface-container-lowest transition-all resize-none placeholder:text-on-surface-variant/60" id="product-desc" placeholder="Briefly describe the key benefits and features..." rows="3"></textarea>
+</div>
+<div>
+<label class="block font-label-sm text-label-sm text-on-surface mb-2" for="target-customer">Target Customer</label>
+<input class="w-full bg-surface-container border-none rounded-xl px-4 py-3 text-body-md focus:ring-2 focus:ring-secondary-fixed focus:bg-surface-container-lowest transition-all" id="target-customer" placeholder="e.g., Gen Z women interested in sustainable fashion" type="text"/>
+</div>
+</div>
+</section>
+<!-- Section 3: Content Requirements -->
+<section class="bg-surface-container-lowest rounded-3xl p-8 soft-shadow border border-surface-variant/50">
+<div class="flex items-center gap-3 mb-6">
+<div class="w-8 h-8 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center font-bold">3</div>
+<h2 class="font-headline-md text-headline-md text-primary">Content Requirements</h2>
+</div>
+<div class="space-y-6">
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div>
+<label class="block font-label-sm text-label-sm text-on-surface mb-2">Platform</label>
+<div class="flex items-center gap-4">
+<label class="flex-1 relative cursor-pointer group">
+<input checked="" class="peer sr-only" name="platform" type="radio" value="tiktok"/>
+<div class="w-full p-4 rounded-xl border-2 border-surface-container bg-surface-container-low peer-checked:border-secondary-fixed peer-checked:bg-secondary-container/20 text-center transition-all flex flex-col items-center gap-2">
+<span class="material-symbols-outlined text-3xl text-on-surface group-hover:scale-110 transition-transform">music_note</span>
+<span class="font-label-sm text-label-sm text-on-surface">TikTok</span>
+</div>
+</label>
+<label class="flex-1 relative cursor-pointer group">
+<input class="peer sr-only" name="platform" type="radio" value="instagram"/>
+<div class="w-full p-4 rounded-xl border-2 border-surface-container bg-surface-container-low peer-checked:border-secondary-fixed peer-checked:bg-secondary-container/20 text-center transition-all flex flex-col items-center gap-2">
+<span class="material-symbols-outlined text-3xl text-on-surface group-hover:scale-110 transition-transform">photo_camera</span>
+<span class="font-label-sm text-label-sm text-on-surface">Instagram</span>
+</div>
+</label>
+</div>
+</div>
+<div>
+<label class="block font-label-sm text-label-sm text-on-surface mb-2" for="campaign-date">Target Go-Live Date</label>
+<div class="relative">
+<input class="w-full bg-surface-container border-none rounded-xl pl-4 pr-10 py-3 text-body-md focus:ring-2 focus:ring-secondary-fixed focus:bg-surface-container-lowest transition-all text-on-surface" id="campaign-date" type="date"/>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none">calendar_today</span>
+</div>
+</div>
+</div>
+<div>
+<label class="block font-label-sm text-label-sm text-on-surface mb-2" for="dos-donts">Do's and Don'ts</label>
+<textarea class="w-full bg-surface-container border-none rounded-xl px-4 py-3 text-body-md focus:ring-2 focus:ring-secondary-fixed focus:bg-surface-container-lowest transition-all resize-none" id="dos-donts" placeholder="Do: Highlight organic ingredients. Don't: Mention competitors..." rows="4"></textarea>
+<p class="text-sm text-on-surface-variant mt-2 ml-1">Clear guidelines help creators deliver better content faster.</p>
+</div>
+</div>
+</section>
+<!-- Section 4: Logistics -->
+<section class="bg-surface-container-lowest rounded-3xl p-8 soft-shadow border border-surface-variant/50">
+<div class="flex items-center gap-3 mb-6">
+<div class="w-8 h-8 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center font-bold">4</div>
+<h2 class="font-headline-md text-headline-md text-primary">Logistics &amp; References</h2>
+</div>
+<div class="space-y-6">
+<div>
+<label class="block font-label-sm text-label-sm text-on-surface mb-2" for="delivery-address">Sample Delivery Address</label>
+<textarea class="w-full bg-surface-container border-none rounded-xl px-4 py-3 text-body-md focus:ring-2 focus:ring-secondary-fixed focus:bg-surface-container-lowest transition-all resize-none" id="delivery-address" placeholder="Enter address for sending product samples..." rows="2"></textarea>
+</div>
+<div>
+<label class="block font-label-sm text-label-sm text-on-surface mb-2" for="reference-links">Reference Links (Moodboard, past examples)</label>
+<input class="w-full bg-surface-container border-none rounded-xl px-4 py-3 text-body-md focus:ring-2 focus:ring-secondary-fixed focus:bg-surface-container-lowest transition-all" id="reference-links" placeholder="https://..." type="url"/>
+</div>
+<div>
+<label class="block font-label-sm text-label-sm text-on-surface mb-2">Brand Assets Upload</label>
+<div class="border-2 border-dashed border-outline-variant rounded-2xl p-8 text-center bg-surface-container-low hover:bg-surface-container transition-colors cursor-pointer group">
+<span class="material-symbols-outlined text-4xl text-on-surface-variant group-hover:text-primary transition-colors mb-2">cloud_upload</span>
+<p class="font-body-md text-body-md text-primary">Drag &amp; drop files or <span class="font-bold underline">browse</span></p>
+<p class="text-sm text-on-surface-variant mt-1">Supports JPG, PNG, PDF up to 10MB</p>
+</div>
+</div>
+</div>
+</section>
+</div>
+<!-- Sticky Sidebar Column -->
+<div class="lg:col-span-4">
+<div class="sticky top-28 space-y-6">
+<!-- Selected Creator Widget -->
+<div class="bg-surface-container-lowest rounded-3xl p-6 soft-shadow border border-surface-variant/50 relative overflow-hidden">
+<div class="absolute inset-0 opacity-10 pointer-events-none" style="background-image: radial-gradient(circle at 100% 0%, var(--tw-colors-secondary-container) 0%, transparent 50%);"></div>
+<h3 class="font-label-sm text-label-sm text-on-surface-variant mb-4 uppercase tracking-wider">Selected Creator</h3>
+<div class="flex items-center gap-4 mb-4">
+<div class="w-16 h-16 rounded-full overflow-hidden border-4 border-secondary-container relative">
+<img alt="Mina Rose Avatar" class="w-full h-full object-cover" data-alt="A stylish, confident young woman posing for a social media profile picture. Bright, colorful background, casual trendy streetwear. High quality lifestyle photography." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBhOqpaPaAB2C8t6JYQ9xqceXyxwSTZ5YY9aALDQwraRWiJuTceCzOALQcktKIRtjU3p2rRFMgAa3vL3yNTPFNXTmAvsOzdor_umw8HSqjuA7mOb9FNj9o7led_2OAh2wmhM162r8F_2hybI51ElmYUIEZs2ROyVK5ZnLtiqQ-tbS1Vjo7Oxh0WCVmpFCr3wZhvHHEfHy9OIgv6XpEKkEv3v5oNmaTxmosudx5YFjb4GVMrN520wKJlEWIjgehZQ9RqE84iajYzVMM"/>
+</div>
+<div>
+<h4 class="font-headline-md text-headline-md text-primary text-xl">Mina Rose</h4>
+<p class="text-sm text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">verified</span> @minarose_
+                                    </p>
+</div>
+</div>
+<div class="flex gap-2 mt-4">
+<span class="px-3 py-1 bg-surface-container rounded-full text-xs text-on-surface-variant font-medium">Beauty</span>
+<span class="px-3 py-1 bg-surface-container rounded-full text-xs text-on-surface-variant font-medium">Lifestyle</span>
+</div>
+</div>
+<!-- Budget & Summary Widget -->
+<div class="bg-surface-container-lowest rounded-3xl p-6 soft-shadow border border-surface-variant/50">
+<h3 class="font-label-sm text-label-sm text-on-surface-variant mb-4 uppercase tracking-wider">Investment</h3>
+<div class="mb-6">
+<label class="block font-label-sm text-label-sm text-on-surface mb-2" for="budget-input">Proposed Budget (USD)</label>
+<div class="relative">
+<span class="absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant font-bold">$</span>
+<input class="w-full bg-surface-container border-none rounded-xl pl-8 pr-4 py-3 text-body-md focus:ring-2 focus:ring-secondary-fixed focus:bg-surface-container-lowest transition-all font-bold text-lg" id="budget-input" placeholder="0.00" type="number" value="1500"/>
+</div>
+<p class="text-xs text-on-surface-variant mt-2">Creator's typical rate for 1 TikTok video is ~$1,200.</p>
+</div>
+<hr class="border-surface-variant mb-6"/>
+<button class="w-full py-4 px-6 bg-secondary-fixed text-on-secondary-fixed rounded-full font-headline-md text-base md:text-lg font-bold hover:bg-secondary-fixed-dim hover:-translate-y-1 hover:shadow-lg transition-all duration-300 flex items-center justify-center gap-2 group">
+                                Submit Booking Request
+                                <span class="material-symbols-outlined group-hover:translate-x-1 transition-transform">arrow_forward</span>
+</button>
+<p class="text-xs text-center text-on-surface-variant mt-4">No charges will be made until the creator accepts.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Bottom Navigation (Mobile Only) -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full glass-panel border-t border-surface-variant z-50 px-6 py-2 pb-safe">
+<ul class="flex justify-between items-center h-14">
+<li>
+<a class="flex flex-col items-center gap-1 text-on-surface-variant p-2" href="#">
+<span class="material-symbols-outlined text-2xl">dashboard</span>
+<span class="text-[10px] font-medium">Home</span>
+</a>
+</li>
+<li>
+<a class="flex flex-col items-center gap-1 text-primary p-2" href="#">
+<div class="relative">
+<span class="material-symbols-outlined text-2xl" style="font-variation-settings: 'FILL' 1;">campaign</span>
+<span class="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-primary rounded-full"></span>
+</div>
+<span class="text-[10px] font-bold">KOLs</span>
+</a>
+</li>
+<li>
+<a class="flex flex-col items-center gap-1 text-on-surface-variant p-2" href="#">
+<span class="material-symbols-outlined text-2xl">chat_bubble</span>
+<span class="text-[10px] font-medium">Messages</span>
+</a>
+</li>
+<li>
+<a class="flex flex-col items-center gap-1 text-on-surface-variant p-2" href="#">
+<span class="material-symbols-outlined text-2xl">person</span>
+<span class="text-[10px] font-medium">Profile</span>
+</a>
+</li>
+</ul>
+</nav>
+<style>
+        /* Safe area padding for mobile bottom nav */
+        .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
+    </style>
+</body></html>

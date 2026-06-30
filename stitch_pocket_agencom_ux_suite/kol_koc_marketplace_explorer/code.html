@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>KOL Marketplace - Pocket Agencom</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&amp;family=Hanken+Grotesk:wght@600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "inverse-surface": "#2e3132",
+                        "on-secondary-container": "#735f61",
+                        "on-error": "#ffffff",
+                        "surface": "#f8f9fa",
+                        "on-primary": "#ffffff",
+                        "on-surface": "#191c1d",
+                        "surface-tint": "#625b6c",
+                        "secondary-fixed-dim": "#dac0c2",
+                        "surface-dim": "#d9dadb",
+                        "on-secondary-fixed-variant": "#544244",
+                        "tertiary-container": "#211a1b",
+                        "on-tertiary-container": "#8c8182",
+                        "outline": "#7a767c",
+                        "primary": "#000000",
+                        "on-background": "#191c1d",
+                        "error": "#ba1a1a",
+                        "tertiary-fixed-dim": "#d0c3c5",
+                        "on-secondary": "#ffffff",
+                        "on-primary-fixed": "#1e1927",
+                        "tertiary-fixed": "#eddfe0",
+                        "surface-container-high": "#e7e8e9",
+                        "secondary-fixed": "#f7dcde",
+                        "on-primary-container": "#888193",
+                        "inverse-primary": "#ccc3d7",
+                        "on-tertiary-fixed-variant": "#4d4546",
+                        "on-tertiary": "#ffffff",
+                        "surface-bright": "#f8f9fa",
+                        "inverse-on-surface": "#f0f1f2",
+                        "surface-variant": "#e1e3e4",
+                        "surface-container-lowest": "#ffffff",
+                        "on-secondary-fixed": "#26181a",
+                        "primary-fixed": "#e9dff3",
+                        "tertiary": "#000000",
+                        "secondary-container": "#f7dcde",
+                        "on-primary-fixed-variant": "#4a4454",
+                        "secondary": "#6d595b",
+                        "primary-container": "#1e1927",
+                        "surface-container-highest": "#e1e3e4",
+                        "on-tertiary-fixed": "#211a1b",
+                        "background": "#f8f9fa",
+                        "surface-container": "#edeeef",
+                        "on-surface-variant": "#49454b",
+                        "primary-fixed-dim": "#ccc3d7",
+                        "on-error-container": "#93000a",
+                        "error-container": "#ffdad6",
+                        "surface-container-low": "#f3f4f5",
+                        "outline-variant": "#cac5cc"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "1rem",
+                        "lg": "2rem",
+                        "xl": "3rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "sidebar-width": "280px",
+                        "section-padding-mobile": "24px",
+                        "container-max": "1280px",
+                        "unit": "8px",
+                        "gutter": "24px",
+                        "section-padding-desktop": "64px"
+                    },
+                    "fontFamily": {
+                        "body-md": ["Plus Jakarta Sans"],
+                        "label-sm": ["Hanken Grotesk"],
+                        "headline-md": ["Plus Jakarta Sans"],
+                        "display-lg": ["Plus Jakarta Sans"],
+                        "body-lg": ["Plus Jakarta Sans"],
+                        "display-lg-mobile": ["Plus Jakarta Sans"]
+                    },
+                    "fontSize": {
+                        "body-md": ["16px", { "lineHeight": "1.6", "fontWeight": "400" }],
+                        "label-sm": ["13px", { "lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "headline-md": ["24px", { "lineHeight": "1.4", "fontWeight": "600" }],
+                        "display-lg": ["48px", { "lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "body-lg": ["18px", { "lineHeight": "1.6", "fontWeight": "400" }],
+                        "display-lg-mobile": ["32px", { "lineHeight": "1.25", "fontWeight": "700" }]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-background text-on-background font-body-md text-body-md antialiased">
+<!-- SideNavBar -->
+<nav class="hidden md:flex flex-col p-6 gap-2 bg-surface shadow-[4px_24px_rgba(255,143,163,0.08)] w-[sidebar-width] h-screen fixed left-0 top-0 z-50">
+<div class="mb-8 px-4 flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container font-headline-md text-headline-md">
+                B
+            </div>
+<div>
+<h1 class="font-headline-md text-[18px] font-bold text-primary">Brand Center</h1>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Micro-SME Growth</p>
+</div>
+</div>
+<div class="flex flex-col gap-1 flex-1">
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high transition-colors duration-200 rounded-full" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+                Dashboard
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high transition-colors duration-200 rounded-full" href="#">
+<span class="material-symbols-outlined">auto_fix</span>
+                Marketing Kit
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high transition-colors duration-200 rounded-full" href="#">
+<span class="material-symbols-outlined">assignment</span>
+                My Plans
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high transition-colors duration-200 rounded-full" href="#">
+<span class="material-symbols-outlined">library_books</span>
+                Template Library
+            </a>
+<a class="relative flex items-center gap-3 px-4 py-3 bg-secondary-container text-on-secondary-container rounded-full before:content-[''] before:absolute before:left-0 before:w-1 before:h-8 before:bg-primary before:rounded-full" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">campaign</span>
+                KOL Marketplace
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high transition-colors duration-200 rounded-full mt-auto" href="#">
+<span class="material-symbols-outlined">help</span>
+                Help Center
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high transition-colors duration-200 rounded-full" href="#">
+<span class="material-symbols-outlined">settings</span>
+                Settings
+            </a>
+</div>
+<div class="mt-4 px-2">
+<button class="w-full py-3 bg-tertiary-fixed text-primary rounded-full font-label-sm text-label-sm hover:bg-secondary-container transition-colors shadow-sm">
+                Upgrade Plan
+            </button>
+</div>
+</nav>
+<!-- Main Content Area -->
+<div class="md:ml-[sidebar-width] min-h-screen flex flex-col">
+<!-- TopNavBar -->
+<header class="flex justify-between items-center h-20 px-8 bg-surface/80 backdrop-blur-xl shadow-sm sticky top-0 z-40">
+<div class="font-headline-md text-[20px] font-bold text-primary">
+                Marketing Hub
+            </div>
+<div class="flex items-center gap-6">
+<button class="text-on-surface-variant hover:text-primary transition-colors cursor-pointer active:opacity-70">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="text-on-surface-variant hover:text-primary transition-colors cursor-pointer active:opacity-70">
+<span class="material-symbols-outlined">chat_bubble</span>
+</button>
+<div class="w-10 h-10 rounded-full bg-surface-container-high overflow-hidden shadow-sm cursor-pointer border-2 border-surface">
+<img alt="User Profile Avatar" class="w-full h-full object-cover" data-alt="A close up portrait of a young professional smiling softly in a brightly lit modern office setting. The aesthetic is clean, minimalist, high-key lighting, soft white tones with very subtle warm highlights." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCYuw_e_e2UaJMW1cpjYmGjXtIa2orQ_VgahpIH1EtRADOtJYwXYpPtT3jscpF0zjxB3REeAVB1raWdsD50Qcpa791kYSMVh8u0UqrZ-Ue0PJhxd2LIIpX7QQmnFaI245VS1dLGKyKZwkU-WgBJFfmMvaEvbW8zTu2ztK5AZX9doTJ__Uxhq9aQLxNlCf7NWXg97lCEhYwWvkiRe5tlzFjRccOuS2GyJNT3Oa__DG48v-yqdqfIxYk8u_-Ttt_4PM40aZB08idynq4"/>
+</div>
+</div>
+</header>
+<!-- Canvas -->
+<main class="flex-1 p-gutter max-w-container-max mx-auto w-full">
+<!-- Hero Search Section -->
+<div class="bg-surface-container-lowest rounded-lg p-8 shadow-[4px_24px_rgba(255,143,163,0.08)] mb-8 flex flex-col items-center justify-center text-center">
+<h2 class="font-display-lg-mobile md:font-display-lg text-primary mb-2">Find Your Perfect Voice</h2>
+<p class="font-body-lg text-on-surface-variant mb-8 max-w-2xl">Discover top creators tailored for your micro-SME growth.</p>
+<div class="w-full max-w-3xl relative">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
+<input class="w-full pl-12 pr-4 py-4 rounded-full bg-surface-container text-on-surface font-body-md border-none focus:ring-2 focus:ring-secondary-container shadow-inner outline-none transition-all" placeholder="Search by name, niche, or location..." type="text"/>
+</div>
+</div>
+<!-- Main Layout: Sidebar Filters + Grid -->
+<div class="flex flex-col lg:flex-row gap-gutter">
+<!-- Filters Sidebar -->
+<aside class="w-full lg:w-64 flex-shrink-0 flex flex-col gap-6">
+<div class="bg-surface-container-lowest rounded-lg p-6 shadow-[4px_24px_rgba(255,143,163,0.08)]">
+<div class="flex items-center justify-between mb-4">
+<h3 class="font-label-sm text-label-sm text-primary uppercase tracking-widest">Filters</h3>
+<button class="text-on-surface-variant hover:text-primary transition-colors text-sm">Clear</button>
+</div>
+<!-- Active Chips -->
+<div class="flex flex-wrap gap-2 mb-6">
+<span class="inline-flex items-center gap-1 px-3 py-1 bg-secondary-container text-on-secondary-container rounded-full text-xs font-semibold">
+                                Fashion
+                                <span class="material-symbols-outlined text-[14px] cursor-pointer">close</span>
+</span>
+<span class="inline-flex items-center gap-1 px-3 py-1 bg-secondary-container text-on-secondary-container rounded-full text-xs font-semibold">
+                                TikTok
+                                <span class="material-symbols-outlined text-[14px] cursor-pointer">close</span>
+</span>
+<span class="inline-flex items-center gap-1 px-3 py-1 bg-secondary-container text-on-secondary-container rounded-full text-xs font-semibold">
+                                Hanoi
+                                <span class="material-symbols-outlined text-[14px] cursor-pointer">close</span>
+</span>
+</div>
+<div class="space-y-6">
+<!-- Category Filter (Simplified visual representation) -->
+<div>
+<h4 class="font-body-md font-semibold text-primary mb-2">Category</h4>
+<div class="space-y-2">
+<label class="flex items-center gap-2 cursor-pointer group">
+<div class="w-5 h-5 rounded border border-outline-variant group-hover:border-primary flex items-center justify-center bg-primary">
+<span class="material-symbols-outlined text-white text-[16px]" style="font-variation-settings: 'FILL' 1;">check</span>
+</div>
+<span class="text-on-surface-variant font-body-md text-sm">Fashion</span>
+</label>
+<label class="flex items-center gap-2 cursor-pointer group">
+<div class="w-5 h-5 rounded border border-outline-variant group-hover:border-primary flex items-center justify-center">
+</div>
+<span class="text-on-surface-variant font-body-md text-sm">Beauty</span>
+</label>
+<label class="flex items-center gap-2 cursor-pointer group">
+<div class="w-5 h-5 rounded border border-outline-variant group-hover:border-primary flex items-center justify-center">
+</div>
+<span class="text-on-surface-variant font-body-md text-sm">Food &amp; Bev</span>
+</label>
+</div>
+</div>
+<!-- Location Filter -->
+<div>
+<h4 class="font-body-md font-semibold text-primary mb-2">Location</h4>
+<div class="space-y-2">
+<label class="flex items-center gap-2 cursor-pointer group">
+<div class="w-5 h-5 rounded border border-outline-variant group-hover:border-primary flex items-center justify-center bg-primary">
+<span class="material-symbols-outlined text-white text-[16px]" style="font-variation-settings: 'FILL' 1;">check</span>
+</div>
+<span class="text-on-surface-variant font-body-md text-sm">Hanoi</span>
+</label>
+<label class="flex items-center gap-2 cursor-pointer group">
+<div class="w-5 h-5 rounded border border-outline-variant group-hover:border-primary flex items-center justify-center">
+</div>
+<span class="text-on-surface-variant font-body-md text-sm">HCM City</span>
+</label>
+</div>
+</div>
+</div>
+</div>
+</aside>
+<!-- Grid Area -->
+<div class="flex-1 flex flex-col gap-6">
+<!-- Sorting & Tabs -->
+<div class="flex flex-col sm:flex-row justify-between items-center gap-4 bg-surface-container-lowest p-4 rounded-xl shadow-sm">
+<div class="flex gap-2 overflow-x-auto w-full sm:w-auto pb-2 sm:pb-0 hide-scrollbar">
+<button class="px-4 py-2 bg-secondary-container text-on-secondary-container rounded-full font-label-sm text-label-sm whitespace-nowrap">All</button>
+<button class="px-4 py-2 bg-transparent text-on-surface-variant hover:bg-surface-container rounded-full font-label-sm text-label-sm whitespace-nowrap transition-colors">Nano</button>
+<button class="px-4 py-2 bg-transparent text-on-surface-variant hover:bg-surface-container rounded-full font-label-sm text-label-sm whitespace-nowrap transition-colors">Micro</button>
+<button class="px-4 py-2 bg-transparent text-on-surface-variant hover:bg-surface-container rounded-full font-label-sm text-label-sm whitespace-nowrap transition-colors">Macro</button>
+</div>
+<div class="flex items-center gap-2 w-full sm:w-auto">
+<span class="font-label-sm text-on-surface-variant whitespace-nowrap">Sort by:</span>
+<select class="bg-surface-container-low border-none rounded-full py-2 pl-4 pr-8 font-body-md text-sm text-primary focus:ring-2 focus:ring-secondary-container outline-none cursor-pointer">
+<option>Highest Engagement</option>
+<option>Lowest Price</option>
+<option>Most Followers</option>
+</select>
+</div>
+</div>
+<!-- Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+<!-- Card 1 -->
+<div class="bg-surface-container-lowest rounded-lg p-6 shadow-[4px_24px_rgba(255,143,163,0.08)] hover:shadow-[4px_28px_rgba(255,143,163,0.15)] hover:-translate-y-1 transition-all duration-300 flex flex-col group relative">
+<button class="absolute top-4 right-4 w-8 h-8 rounded-full bg-surface/50 backdrop-blur flex items-center justify-center text-on-surface-variant hover:text-primary hover:bg-secondary-container transition-colors z-10">
+<span class="material-symbols-outlined text-[20px]">favorite</span>
+</button>
+<div class="flex items-center gap-4 mb-4">
+<div class="w-16 h-16 rounded-full overflow-hidden border-2 border-secondary-container">
+<img class="w-full h-full object-cover" data-alt="A stylish young woman posing naturally in a bright, modern minimalist cafe setting. High-key lighting, soft white aesthetics, subtle pastel pink tones in her outfit, conveying a nurturing and high-end lifestyle vibe." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDbIwgIo3emer8702ESbHnfpFGYya02F0dObDjZuWyYmjBxjIijs-PFQhqu0fFpmWADafhqyld5PUYlpb65KHpOChwgO5MnEJ0sxiIZ45vbwZm1reEIggKM-qa17r6WGnn6hDaAh28lE84hjQBCtIBu0EQWLHqhQoWHUw56Siw-U1bXPKmVdPTD0vOSILvMroGm14gHVkWC3lSNZvcNGyWdBQuh58-nHJK0y2fJN73ZHaNSxfHxS_shLtjVwVIhkWS5PW1M2P5zSGc"/>
+</div>
+<div>
+<div class="flex items-center gap-1">
+<h3 class="font-headline-md text-lg text-primary">Linh Nguyen</h3>
+<span class="material-symbols-outlined text-secondary-fixed-dim text-[18px]" style="font-variation-settings: 'FILL' 1;">verified</span>
+</div>
+<p class="font-body-md text-sm text-on-surface-variant">Fashion &amp; Lifestyle</p>
+<p class="font-label-sm text-xs text-outline flex items-center gap-1 mt-1">
+<span class="material-symbols-outlined text-[14px]">location_on</span> Hanoi
+                                    </p>
+</div>
+</div>
+<div class="flex gap-2 mb-6">
+<span class="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center text-primary text-xs font-bold">IG</span>
+<span class="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center text-primary text-xs font-bold">TT</span>
+</div>
+<div class="grid grid-cols-3 gap-2 mb-6 text-center border-t border-b border-surface-variant py-4">
+<div>
+<p class="font-label-sm text-xs text-on-surface-variant mb-1">Followers</p>
+<p class="font-headline-md text-base text-primary">120K</p>
+</div>
+<div class="border-l border-r border-surface-variant">
+<p class="font-label-sm text-xs text-on-surface-variant mb-1">Engage</p>
+<p class="font-headline-md text-base text-primary">4.5%</p>
+</div>
+<div>
+<p class="font-label-sm text-xs text-on-surface-variant mb-1">Camps</p>
+<p class="font-headline-md text-base text-primary">42</p>
+</div>
+</div>
+<div class="mt-auto flex items-center justify-between">
+<div>
+<p class="font-label-sm text-xs text-on-surface-variant">Starting at</p>
+<p class="font-headline-md text-lg text-primary">$200</p>
+</div>
+<div class="flex gap-2">
+<button class="px-4 py-2 rounded-full border border-outline-variant text-primary font-label-sm hover:bg-surface-container transition-colors">Profile</button>
+<button class="px-4 py-2 rounded-full bg-primary text-on-primary font-label-sm hover:bg-inverse-surface transition-colors">Book</button>
+</div>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="bg-surface-container-lowest rounded-lg p-6 shadow-[4px_24px_rgba(255,143,163,0.08)] hover:shadow-[4px_28px_rgba(255,143,163,0.15)] hover:-translate-y-1 transition-all duration-300 flex flex-col group relative">
+<button class="absolute top-4 right-4 w-8 h-8 rounded-full bg-surface/50 backdrop-blur flex items-center justify-center text-on-surface-variant hover:text-primary hover:bg-secondary-container transition-colors z-10">
+<span class="material-symbols-outlined text-[20px]">favorite</span>
+</button>
+<div class="flex items-center gap-4 mb-4">
+<div class="w-16 h-16 rounded-full overflow-hidden border-2 border-secondary-container">
+<img class="w-full h-full object-cover" data-alt="A trendy young male creator standing in a modern, light-filled minimalist studio space holding a camera. Clean white aesthetic with very soft ambient lighting, communicating effortless professionalism." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA2OntZgT8dlWRYW_bv7jFPMrXZJ0hCz14_G6WKOoQgEDQdY3bFGx7gzKhHYaBsadT06MHSrUCA9xNaW4U_Wjv62IRG1-Z2w6BRh-3Qk-oqZZvLhiM8_5n5BUOIUNqoGw1LZp7O4QI6Wjde-zq5AtbpWqW2pY1bPV-VzzB3xPUmKE1oYV6S0oZseAigYFqOv99naHfZivJFaRbCA01acYI5jYN3ODq63TApoljh4T89sW9Mv64-LuAvAYpaz8n22NG2jpyAfreO50k"/>
+</div>
+<div>
+<div class="flex items-center gap-1">
+<h3 class="font-headline-md text-lg text-primary">Minh Tran</h3>
+</div>
+<p class="font-body-md text-sm text-on-surface-variant">Tech &amp; Reviews</p>
+<p class="font-label-sm text-xs text-outline flex items-center gap-1 mt-1">
+<span class="material-symbols-outlined text-[14px]">location_on</span> HCM City
+                                    </p>
+</div>
+</div>
+<div class="flex gap-2 mb-6">
+<span class="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center text-primary text-xs font-bold">TT</span>
+<span class="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center text-primary text-xs font-bold">YT</span>
+</div>
+<div class="grid grid-cols-3 gap-2 mb-6 text-center border-t border-b border-surface-variant py-4">
+<div>
+<p class="font-label-sm text-xs text-on-surface-variant mb-1">Followers</p>
+<p class="font-headline-md text-base text-primary">85K</p>
+</div>
+<div class="border-l border-r border-surface-variant">
+<p class="font-label-sm text-xs text-on-surface-variant mb-1">Engage</p>
+<p class="font-headline-md text-base text-primary">6.2%</p>
+</div>
+<div>
+<p class="font-label-sm text-xs text-on-surface-variant mb-1">Camps</p>
+<p class="font-headline-md text-base text-primary">18</p>
+</div>
+</div>
+<div class="mt-auto flex items-center justify-between">
+<div>
+<p class="font-label-sm text-xs text-on-surface-variant">Starting at</p>
+<p class="font-headline-md text-lg text-primary">$150</p>
+</div>
+<div class="flex gap-2">
+<button class="px-4 py-2 rounded-full border border-outline-variant text-primary font-label-sm hover:bg-surface-container transition-colors">Profile</button>
+<button class="px-4 py-2 rounded-full bg-primary text-on-primary font-label-sm hover:bg-inverse-surface transition-colors">Book</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+<style>
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</body></html>

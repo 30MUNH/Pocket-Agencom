@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Pocket Agencom - Login</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@600&amp;family=Plus+Jakarta+Sans:wght@400;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "tertiary-container": "#211a1b",
+                        "surface-tint": "#625b6c",
+                        "on-tertiary": "#ffffff",
+                        "surface-dim": "#d9dadb",
+                        "on-primary-fixed": "#1e1927",
+                        "on-tertiary-fixed": "#211a1b",
+                        "on-secondary": "#ffffff",
+                        "on-error-container": "#93000a",
+                        "primary-fixed-dim": "#ccc3d7",
+                        "background": "#f8f9fa",
+                        "on-secondary-container": "#735f61",
+                        "on-error": "#ffffff",
+                        "secondary-fixed-dim": "#dac0c2",
+                        "error": "#ba1a1a",
+                        "on-secondary-fixed-variant": "#544244",
+                        "on-primary-container": "#888193",
+                        "tertiary": "#000000",
+                        "surface-container-low": "#f3f4f5",
+                        "on-surface": "#191c1d",
+                        "surface-container": "#edeeef",
+                        "surface-container-lowest": "#ffffff",
+                        "on-background": "#191c1d",
+                        "secondary": "#6d595b",
+                        "primary": "#000000",
+                        "inverse-on-surface": "#f0f1f2",
+                        "secondary-container": "#f7dcde",
+                        "inverse-primary": "#ccc3d7",
+                        "on-primary-fixed-variant": "#4a4454",
+                        "on-tertiary-fixed-variant": "#4d4546",
+                        "outline-variant": "#cac5cc",
+                        "on-surface-variant": "#49454b",
+                        "secondary-fixed": "#f7dcde",
+                        "primary-container": "#1e1927",
+                        "on-primary": "#ffffff",
+                        "surface-bright": "#f8f9fa",
+                        "surface-container-highest": "#e1e3e4",
+                        "on-secondary-fixed": "#26181a",
+                        "surface-variant": "#e1e3e4",
+                        "surface": "#f8f9fa",
+                        "error-container": "#ffdad6",
+                        "primary-fixed": "#e9dff3",
+                        "tertiary-fixed": "#eddfe0",
+                        "surface-container-high": "#e7e8e9",
+                        "inverse-surface": "#2e3132",
+                        "on-tertiary-container": "#8c8182",
+                        "tertiary-fixed-dim": "#d0c3c5",
+                        "outline": "#7a767c"
+                    },
+                    borderRadius: {
+                        DEFAULT: "1rem",
+                        lg: "2rem",
+                        xl: "3rem",
+                        full: "9999px"
+                    },
+                    spacing: {
+                        "section-padding-desktop": "64px",
+                        "container-max": "1280px",
+                        "sidebar-width": "280px",
+                        "gutter": "24px",
+                        "unit": "8px",
+                        "section-padding-mobile": "24px"
+                    },
+                    fontFamily: {
+                        "body-md": ["Plus Jakarta Sans"],
+                        "display-lg": ["Plus Jakarta Sans"],
+                        "headline-md": ["Plus Jakarta Sans"],
+                        "body-lg": ["Plus Jakarta Sans"],
+                        "label-sm": ["Hanken Grotesk"],
+                        "display-lg-mobile": ["Plus Jakarta Sans"]
+                    },
+                    fontSize: {
+                        "body-md": ["16px", { lineHeight: "1.6", fontWeight: "400" }],
+                        "display-lg": ["48px", { lineHeight: "1.2", letterSpacing: "-0.02em", fontWeight: "700" }],
+                        "headline-md": ["24px", { lineHeight: "1.4", fontWeight: "600" }],
+                        "body-lg": ["18px", { lineHeight: "1.6", fontWeight: "400" }],
+                        "label-sm": ["13px", { lineHeight: "1", letterSpacing: "0.05em", fontWeight: "600" }],
+                        "display-lg-mobile": ["32px", { lineHeight: "1.25", fontWeight: "700" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style type="text/tailwindcss">
+        @layer utilities {
+            .material-symbols-outlined {
+                font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-surface to-secondary-container/20 flex items-center justify-center p-gutter font-body-md text-on-surface">
+<!-- Main Login Card Canvas -->
+<div class="w-full max-w-[440px] bg-surface-container-lowest rounded-xl p-8 md:p-12 shadow-[0_4px_24px_rgba(255,143,163,0.08)] relative z-10 transition-all duration-300">
+<!-- Header -->
+<div class="text-center mb-10">
+<h1 class="font-headline-md text-headline-md text-primary font-bold mb-2">Pocket Agencom</h1>
+<p class="font-body-md text-body-md text-on-surface-variant">Welcome back. Please enter your details.</p>
+</div>
+<!-- Form -->
+<form action="#" class="space-y-6" method="POST">
+<!-- Email Field -->
+<div class="space-y-2">
+<label class="block font-label-sm text-label-sm text-on-surface ml-1" for="email">Email</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline-variant pointer-events-none">mail</span>
+<input class="w-full pl-12 pr-4 py-4 bg-tertiary-fixed rounded-full border-none font-body-md text-body-md text-on-surface placeholder:text-outline-variant focus:ring-2 focus:ring-secondary-container focus:outline-none transition-shadow" id="email" name="email" placeholder="Enter your email" required="" type="email"/>
+</div>
+</div>
+<!-- Password Field -->
+<div class="space-y-2">
+<label class="block font-label-sm text-label-sm text-on-surface ml-1" for="password">Password</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline-variant pointer-events-none">lock</span>
+<input class="w-full pl-12 pr-4 py-4 bg-tertiary-fixed rounded-full border-none font-body-md text-body-md text-on-surface placeholder:text-outline-variant focus:ring-2 focus:ring-secondary-container focus:outline-none transition-shadow" id="password" name="password" placeholder="••••••••" required="" type="password"/>
+</div>
+</div>
+<!-- Options Row -->
+<div class="flex items-center justify-between pt-2">
+<div class="flex items-center">
+<input class="h-4 w-4 rounded border-outline-variant text-secondary-container focus:ring-secondary-container bg-tertiary-fixed transition-colors cursor-pointer" id="remember-me" name="remember-me" type="checkbox"/>
+<label class="ml-2 block font-body-md text-[14px] text-on-surface-variant cursor-pointer" for="remember-me">
+                        Remember me
+                    </label>
+</div>
+<a class="font-label-sm text-label-sm text-primary hover:text-secondary-container transition-colors" href="#">
+                    Forgot password?
+                </a>
+</div>
+<!-- CTA Button -->
+<div class="pt-4">
+<button class="w-full flex justify-center py-4 px-4 border border-transparent rounded-full shadow-sm font-label-sm text-label-sm bg-secondary-container text-on-secondary-container hover:bg-[#f2cace] hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-secondary-container transition-all duration-200" type="submit">
+                    Login
+                </button>
+</div>
+</form>
+<!-- Footer Link -->
+<div class="mt-8 text-center">
+<p class="font-body-md text-[14px] text-on-surface-variant">
+                Don't have an account? 
+                <a class="font-label-sm text-label-sm text-primary hover:text-secondary-container transition-colors ml-1" href="#">Register here</a>
+</p>
+</div>
+</div>
+<!-- Decorative background blobs (Subtle) -->
+<div class="fixed top-[-10%] left-[-10%] w-[40vw] h-[40vw] rounded-full bg-secondary-container/30 blur-[100px] pointer-events-none z-0"></div>
+<div class="fixed bottom-[-10%] right-[-10%] w-[30vw] h-[30vw] rounded-full bg-secondary-container/20 blur-[80px] pointer-events-none z-0"></div>
+</body></html>

@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>My Bookings - Marketing Hub</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&amp;family=Hanken+Grotesk:wght@600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "inverse-surface": "#2e3132",
+                        "on-secondary-container": "#735f61",
+                        "on-error": "#ffffff",
+                        "surface": "#f8f9fa",
+                        "on-primary": "#ffffff",
+                        "on-surface": "#191c1d",
+                        "surface-tint": "#625b6c",
+                        "secondary-fixed-dim": "#dac0c2",
+                        "surface-dim": "#d9dadb",
+                        "on-secondary-fixed-variant": "#544244",
+                        "tertiary-container": "#211a1b",
+                        "on-tertiary-container": "#8c8182",
+                        "outline": "#7a767c",
+                        "primary": "#000000",
+                        "on-background": "#191c1d",
+                        "error": "#ba1a1a",
+                        "tertiary-fixed-dim": "#d0c3c5",
+                        "on-secondary": "#ffffff",
+                        "on-primary-fixed": "#1e1927",
+                        "tertiary-fixed": "#eddfe0",
+                        "surface-container-high": "#e7e8e9",
+                        "secondary-fixed": "#f7dcde",
+                        "on-primary-container": "#888193",
+                        "inverse-primary": "#ccc3d7",
+                        "on-tertiary-fixed-variant": "#4d4546",
+                        "on-tertiary": "#ffffff",
+                        "surface-bright": "#f8f9fa",
+                        "inverse-on-surface": "#f0f1f2",
+                        "surface-variant": "#e1e3e4",
+                        "surface-container-lowest": "#ffffff",
+                        "on-secondary-fixed": "#26181a",
+                        "primary-fixed": "#e9dff3",
+                        "tertiary": "#000000",
+                        "secondary-container": "#f7dcde",
+                        "on-primary-fixed-variant": "#4a4454",
+                        "secondary": "#6d595b",
+                        "primary-container": "#1e1927",
+                        "surface-container-highest": "#e1e3e4",
+                        "on-tertiary-fixed": "#211a1b",
+                        "background": "#f8f9fa",
+                        "surface-container": "#edeeef",
+                        "on-surface-variant": "#49454b",
+                        "primary-fixed-dim": "#ccc3d7",
+                        "on-error-container": "#93000a",
+                        "error-container": "#ffdad6",
+                        "surface-container-low": "#f3f4f5",
+                        "outline-variant": "#cac5cc"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "1rem",
+                        "lg": "2rem",
+                        "xl": "3rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "sidebar-width": "280px",
+                        "section-padding-mobile": "24px",
+                        "container-max": "1280px",
+                        "unit": "8px",
+                        "gutter": "24px",
+                        "section-padding-desktop": "64px"
+                    },
+                    "fontFamily": {
+                        "body-md": ["Plus Jakarta Sans"],
+                        "label-sm": ["Hanken Grotesk"],
+                        "headline-md": ["Plus Jakarta Sans"],
+                        "display-lg": ["Plus Jakarta Sans"],
+                        "body-lg": ["Plus Jakarta Sans"],
+                        "display-lg-mobile": ["Plus Jakarta Sans"]
+                    },
+                    "fontSize": {
+                        "body-md": ["16px", { "lineHeight": "1.6", "fontWeight": "400" }],
+                        "label-sm": ["13px", { "lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "headline-md": ["24px", { "lineHeight": "1.4", "fontWeight": "600" }],
+                        "display-lg": ["48px", { "lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "body-lg": ["18px", { "lineHeight": "1.6", "fontWeight": "400" }],
+                        "display-lg-mobile": ["32px", { "lineHeight": "1.25", "fontWeight": "700" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md min-h-screen">
+<!-- TopNavBar -->
+<header class="bg-surface/80 dark:bg-surface-dim/80 backdrop-blur-xl docked full-width top-0 sticky z-40 shadow-sm flex justify-between items-center h-20 px-8 hidden md:flex ml-[280px]">
+<div class="flex items-center gap-4">
+<span class="font-headline-md text-headline-md font-bold text-primary">Marketing Hub</span>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
+<input class="pl-10 pr-4 py-2 bg-surface-container rounded-full border-none focus:ring-2 focus:ring-primary-fixed outline-none font-body-md text-body-md" placeholder="Search..." type="text"/>
+</div>
+<button class="p-2 text-on-surface-variant dark:text-outline-variant hover:text-primary transition-colors cursor-pointer transition-opacity active:opacity-70 rounded-full hover:bg-surface-container-high"><span class="material-symbols-outlined" data-icon="notifications">notifications</span></button>
+<button class="p-2 text-on-surface-variant dark:text-outline-variant hover:text-primary transition-colors cursor-pointer transition-opacity active:opacity-70 rounded-full hover:bg-surface-container-high"><span class="material-symbols-outlined" data-icon="chat_bubble">chat_bubble</span></button>
+<div class="w-10 h-10 rounded-full bg-surface-container-high overflow-hidden cursor-pointer">
+<img alt="User Profile Avatar" class="w-full h-full object-cover" data-alt="A close up portrait of a young professional woman with a soft smile, well-lit in a bright modern office setting, representing a high-end minimalist business profile avatar. Soft pastel tones in the background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDLVtrCyglDTFQ_yaBQHk7TKLp3__kKVyt33TKq_8CHyqEHeK75m0GT8uZHWt44P8GmvnP_X4h5VgfYeekg9Z9uIjFflBp2Tz_yR2L3vJoBAd4fxexqMy81x2k7s1KBWf615GrJbKjIZkNv4cEbFhtScvpww-u-mlW6RzwCAXSiNyCTnANs41vRqxAn1DqkXO6cEfZVSUHm25IJ1zWeQDOCRgj0iZfX-iB5EJIMXxoSuzVvCnW5ap7PXckod8JkIALvkZY-lcp96r4"/>
+</div>
+</div>
+</header>
+<!-- SideNavBar (Desktop) -->
+<nav class="bg-surface dark:bg-surface-dim w-[280px] h-screen fixed left-0 top-0 shadow-[4px_24px_rgba(255,143,163,0.08)] hidden md:flex flex-col p-6 gap-2 z-50 border-r border-surface-variant">
+<div class="mb-8 flex items-center gap-4 px-4">
+<div class="w-10 h-10 rounded-full bg-surface-container-high overflow-hidden">
+<img alt="User Workspace Logo" class="w-full h-full object-cover" data-alt="A simple, abstract, elegant logo for a modern creative agency, using soft pastel pinks and charcoal blacks, suitable for a sophisticated brand identity workspace avatar." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAnsjuWF7le8u3Ep54tG2KUP7pbePH31M9HB6UBpwX3JTgpwnta4FCipXigyItZkRQIAUY6eddO8ZvtEXMc4upCx77r78DysNV2XTAdsUdRYfuC34X8-A4jIu9H3kk-llvZ2DmKf6h3slIcr1ks4hEjxCaXcj_TMgyuCjL-wdwuDgQYixdypD_lQOCTCEbYXMZji9z2LS4LgmzKSBlzW4dQAdNXKJAJLYMS37v4gZ56gdLM80W1cvRVIPObmcE72KWsA_N6VUyL4mQ"/>
+</div>
+<div>
+<h2 class="font-headline-md text-[18px] font-bold text-primary dark:text-inverse-primary leading-tight">Brand Center</h2>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Micro-SME Growth</p>
+</div>
+</div>
+<div class="flex flex-col gap-2 flex-grow">
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant dark:text-outline-variant hover:bg-surface-container-high dark:hover:bg-surface-variant transition-colors duration-200 rounded-full font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span>Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant dark:text-outline-variant hover:bg-surface-container-high dark:hover:bg-surface-variant transition-colors duration-200 rounded-full font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined" data-icon="auto_fix">auto_fix_high</span>
+<span>Marketing Kit</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant dark:text-outline-variant hover:bg-surface-container-high dark:hover:bg-surface-variant transition-colors duration-200 rounded-full font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined" data-icon="assignment">assignment</span>
+<span>My Plans</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant dark:text-outline-variant hover:bg-surface-container-high dark:hover:bg-surface-variant transition-colors duration-200 rounded-full font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined" data-icon="library_books">library_books</span>
+<span>Template Library</span>
+</a>
+<a class="relative flex items-center gap-3 px-4 py-3 bg-secondary-container dark:bg-on-secondary-fixed-variant text-on-secondary-container dark:text-secondary-fixed rounded-full before:content-[''] before:absolute before:left-0 before:w-1 before:h-8 before:bg-primary before:rounded-full font-body-md text-body-md hover:bg-surface-container-high transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="campaign">campaign</span>
+<span class="font-bold">KOL Marketplace</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant dark:text-outline-variant hover:bg-surface-container-high dark:hover:bg-surface-variant transition-colors duration-200 rounded-full font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined" data-icon="help">help</span>
+<span>Help Center</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant dark:text-outline-variant hover:bg-surface-container-high dark:hover:bg-surface-variant transition-colors duration-200 rounded-full font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span>Settings</span>
+</a>
+</div>
+<button class="mt-auto py-3 px-4 bg-primary text-on-primary rounded-full font-label-sm text-label-sm uppercase tracking-wider hover:bg-surface-tint transition-colors text-center w-full">Upgrade Plan</button>
+</nav>
+<!-- Main Content -->
+<main class="md:ml-[280px] p-6 md:p-12 max-w-[container-max] mx-auto">
+<div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-4">
+<div>
+<h1 class="font-display-lg-mobile md:font-display-lg text-display-lg-mobile md:text-display-lg text-primary mb-2">My Bookings</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant">Manage and track your KOL marketplace campaigns.</p>
+</div>
+<div class="flex flex-wrap gap-2 w-full md:w-auto">
+<button class="px-4 py-2 rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-label-sm uppercase hover:opacity-90 transition-opacity">All</button>
+<button class="px-4 py-2 rounded-full bg-surface-container text-on-surface-variant font-label-sm text-label-sm uppercase hover:bg-surface-variant transition-colors border border-surface-variant">Pending</button>
+<button class="px-4 py-2 rounded-full bg-surface-container text-on-surface-variant font-label-sm text-label-sm uppercase hover:bg-surface-variant transition-colors border border-surface-variant">In Progress</button>
+<button class="px-4 py-2 rounded-full bg-surface-container text-on-surface-variant font-label-sm text-label-sm uppercase hover:bg-surface-variant transition-colors border border-surface-variant">Completed</button>
+</div>
+</div>
+<!-- Table Container -->
+<div class="bg-surface-container-lowest rounded-3xl shadow-[0_4px_24px_rgba(255,143,163,0.08)] overflow-hidden border border-surface-variant/50">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="border-b border-surface-variant/60 bg-surface-container-low/50">
+<th class="p-6 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider whitespace-nowrap">Booking ID</th>
+<th class="p-6 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider whitespace-nowrap">Creator</th>
+<th class="p-6 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider whitespace-nowrap">Campaign</th>
+<th class="p-6 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider whitespace-nowrap">Package</th>
+<th class="p-6 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider whitespace-nowrap">Date</th>
+<th class="p-6 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider whitespace-nowrap">Price</th>
+<th class="p-6 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider whitespace-nowrap">Status</th>
+<th class="p-6 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider whitespace-nowrap text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-surface-variant/40">
+<!-- Row 1 -->
+<tr class="hover:bg-surface-container-low/30 transition-colors group">
+<td class="p-6 font-body-md text-body-md text-primary font-medium">#BK-84729</td>
+<td class="p-6">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full overflow-hidden bg-surface-container">
+<img alt="Mina Rose" class="w-full h-full object-cover" data-alt="A soft, elegant portrait of a female content creator named Mina Rose, soft natural lighting, high end minimal aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAI7twdX_SV-6HCelpGUhLbpp_SuEkYqO15f432h6OslrzM9QmXi9zMRmvJk0oTUSwbCTY6Mt0LWeIONB3eqMv3PUNI_5IQmqO2aJ2Lemzy1R6FlK0s0D2hmwHvpPlEvDb37DjWtNJ1cYvM2kIWNKhYk2E3tXLGZDi40ygFCcJtH3LP5Dpgx5PJ3lxHtKz9boFTyNFNUiWILj2O8TMWFWyo4RoCghCKmiRhehIj7FuJzY3qwB_YQdKfMp0aaUGrhvIcTwxUt2xdhJ0"/>
+</div>
+<span class="font-body-md text-body-md text-primary">Mina Rose</span>
+</div>
+</td>
+<td class="p-6 font-body-md text-body-md text-on-surface-variant">Summer Launch</td>
+<td class="p-6 font-body-md text-body-md text-on-surface-variant">Reels Video</td>
+<td class="p-6 font-body-md text-body-md text-on-surface-variant">Oct 24, 2024</td>
+<td class="p-6 font-body-md text-body-md text-primary font-medium">$450</td>
+<td class="p-6">
+<span class="inline-flex items-center px-3 py-1 rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-label-sm">
+                                    Staff Reviewing
+                                </span>
+</td>
+<td class="p-6 text-right">
+<button class="text-on-surface-variant hover:text-primary transition-colors p-2 rounded-full hover:bg-surface-container group-hover:opacity-100 opacity-60">
+<span class="material-symbols-outlined text-[20px]" data-icon="more_vert">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-surface-container-low/30 transition-colors group">
+<td class="p-6 font-body-md text-body-md text-primary font-medium">#BK-84710</td>
+<td class="p-6">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full overflow-hidden bg-surface-container">
+<img alt="Alex Chen" class="w-full h-full object-cover" data-alt="A modern portrait of a male tech reviewer named Alex Chen, clean lighting, sophisticated background, minimal style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAA83kmbMFRVo4VRM-iExKBkFfpF5YN506o1MVvK2lU3VSSFrQ7KbqrUAfq8dA51lubmEI2nwKHsRSAVHiiCaNnNdqBYbnNEMJvzLCd7-vRO_3vimmM7HTXS9HlTjme2SSu1Yw6pNlVAdHNSOSpGfzatRc4XIr2It4Cn3gRyYxsi1PPA-8nyrX3n35ceum3CqUSqzStyaP2kiq5Ge5-lKAjjp_G4wCi6nFywBT1U_cy8UrWzvN8iikY4KQVXI5Nj3wPPxGFC0HmB6w"/>
+</div>
+<span class="font-body-md text-body-md text-primary">Alex Chen</span>
+</div>
+</td>
+<td class="p-6 font-body-md text-body-md text-on-surface-variant">Tech Review</td>
+<td class="p-6 font-body-md text-body-md text-on-surface-variant">TikTok Video</td>
+<td class="p-6 font-body-md text-body-md text-on-surface-variant">Oct 20, 2024</td>
+<td class="p-6 font-body-md text-body-md text-primary font-medium">$850</td>
+<td class="p-6">
+<span class="inline-flex items-center px-3 py-1 rounded-full bg-primary-fixed text-primary-container font-label-sm text-label-sm">
+                                    In Progress
+                                </span>
+</td>
+<td class="p-6 text-right">
+<button class="text-on-surface-variant hover:text-primary transition-colors p-2 rounded-full hover:bg-surface-container group-hover:opacity-100 opacity-60">
+<span class="material-symbols-outlined text-[20px]" data-icon="more_vert">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-surface-container-low/30 transition-colors group">
+<td class="p-6 font-body-md text-body-md text-primary font-medium">#BK-84695</td>
+<td class="p-6">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full overflow-hidden bg-surface-container">
+<img alt="Sarah J." class="w-full h-full object-cover" data-alt="A bright, energetic portrait of a female fitness influencer named Sarah J, soft lighting, minimal white and pastel pink aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC15MCZibaR8DyCi1J3dt4II4QbLP-0gVIOUrZeNhiiNI6G2M-3_zzRI3ry3yprPeqYKh3K1xrwwMm9jUYRLOHbr5r4PgQv-qV6VXiGfMU5ClD8uJowFoAvzqGdVAvaDkp0J3AhzBkc566kFQF1Yzp5ZgiUzeQ2rcFnRN3Jigb7KHhwbFTmIdxZRRZ8Fvk7q-IHPYT3E-ZbcQLAz2Bqt0NQiuVDNneFS6v9xJEQmci2GrF1Q0OJBJDa4v4uPR0V1Fjymz74KfEZ-t4"/>
+</div>
+<span class="font-body-md text-body-md text-primary">Sarah J.</span>
+</div>
+</td>
+<td class="p-6 font-body-md text-body-md text-on-surface-variant">Fitness Daily</td>
+<td class="p-6 font-body-md text-body-md text-on-surface-variant">Story Post</td>
+<td class="p-6 font-body-md text-body-md text-on-surface-variant">Oct 15, 2024</td>
+<td class="p-6 font-body-md text-body-md text-primary font-medium">$150</td>
+<td class="p-6">
+<span class="inline-flex items-center px-3 py-1 rounded-full bg-surface-variant text-on-surface-variant font-label-sm text-label-sm">
+                                    Completed
+                                </span>
+</td>
+<td class="p-6 text-right">
+<button class="text-on-surface-variant hover:text-primary transition-colors p-2 rounded-full hover:bg-surface-container group-hover:opacity-100 opacity-60">
+<span class="material-symbols-outlined text-[20px]" data-icon="more_vert">more_vert</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="p-4 border-t border-surface-variant/40 flex justify-between items-center bg-surface/50">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Showing 3 of 3 entries</span>
+<div class="flex gap-1">
+<button class="p-2 rounded-full text-on-surface-variant hover:bg-surface-container opacity-50 cursor-not-allowed"><span class="material-symbols-outlined text-[20px]" data-icon="chevron_left">chevron_left</span></button>
+<button class="p-2 rounded-full text-on-surface-variant hover:bg-surface-container opacity-50 cursor-not-allowed"><span class="material-symbols-outlined text-[20px]" data-icon="chevron_right">chevron_right</span></button>
+</div>
+</div>
+</div>
+</main>
+</body></html>

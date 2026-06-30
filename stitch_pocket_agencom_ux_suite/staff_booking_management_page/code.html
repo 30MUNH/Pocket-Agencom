@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Booking Management Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@600&amp;family=Plus+Jakarta+Sans:wght@400;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                            "tertiary": "#000000",
+                            "on-secondary-fixed": "#26181a",
+                            "surface-container-high": "#e7e8e9",
+                            "on-tertiary-container": "#8c8182",
+                            "on-background": "#191c1d",
+                            "inverse-surface": "#2e3132",
+                            "secondary-container": "#f7dcde",
+                            "primary-fixed-dim": "#ccc3d7",
+                            "primary": "#000000",
+                            "on-surface": "#191c1d",
+                            "on-secondary-container": "#735f61",
+                            "surface-container-highest": "#e1e3e4",
+                            "on-tertiary-fixed": "#211a1b",
+                            "on-tertiary": "#ffffff",
+                            "secondary-fixed-dim": "#dac0c2",
+                            "on-error-container": "#93000a",
+                            "surface-variant": "#e1e3e4",
+                            "on-primary-fixed": "#1e1927",
+                            "inverse-on-surface": "#f0f1f2",
+                            "on-secondary": "#ffffff",
+                            "surface-container": "#edeeef",
+                            "surface-tint": "#625b6c",
+                            "on-tertiary-fixed-variant": "#4d4546",
+                            "tertiary-container": "#211a1b",
+                            "secondary": "#6d595b",
+                            "on-primary-container": "#888193",
+                            "error": "#ba1a1a",
+                            "on-primary": "#ffffff",
+                            "surface-container-low": "#f3f4f5",
+                            "secondary-fixed": "#f7dcde",
+                            "primary-container": "#1e1927",
+                            "outline": "#7a767c",
+                            "inverse-primary": "#ccc3d7",
+                            "background": "#f8f9fa",
+                            "surface-bright": "#f8f9fa",
+                            "on-primary-fixed-variant": "#4a4454",
+                            "error-container": "#ffdad6",
+                            "surface-dim": "#d9dadb",
+                            "tertiary-fixed-dim": "#d0c3c5",
+                            "primary-fixed": "#e9dff3",
+                            "on-surface-variant": "#49454b",
+                            "outline-variant": "#cac5cc",
+                            "tertiary-fixed": "#eddfe0",
+                            "surface": "#f8f9fa",
+                            "on-error": "#ffffff",
+                            "surface-container-lowest": "#ffffff",
+                            "on-secondary-fixed-variant": "#544244"
+                    },
+                    "borderRadius": {
+                            "DEFAULT": "1rem",
+                            "lg": "2rem",
+                            "xl": "3rem",
+                            "full": "9999px"
+                    },
+                    "spacing": {
+                            "sidebar-width": "280px",
+                            "section-padding-mobile": "24px",
+                            "container-max": "1280px",
+                            "unit": "8px",
+                            "section-padding-desktop": "64px",
+                            "gutter": "24px"
+                    },
+                    "fontFamily": {
+                            "label-sm": [
+                                    "Hanken Grotesk"
+                            ],
+                            "display-lg-mobile": [
+                                    "Plus Jakarta Sans"
+                            ],
+                            "headline-md": [
+                                    "Plus Jakarta Sans"
+                            ],
+                            "display-lg": [
+                                    "Plus Jakarta Sans"
+                            ],
+                            "body-md": [
+                                    "Plus Jakarta Sans"
+                            ],
+                            "body-lg": [
+                                    "Plus Jakarta Sans"
+                            ]
+                    },
+                    "fontSize": {
+                            "label-sm": [
+                                    "13px",
+                                    {
+                                            "lineHeight": "1",
+                                            "letterSpacing": "0.05em",
+                                            "fontWeight": "600"
+                                    }
+                            ],
+                            "display-lg-mobile": [
+                                    "32px",
+                                    {
+                                            "lineHeight": "1.25",
+                                            "fontWeight": "700"
+                                    }
+                            ],
+                            "headline-md": [
+                                    "24px",
+                                    {
+                                            "lineHeight": "1.4",
+                                            "fontWeight": "600"
+                                    }
+                            ],
+                            "display-lg": [
+                                    "48px",
+                                    {
+                                            "lineHeight": "1.2",
+                                            "letterSpacing": "-0.02em",
+                                            "fontWeight": "700"
+                                    }
+                            ],
+                            "body-md": [
+                                    "16px",
+                                    {
+                                            "lineHeight": "1.6",
+                                            "fontWeight": "400"
+                                    }
+                            ],
+                            "body-lg": [
+                                    "18px",
+                                    {
+                                            "lineHeight": "1.6",
+                                            "fontWeight": "400"
+                                    }
+                            ]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-background text-on-background antialiased font-body-md text-body-md overflow-x-hidden min-h-screen">
+<!-- TopNavBar -->
+<header class="bg-surface/80 dark:bg-surface-dim/80 backdrop-blur-xl font-label-sm text-label-sm docked full-width top-0 sticky z-40 shadow-sm flex justify-between items-center h-20 px-8 ml-[sidebar-width]">
+<div class="flex items-center gap-4">
+<div class="font-headline-md text-headline-md font-bold text-primary">Marketing Hub</div>
+</div>
+<div class="flex-1 flex justify-center max-w-md mx-8">
+<div class="relative w-full">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
+<input class="w-full bg-surface-container-low border-none rounded-full pl-10 pr-4 py-2 focus:ring-2 focus:ring-secondary-container text-body-md transition-shadow" placeholder="Search bookings..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant dark:text-outline-variant hover:text-primary transition-colors cursor-pointer transition-opacity active:opacity-70 bg-surface-container-low hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant dark:text-outline-variant hover:text-primary transition-colors cursor-pointer transition-opacity active:opacity-70 bg-surface-container-low hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined">chat_bubble</span>
+</button>
+<div class="w-10 h-10 rounded-full overflow-hidden border border-outline-variant cursor-pointer">
+<img alt="User Profile Avatar" class="w-full h-full object-cover" data-alt="A small, high-quality, brightly lit profile picture of a young professional in a modern white-and-pink themed office setting, looking friendly and approachable." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBjwJe-P1oU2_Po425kZYNU8AX6awQ1Jy4a6rc5Wp8R5AC_77K94AspO-zb-eOszqQE-qpN6QdKpeCRHNYoLjgE6u2x_Hcar0tMPVfacocrPLVJQn_aIfQdX5I05zGfSibzxCEtZD6kfzNTPoFdZlktU7XeexKqYEY-zxx9jDBzkN7dYH2cTrqUUnblyJsfwnqTLE6tsEf7rOANSg7byv8nnwWfH7VTCbDCltNUB_9viIcJ1koUm--Tiu4qjzeDj1Vv7tmk_4m85qY"/>
+</div>
+</div>
+</header>
+<!-- SideNavBar -->
+<nav class="bg-surface dark:bg-surface-dim w-[sidebar-width] h-screen fixed left-0 top-0 shadow-[4px_24px_rgba(255,143,163,0.08)] flex flex-col p-6 gap-2 z-50">
+<div class="flex items-center gap-4 mb-8 px-2">
+<div class="w-10 h-10 rounded-xl overflow-hidden bg-secondary-container flex items-center justify-center">
+<img alt="User Workspace Logo" class="w-full h-full object-cover" data-alt="A minimalist, elegant brand logo graphic for a 'Brand Center', featuring soft pastel pink geometric shapes against a pure white background, embodying a high-end concierge service vibe." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD8_svLDnKEoVJih_HdJDmTpynmWDE_gxcca23lYq3wdhDCjhCPMBFqlqvgJhPWYvHH_xnCWYJjWA32uuslkT6LQftrRMvoaLYNw-btjRRpkw8IJSJLbl0weNpUwREHHV8VWmXlxAWADki8DDrDzYs8ab4unD58CHCccg1jwxCuSjnF3sW_BdZwhpkZSebADqMnDEKSMyPwaExbGmJ6xFDYldr-ZT-Z8bxZua4cNoPdoIPLmwzfwBInsPlMV25ztiMtd140nIrQB_Q"/>
+</div>
+<div>
+<h1 class="font-headline-md text-headline-md font-bold text-primary dark:text-inverse-primary leading-tight">Brand Center</h1>
+<p class="text-on-surface-variant font-label-sm text-label-sm">Micro-SME Growth</p>
+</div>
+</div>
+<div class="flex-1 flex flex-col gap-1 overflow-y-auto">
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant dark:text-outline-variant hover:bg-surface-container-high dark:hover:bg-surface-variant transition-colors duration-200 active:scale-95 transition-transform rounded-full" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span>Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant dark:text-outline-variant hover:bg-surface-container-high dark:hover:bg-surface-variant transition-colors duration-200 active:scale-95 transition-transform rounded-full" href="#">
+<span class="material-symbols-outlined">auto_fix</span>
+<span>Marketing Kit</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant dark:text-outline-variant hover:bg-surface-container-high dark:hover:bg-surface-variant transition-colors duration-200 active:scale-95 transition-transform rounded-full" href="#">
+<span class="material-symbols-outlined">assignment</span>
+<span>My Plans</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant dark:text-outline-variant hover:bg-surface-container-high dark:hover:bg-surface-variant transition-colors duration-200 active:scale-95 transition-transform rounded-full" href="#">
+<span class="material-symbols-outlined">library_books</span>
+<span>Template Library</span>
+</a>
+<a class="relative flex items-center gap-3 px-4 py-3 bg-secondary-container dark:bg-on-secondary-fixed-variant text-on-secondary-container dark:text-secondary-fixed rounded-full before:content-[''] before:absolute before:left-0 before:w-1 before:h-8 before:bg-primary before:rounded-full font-body-md text-body-md font-medium" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">campaign</span>
+<span>KOL Marketplace</span>
+</a>
+<div class="mt-auto flex flex-col gap-1 pt-4 border-t border-surface-variant">
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant dark:text-outline-variant hover:bg-surface-container-high dark:hover:bg-surface-variant transition-colors duration-200 active:scale-95 transition-transform rounded-full" href="#">
+<span class="material-symbols-outlined">help</span>
+<span>Help Center</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant dark:text-outline-variant hover:bg-surface-container-high dark:hover:bg-surface-variant transition-colors duration-200 active:scale-95 transition-transform rounded-full" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span>Settings</span>
+</a>
+</div>
+</div>
+<button class="mt-4 w-full bg-primary text-on-primary py-3 rounded-full font-label-sm text-label-sm hover:opacity-90 transition-opacity active:scale-95">
+            Upgrade Plan
+        </button>
+</nav>
+<!-- Main Content Canvas -->
+<main class="ml-[sidebar-width] p-section-padding-desktop">
+<div class="max-w-[container-max] mx-auto">
+<!-- Page Header -->
+<div class="mb-8 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+<div>
+<h2 class="font-display-lg text-display-lg text-primary">KOL Bookings</h2>
+<p class="text-on-surface-variant mt-2 font-body-lg text-body-lg">Manage incoming influencer collaboration requests.</p>
+</div>
+</div>
+<!-- Dashboard Content -->
+<div class="bg-surface-container-lowest rounded-3xl p-8 shadow-[4px_24px_rgba(255,143,163,0.08)]">
+<!-- Filters & Controls -->
+<div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+<div class="flex gap-2">
+<button class="px-5 py-2 rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-label-sm transition-colors border-none cursor-pointer">
+                            All Statuses
+                        </button>
+<button class="px-5 py-2 rounded-full bg-surface-container-low text-on-surface-variant hover:bg-surface-container-high font-label-sm text-label-sm transition-colors cursor-pointer border-none">
+                            Pending Review
+                        </button>
+<button class="px-5 py-2 rounded-full bg-surface-container-low text-on-surface-variant hover:bg-surface-container-high font-label-sm text-label-sm transition-colors cursor-pointer border-none">
+                            Confirmed
+                        </button>
+</div>
+</div>
+<!-- Data Table -->
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="border-b border-surface-variant">
+<th class="py-4 px-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">User</th>
+<th class="py-4 px-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">KOL Requested</th>
+<th class="py-4 px-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Campaign</th>
+<th class="py-4 px-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Budget</th>
+<th class="py-4 px-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Status</th>
+<th class="py-4 px-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Date</th>
+<th class="py-4 px-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-surface-variant">
+<!-- Row 1 -->
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="py-4 px-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full overflow-hidden bg-surface-variant">
+<img alt="User Avatar" class="w-full h-full object-cover" data-alt="Small avatar of a female small business owner smiling, brightly lit, high quality." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCkRTtashE7TyeiHSsz8kMX52HsN3R5oFHvxTSFHTlA97csmo9Cat7YUIttcFWOoEMmaDV_Jb5wv5AeIX_xZSAHqFlSUTl5pEwPkHz5XcIya1Ux2PJ30JY0qshQhDeB6HtvZ6KPchdy3Sf3Z526S3Yb21z06H-1La-NSiNdGjc2XDwmKIVrVlZ3I2XpYkrVEWJOH7G3j1tMcDXvQELcL-U3y3Zr7EL47EPbQGJkDxR3V_h4Lxba1PAftkjP2KKArg_ZjI2Edv3x_nk"/>
+</div>
+<span class="font-medium text-primary">Sarah's Boutique</span>
+</div>
+</td>
+<td class="py-4 px-4 text-on-surface-variant">@fashionista_mia</td>
+<td class="py-4 px-4 text-on-surface-variant">Summer Collection Launch</td>
+<td class="py-4 px-4 text-primary font-medium">$1,500</td>
+<td class="py-4 px-4">
+<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-tertiary-fixed text-on-tertiary-fixed-variant">
+                                        Pending Review
+                                    </span>
+</td>
+<td class="py-4 px-4 text-on-surface-variant text-sm">Oct 24, 2023</td>
+<td class="py-4 px-4 text-right">
+<div class="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="px-3 py-1.5 rounded-full bg-primary text-on-primary font-label-sm text-[11px] hover:opacity-90 transition-opacity">Approve</button>
+<button class="px-3 py-1.5 rounded-full bg-surface-container text-on-surface-variant font-label-sm text-[11px] hover:bg-surface-variant transition-colors">Reject</button>
+</div>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="py-4 px-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full overflow-hidden bg-surface-variant">
+<img alt="User Avatar" class="w-full h-full object-cover" data-alt="Small avatar of a male entrepreneur looking confident, clean bright studio lighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBtBhYXewEwjr6pKFhq-uteBzjfAwBspnk3CgYdUW2NhP-EjX17kSZ4WK7x72yNokjGSZLdljRecWRuq8Wv2hy5m2j15mfke7hxv2mT8Jsb2dFbiLf7BYKXkq4L7ilHlJRFZQhEqimikX8G7dap23aJVyTjb_LIXkJguAfZZl6FFxTSXB09WE_HNz587MqL8zhL97JvWMs8u_nAlZSe0iwbQO9sFscXdWJuMxiA3qi62hwyDTrGKdecXm99uHaaTslKV4sOjlcJvaU"/>
+</div>
+<span class="font-medium text-primary">TechGizmo Inc.</span>
+</div>
+</td>
+<td class="py-4 px-4 text-on-surface-variant">@gadget_guru</td>
+<td class="py-4 px-4 text-on-surface-variant">New App Promotion</td>
+<td class="py-4 px-4 text-primary font-medium">$3,200</td>
+<td class="py-4 px-4">
+<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-primary-fixed text-on-primary-fixed-variant">
+                                        Confirmed
+                                    </span>
+</td>
+<td class="py-4 px-4 text-on-surface-variant text-sm">Oct 22, 2023</td>
+<td class="py-4 px-4 text-right">
+<div class="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="px-3 py-1.5 rounded-full bg-surface-container text-on-surface-variant font-label-sm text-[11px] hover:bg-surface-variant transition-colors flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">edit_note</span> Internal Note</button>
+</div>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="py-4 px-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full overflow-hidden bg-surface-variant">
+<span class="w-full h-full flex items-center justify-center font-bold text-on-surface-variant text-xs">V</span>
+</div>
+<span class="font-medium text-primary">VitaGlow Skincare</span>
+</div>
+</td>
+<td class="py-4 px-4 text-on-surface-variant">TBD (Need Assignment)</td>
+<td class="py-4 px-4 text-on-surface-variant">Holiday Bundle Promo</td>
+<td class="py-4 px-4 text-primary font-medium">$800</td>
+<td class="py-4 px-4">
+<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-tertiary-fixed text-on-tertiary-fixed-variant">
+                                        Pending Review
+                                    </span>
+</td>
+<td class="py-4 px-4 text-on-surface-variant text-sm">Oct 21, 2023</td>
+<td class="py-4 px-4 text-right">
+<div class="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="px-3 py-1.5 rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-[11px] hover:opacity-90 transition-opacity">Assign KOL</button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</main>
+</body></html>
