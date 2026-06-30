@@ -1,82 +1,61 @@
 import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import {
-  ArrowLeft,
-  XCircle,
-  Edit,
-  CheckCircle2,
-  Lightbulb,
-  Eye,
-  Heart,
-  Video,
-  Play,
-  ChevronDown,
-  Calendar,
-  MessageSquare,
-} from 'lucide-react';
-
-const INITIAL_NOTES = [
-  {
-    id: 1,
-    author: 'Sarah J. (Senior Strat)',
-    time: 'Hôm qua',
-    text: "Kịch bản cho 'Morning Rush' rất tốt, nhưng hãy đảm bảo khách hàng hiểu rằng họ cần ánh sáng tự nhiên tốt cho cảnh quay trong tủ quần áo. Có thể cần thêm lưu ý về chất lượng sản xuất.",
-    avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBAMkLDTafgG0bWAIJDJHoh9ognwYNLpZf1GCMkA5jgL7lRmu-QX52woxFOT0HuFBH-7IsVmK7RHzKledcWvYHeQmcF0iLOhHNKz46tVAJ8wH-KA51Ss57wvkQ7RRI3YC2sMB0I6wCdC7_Npoa7L276r0L1M4wrD2k3NDOdDu5nK0o6xU5UvJqY7EYqpL0EXLV_3QsLThLvyEYh2hjnxgbFgzZwHvc9FRsc0CWWxHPfIF_3xJL23lEA289lca2tyn0WESgg9T89Z6I',
-    isHighlight: false,
-  },
-  {
-    id: 2,
-    type: 'log',
-    text: 'Phiên bản V2 được nộp bởi Hệ thống',
-  },
-  {
-    id: 3,
-    author: 'Mike T. (Copywriter)',
-    time: '2 giờ trước',
-    text: "Tôi đã tinh chỉnh các dòng tiêu đề email trong cẩm nang để cải thiện tỷ lệ mở dựa trên dữ liệu tháng trước. Phía tôi thấy có thể duyệt rồi.",
-    avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuJS7IxISPC6aZBeaFCVLXdemJtexDTPcBJdrfh4sqqVcXpXHLkG7oba-R0miYEaW0U6fhCp3tBHbO2UTUhSdQuzCVDgWRElAmk-5Vu5cAnYr74fzGIlkdpD-swooRnFbNoJ4Jyv0yB7HPZWiYyt3vmpIPy4214NbzB_QgCPnauGU4wVtTCC8Bv6dtiHT_TwowGL9L7WIZiUKe6HOPdKY-U0-3iuDqEDXl8-ZI21izzq-QXVIAQL4MhC_6xkcBdEyjZhlHeFCPVpzM',
-    isHighlight: true,
-  },
-];
+import { ArrowLeft, XCircle, Edit, CheckCircle2, Lightbulb, Loader2 } from 'lucide-react';
+import { useMarketingPlan, useReviewPlan } from '../../hooks/useMarketingPlans';
+import { PLAN_STATUS_LABELS } from '../../utils/statusLabels';
+import { toast } from '../../store/toastStore';
+import { useAuthStore } from '../../store/authStore';
 
 export default function PlanReviewPage() {
   const { id } = useParams();
-  const [status, setStatus] = useState('Chờ Kiểm duyệt');
-  const [notes, setNotes] = useState(INITIAL_NOTES);
+  const user = useAuthStore((s) => s.user);
+  const { data: plan, isLoading } = useMarketingPlan(id);
+  const reviewPlan = useReviewPlan();
   const [newNoteText, setNewNoteText] = useState('');
-  const [isScriptOpen, setIsScriptOpen] = useState(false);
 
-  const handlePostNote = (e) => {
-    e.preventDefault();
-    if (!newNoteText.trim()) return;
+  const statusLabel = plan ? (PLAN_STATUS_LABELS[plan.status]?.label || plan.status) : '';
 
-    const newNote = {
-      id: Date.now(),
-      author: 'Bạn (Nhân viên Kiểm duyệt)',
-      time: 'Vừa xong',
-      text: newNoteText,
-      avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAdryrfnHxZkDY52XAKUA-U-IBvHjYEdLY3EGTApo_tmoR34UNgnRKFHQ-4aNqv3WW5MjTPTCa4C4_mYrV9lnTFKCSlpEip4Itcl1AAP0kIfzVSqmaDgXrIALldntA0hczh5_90CkDWoH0VRVAdA-3na8v6Va9hijg_Wm3xdcOxKxgZSHJvDrBJgunLiC21Pnb54GOCA1P9RKJr-apBBZ6lGI9Faau-g4p4VxqIK7KCmYvPUqBcOzucF7HSUoudp0zslB6AdjRwqpw',
-      isHighlight: false,
-    };
-
-    setNotes([...notes, newNote]);
-    setNewNoteText('');
+  const handleApprove = async () => {
+    try {
+      await reviewPlan.mutateAsync({ id, action: 'approve' });
+      toast.success('Đã duyệt kế hoạch thành công!');
+    } catch (err) {
+      toast.error(err.message || 'Không thể duyệt kế hoạch');
+    }
   };
 
-  const handleApprove = () => {
-    setStatus('Đã Duyệt');
-    alert('Đã duyệt kế hoạch thành công!');
+  const handleSuggestEdits = async () => {
+    try {
+      await reviewPlan.mutateAsync({ id, action: 'need_revision', note: newNoteText || undefined });
+      toast.success('Đã gửi gợi ý chỉnh sửa đến khách hàng.');
+    } catch (err) {
+      toast.error(err.message || 'Không thể gửi gợi ý');
+    }
   };
 
-  const handleSuggestEdits = () => {
-    setStatus('Yêu cầu Chỉnh sửa');
-    alert('Đã gửi gợi ý chỉnh sửa đến khách hàng.');
+  const handleMarkReviewed = async () => {
+    try {
+      await reviewPlan.mutateAsync({ id, action: 'reviewed', note: newNoteText || undefined });
+      toast.success('Đã đánh dấu kế hoạch đã xem xét.');
+    } catch (err) {
+      toast.error(err.message || 'Không thể cập nhật trạng thái');
+    }
   };
 
-  const handleReject = () => {
-    setStatus('Đã Từ chối');
-    alert('Đã từ chối kế hoạch.');
-  };
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-20 gap-2">
+        <Loader2 className="animate-spin" size={24} />
+        Đang tải kế hoạch...
+      </div>
+    );
+  }
+
+  if (!plan) {
+    return <div className="text-center py-20">Không tìm thấy kế hoạch.</div>;
+  }
+
+  const isStaff = user?.role === 'staff' || user?.role === 'admin';
 
   return (
     <div className="flex-1 w-full space-y-8">
@@ -92,51 +71,44 @@ export default function PlanReviewPage() {
           </Link>
           <div className="flex items-center gap-3">
             <h2 className="text-display-lg-mobile md:text-headline-md font-headline-md text-primary dark:text-inverse-primary">
-              Chiến lược Trọn đời Q4
+              {plan.goal}
             </h2>
-            <span
-              className={`inline-flex items-center px-3 py-1 rounded-full text-[11px] font-label-sm uppercase tracking-wider ${
-                status === 'Đã Duyệt'
-                  ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
-                  : status === 'Đã Từ chối'
-                  ? 'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300'
-                  : status === 'Yêu cầu Chỉnh sửa'
-                  ? 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300'
-                  : 'bg-surface-container-high text-on-surface-variant dark:bg-outline/20'
-              }`}
-            >
-              {status}
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-[11px] font-label-sm uppercase tracking-wider bg-surface-container-high text-on-surface-variant">
+              {statusLabel}
             </span>
           </div>
           <p className="text-body-md text-on-surface-variant mt-1 dark:text-outline-variant">
-            Được nộp bởi <span className="font-semibold text-on-surface dark:text-inverse-primary">Eleanor's Boutique</span> • 2 giờ trước
+            Được nộp bởi <span className="font-semibold">{plan.user?.name}</span>
           </p>
         </div>
 
-        {/* Action Buttons */}
+        {isStaff && (
         <div className="flex flex-wrap items-center gap-3">
           <button
-            onClick={handleReject}
-            className="px-5 py-3 rounded-full text-error hover:bg-error-container/20 text-label-sm font-label-sm transition-colors flex items-center gap-2"
-          >
-            <XCircle size={16} />
-            Từ chối
-          </button>
-          <button
             onClick={handleSuggestEdits}
-            className="px-5 py-3 rounded-full bg-surface-container hover:bg-surface-container-high text-on-surface dark:text-inverse-primary text-label-sm font-label-sm transition-colors flex items-center gap-2"
+            disabled={reviewPlan.isPending}
+            className="px-5 py-3 rounded-full bg-surface-container hover:bg-surface-container-high text-on-surface text-label-sm transition-colors flex items-center gap-2 disabled:opacity-60"
           >
             <Edit size={16} />
             Yêu cầu Sửa
           </button>
           <button
-            onClick={handleApprove}
-            className="px-7 py-3 rounded-full bg-primary text-on-primary hover:bg-primary/90 shadow-md text-label-sm font-label-sm transition-all transform hover:scale-[1.03] active:scale-[0.98] flex items-center gap-2 font-bold"
+            onClick={handleMarkReviewed}
+            disabled={reviewPlan.isPending}
+            className="px-5 py-3 rounded-full bg-surface-container text-label-sm transition-colors disabled:opacity-60"
           >
-            <CheckCircle2 size={16} />
+            Đánh dấu Đã xem
+          </button>
+          <button
+            onClick={handleApprove}
+            disabled={reviewPlan.isPending}
+            className="px-7 py-3 rounded-full bg-primary text-on-primary hover:bg-primary/90 shadow-md text-label-sm transition-all flex items-center gap-2 font-bold disabled:opacity-60"
+          >
+            {reviewPlan.isPending ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
             Duyệt Kế hoạch
           </button>
         </div>
+        )}
       </div>
 
       {/* Main Layout Grid */}

@@ -1,15 +1,11 @@
 import { useParams, Link } from 'react-router-dom';
-import { useMemo } from 'react';
-import { ArrowLeft, MessageSquare, Calendar, Check, Star, Globe, TrendingUp, Users } from 'lucide-react';
-import { CREATORS_DATA } from './mockData';
-import BrandElementCard from '../../components/marketplace/BrandElementCard';
+import { ArrowLeft, Check, Star, Globe, Loader2 } from 'lucide-react';
+import { useKol, mapKolToCreator } from '../../hooks/useKols';
 
 export default function KOLDetailPage() {
   const { id } = useParams();
-
-  const creator = useMemo(() => {
-    return CREATORS_DATA.find((c) => c.id === id) || CREATORS_DATA[0];
-  }, [id]);
+  const { data: kolData, isLoading, error } = useKol(id);
+  const creator = mapKolToCreator(kolData);
 
   const formatFollowers = (count) => {
     if (count >= 1000000) {
@@ -20,6 +16,24 @@ export default function KOLDetailPage() {
     }
     return count;
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-20 gap-2 text-on-surface-variant">
+        <Loader2 className="animate-spin" size={24} />
+        Đang tải hồ sơ KOL...
+      </div>
+    );
+  }
+
+  if (error || !creator) {
+    return (
+      <div className="text-center py-20">
+        <p className="text-on-surface-variant mb-4">Không tìm thấy KOL.</p>
+        <Link to="/marketplace" className="text-primary font-bold">Quay lại Chợ KOL</Link>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">

@@ -1,19 +1,13 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  Store,
-  Users,
-  Target,
-  Wand2,
-  ArrowRight,
-  ChevronDown,
-  Check,
-  Sparkles,
-} from 'lucide-react';
+import { Store, Users, Target, Wand2, ArrowRight, ChevronDown, Check, Sparkles, Loader2 } from 'lucide-react';
+import { useGeneratePlan } from '../../hooks/useMarketingPlans';
+import { toast } from '../../store/toastStore';
 
 export default function GenerateMarketingKit() {
   const navigate = useNavigate();
-  const [activeStep, setActiveStep] = useState(2); // Step 2: Details is active as per Stitch
+  const generatePlan = useGeneratePlan();
+  const [activeStep, setActiveStep] = useState(2);
 
   // Form states
   const [businessType, setBusinessType] = useState('ecommerce');
@@ -29,15 +23,25 @@ export default function GenerateMarketingKit() {
 
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-
-    // Simulate AI loading state for 3 seconds, then redirect to marketing result page
-    setTimeout(() => {
+    try {
+      const plan = await generatePlan.mutateAsync({
+        businessType,
+        campaignType,
+        productDescription: description,
+        targetCustomer: customerProfile,
+        goal: primaryGoal,
+        budget,
+      });
+      toast.success('Kế hoạch marketing đã được tạo!');
+      navigate(`/marketing-kit/result?planId=${plan.id}`);
+    } catch (err) {
+      toast.error(err.message || 'Không thể tạo kế hoạch');
+    } finally {
       setIsLoading(false);
-      navigate('/marketing-kit/result');
-    }, 3000);
+    }
   };
 
   return (

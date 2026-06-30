@@ -1,34 +1,64 @@
-import { useState } from 'react';
-import {
-  Lightbulb,
-  Heart,
-  Mail,
-  FileText,
-  ClipboardCheck,
-  Check,
-  PlayCircle,
-  Play,
-  Video,
-  Copy,
-  BookOpen,
-  RefreshCw,
-  Download,
-  Save,
-  Clock,
-  ArrowLeft,
-} from 'lucide-react';
-import { Link } from 'react-router-dom';
-
-const INITIAL_CHECKLIST = [
-  { id: 1, title: 'Đánh giá Chi phí Quảng cáo', desc: 'Kiểm tra số liệu hàng ngày cho chiến dịch Facebook.', checked: false },
-  { id: 2, title: 'Lên lịch đăng Story', desc: 'Lên hàng chờ 3 cuộc thăm dò ý kiến tương tác.', checked: true },
-  { id: 3, title: 'Phản hồi Bình luận', desc: 'Dành 15 phút trả lời bình luận các bài viết mới nhất.', checked: false },
-  { id: 4, title: 'Kiểm tra đồng bộ kho hàng', desc: 'Xác minh danh mục sản phẩm trên Shopify đã được cập nhật.', checked: false },
-];
+import { useState, useMemo, useEffect } from 'react';
+import { Link, useSearchParams, useNavigate } from 'react-router-dom';
+import { Lightbulb, Heart, Mail, FileText, ClipboardCheck, Check, PlayCircle, Play, Video, Copy, BookOpen, RefreshCw, Download, Clock, Loader2 } from 'lucide-react';
+import { useMarketingPlan, useSavePlan } from '../../hooks/useMarketingPlans';
+import { toast } from '../../store/toastStore';
 
 export default function MarketingResult() {
-  const [checklist, setChecklist] = useState(INITIAL_CHECKLIST);
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const planId = searchParams.get('planId');
+  const { data: plan, isLoading } = useMarketingPlan(planId);
+  const savePlan = useSavePlan();
+
+  const contentIdeas = plan?.contentIdeas || [];
+  const videoScripts = plan?.videoScripts || [];
+  const initialChecklist = useMemo(() => {
+    if (Array.isArray(plan?.checklist)) {
+      return plan.checklist.map((item, i) =>
+        typeof item === 'string'
+          ? { id: i + 1, title: item, desc: '', checked: false }
+          : item
+      );
+    }
+    return [];
+  }, [plan]);
+
+  const [checklist, setChecklist] = useState([]);
   const [copiedScript, setCopiedScript] = useState(null);
+
+  useEffect(() => {
+    if (initialChecklist.length) setChecklist(initialChecklist);
+  }, [initialChecklist]);
+
+  const handleSave = async () => {
+    if (!planId) return;
+    try {
+      await savePlan.mutateAsync(planId);
+      toast.success('Kế hoạch đã được lưu vào Bảng điều khiển!');
+      navigate('/plans');
+    } catch (err) {
+      toast.error(err.message || 'Không thể lưu kế hoạch');
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-20 gap-2 text-on-surface-variant">
+        <Loader2 className="animate-spin" size={24} />
+        Đang tải kế hoạch...
+      </div>
+    );
+  }
+
+  if (!plan) {
+    return (
+      <div className="text-center py-20">
+        <p className="text-on-surface-variant mb-4">Không tìm thấy kế hoạch.</p>
+        <Link to="/marketing-kit" className="text-primary font-bold">Tạo kế hoạch mới</Link>
+      </div>
+    );
+  }
 
   const toggleCheck = (id) => {
     setChecklist(
@@ -58,10 +88,10 @@ export default function MarketingResult() {
             </span>
           </div>
           <h2 className="text-display-lg-mobile md:text-display-lg font-display-lg text-primary dark:text-inverse-primary max-w-2xl leading-tight">
-            Ra mắt Bộ sưu tập Mùa xuân
+            {plan.goal}
           </h2>
           <p className="text-body-lg text-on-surface-variant max-w-3xl">
-            Chiến lược đa kênh toàn diện kéo dài 4 tuần được thiết kế riêng để thu hút khán giả millennial trên Instagram và TikTok.
+            {plan.playbook || plan.campaignType}
           </p>
         </div>
 
@@ -81,9 +111,11 @@ export default function MarketingResult() {
             Xuất file
           </button>
           <button
-            onClick={() => alert('Kế hoạch đã được lưu vào Bảng điều khiển!')}
-            className="px-5 py-3 rounded-full text-label-sm font-label-sm text-on-primary bg-primary hover:bg-primary/90 transition-colors shadow-md hover:-translate-y-0.5 transform duration-200"
+            onClick={handleSave}
+            disabled={savePlan.isPending}
+            className="px-5 py-3 rounded-full text-label-sm font-label-sm text-on-primary bg-primary hover:bg-primary/90 transition-colors shadow-md hover:-translate-y-0.5 transform duration-200 disabled:opacity-60 flex items-center gap-2"
           >
+            {savePlan.isPending ? <Loader2 size={14} className="animate-spin" /> : null}
             Lưu kế hoạch
           </button>
         </div>
