@@ -15,6 +15,15 @@ export default function ForgotPasswordPage() {
 
   return (
     <div className="bg-surface font-body-md text-on-surface min-h-screen flex items-center justify-center relative overflow-hidden">
+      {/* Back to Homepage Button */}
+      <Link
+        to="/"
+        className="absolute top-6 left-6 z-20 flex items-center gap-2 px-4 py-2 bg-surface-container-lowest rounded-full shadow-sm border border-surface-container/20 text-on-surface-variant hover:text-primary hover:shadow-md transition-all text-xs font-semibold"
+      >
+        <ArrowLeft size={14} />
+        <span>Quay về trang chủ</span>
+      </Link>
+
       {/* Ambient glow backgrounds */}
       <div className="ambient-glow" style={{ top: '-200px', left: '-200px' }} />
       <div className="ambient-glow" style={{ bottom: '-200px', right: '-200px' }} />
@@ -40,11 +49,11 @@ export default function ForgotPasswordPage() {
               </span>
             </div>
             <h1 className="text-headline-md font-headline-md text-on-surface mb-2">
-              Reset Your Password
+              Đặt lại mật khẩu
             </h1>
             <p className="text-body-md font-body-md text-on-surface-variant">
-              Enter your email address and we'll send you a link to reset your
-              password.
+              Nhập địa chỉ email của bạn và chúng tôi sẽ gửi liên kết đặt lại
+              mật khẩu cho bạn.
             </p>
           </div>
 
@@ -56,7 +65,7 @@ export default function ForgotPasswordPage() {
                   htmlFor="forgot-email"
                   className="text-label-sm font-label-sm text-on-surface-variant ml-1"
                 >
-                  Email Address
+                  Địa chỉ Email
                 </label>
                 <div className="relative">
                   <Mail
@@ -79,7 +88,7 @@ export default function ForgotPasswordPage() {
                 type="submit"
                 className="w-full bg-secondary-container hover:bg-secondary-container/80 text-on-secondary-container text-label-sm font-label-sm py-4 rounded-full transition-all duration-200 transform hover:-translate-y-0.5 shadow-ambient flex items-center justify-center gap-2"
               >
-                <span>Send Reset Link</span>
+                <span>Gửi liên kết đặt lại</span>
                 <ArrowRight size={18} />
               </button>
             </form>
@@ -92,8 +101,8 @@ export default function ForgotPasswordPage() {
                 <CheckCircle size={32} className="text-[#2e7d32]" />
               </div>
               <p className="text-body-md font-body-md text-on-surface-variant">
-                We've sent a password reset link to your email. Please check
-                your inbox.
+                Chúng tôi đã gửi liên kết đặt lại mật khẩu đến email của bạn. Vui lòng
+                kiểm tra hộp thư đến.
               </p>
             </div>
           )}
@@ -108,7 +117,7 @@ export default function ForgotPasswordPage() {
                 size={16}
                 className="group-hover:-translate-x-1 transition-transform"
               />
-              <span>Back to Login</span>
+              <span>Quay lại đăng nhập</span>
             </Link>
           </div>
         </div>
@@ -116,9 +125,9 @@ export default function ForgotPasswordPage() {
         {/* Footer Info */}
         <div className="text-center mt-8">
           <p className="text-label-sm font-label-sm text-on-surface-variant/70">
-            © {new Date().getFullYear()} Pocket Agencom. Need help?{' '}
+            © {new Date().getFullYear()} Pocket Agencom. Cần hỗ trợ?{' '}
             <a href="#" className="text-primary hover:underline">
-              Contact Support
+              Liên hệ Hỗ trợ
             </a>
           </p>
         </div>

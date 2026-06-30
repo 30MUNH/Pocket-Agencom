@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Mail, Lock } from 'lucide-react';
+import { Mail, Lock, ArrowLeft } from 'lucide-react';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -15,6 +15,15 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-surface to-secondary-container/20 flex items-center justify-center p-gutter font-body-md text-on-surface relative">
+      {/* Back to Homepage Button */}
+      <Link
+        to="/"
+        className="absolute top-6 left-6 z-20 flex items-center gap-2 px-4 py-2 bg-surface-container-lowest rounded-full shadow-sm border border-surface-container/20 text-on-surface-variant hover:text-primary hover:shadow-md transition-all text-xs font-semibold"
+      >
+        <ArrowLeft size={14} />
+        <span>Quay về trang chủ</span>
+      </Link>
+
       {/* Decorative background blobs */}
       <div className="fixed top-[-10%] left-[-10%] w-[40vw] h-[40vw] rounded-full bg-secondary-container/30 blur-[100px] pointer-events-none z-0" />
       <div className="fixed bottom-[-10%] right-[-10%] w-[30vw] h-[30vw] rounded-full bg-secondary-container/20 blur-[80px] pointer-events-none z-0" />
@@ -27,7 +36,7 @@ export default function LoginPage() {
             Pocket Agencom
           </h1>
           <p className="font-body-md text-body-md text-on-surface-variant">
-            Welcome back. Please enter your details.
+            Chào mừng trở lại. Vui lòng nhập thông tin đăng nhập.
           </p>
         </div>
 
@@ -53,7 +62,7 @@ export default function LoginPage() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="Enter your email"
+                placeholder="Nhập email của bạn"
                 className="w-full pl-12 pr-4 py-4 bg-tertiary-fixed rounded-full border-none font-body-md text-body-md text-on-surface placeholder:text-outline-variant focus:ring-2 focus:ring-secondary-container focus:outline-none transition-shadow"
               />
             </div>
@@ -65,7 +74,7 @@ export default function LoginPage() {
               htmlFor="login-password"
               className="block font-label-sm text-label-sm text-on-surface ml-1"
             >
-              Password
+              Mật khẩu
             </label>
             <div className="relative">
               <Lock
@@ -94,20 +103,20 @@ export default function LoginPage() {
                 type="checkbox"
                 checked={remember}
                 onChange={(e) => setRemember(e.target.checked)}
-                className="h-4 w-4 rounded border-outline-variant text-secondary-container focus:ring-secondary-container bg-tertiary-fixed transition-colors cursor-pointer"
+                className="appearance-none h-4 w-4 rounded-full border border-secondary-fixed-dim bg-secondary-container/30 checked:bg-secondary-container checked:border-secondary focus:outline-none transition-all cursor-pointer flex items-center justify-center after:content-[''] after:block after:w-1.5 after:h-1.5 after:bg-secondary after:rounded-full after:opacity-0 checked:after:opacity-100 after:transition-opacity"
               />
               <label
                 htmlFor="remember-me"
                 className="ml-2 block font-body-md text-[14px] text-on-surface-variant cursor-pointer"
               >
-                Remember me
+                Ghi nhớ đăng nhập
               </label>
             </div>
             <Link
               to="/forgot-password"
               className="font-label-sm text-label-sm text-primary hover:text-secondary-container transition-colors"
             >
-              Forgot password?
+              Quên mật khẩu?
             </Link>
           </div>
 
@@ -117,7 +126,7 @@ export default function LoginPage() {
               type="submit"
               className="w-full flex justify-center py-4 px-4 border border-transparent rounded-full shadow-sm font-label-sm text-label-sm bg-secondary-container text-on-secondary-container hover:bg-secondary-container/80 hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-secondary-container transition-all duration-200"
             >
-              Login
+              Đăng nhập
             </button>
           </div>
         </form>
@@ -125,12 +134,12 @@ export default function LoginPage() {
         {/* Footer Link */}
         <div className="mt-8 text-center">
           <p className="font-body-md text-[14px] text-on-surface-variant">
-            Don't have an account?{' '}
+            Chưa có tài khoản?{' '}
             <Link
               to="/register"
               className="font-label-sm text-label-sm text-primary hover:text-secondary-container transition-colors ml-1"
             >
-              Register here
+              Đăng ký tại đây
             </Link>
           </p>
         </div>

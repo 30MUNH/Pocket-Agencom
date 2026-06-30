@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { User, Mail, Lock, ShieldCheck, ArrowRight } from 'lucide-react';
+import { User, Mail, Lock, ShieldCheck, ArrowRight, ArrowLeft } from 'lucide-react';
 
 export default function RegisterPage() {
   const [form, setForm] = useState({
@@ -23,13 +23,22 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="bg-background text-on-background min-h-screen font-body-md antialiased flex flex-col md:flex-row">
+    <div className="bg-background text-on-background min-h-screen font-body-md antialiased flex flex-col md:flex-row relative">
+      {/* Back to Homepage Button */}
+      <Link
+        to="/"
+        className="absolute top-6 left-6 z-20 flex items-center gap-2 px-4 py-2 bg-surface-container-lowest rounded-full shadow-sm border border-surface-container/20 text-on-surface-variant hover:text-primary hover:shadow-md transition-all text-xs font-semibold"
+      >
+        <ArrowLeft size={14} />
+        <span>Quay về trang chủ</span>
+      </Link>
+
       {/* ─── Left Side: Registration Form ─── */}
       <main className="flex-1 flex flex-col justify-center items-center p-gutter lg:px-section-padding-desktop w-full md:w-1/2 bg-surface-container-lowest">
         <div className="w-full max-w-md">
           {/* Brand */}
           <div className="mb-12">
-            <Link to="/" className="inline-flex items-center gap-2">
+            <div className="inline-flex items-center gap-2">
               <span
                 className="material-symbols-outlined text-primary"
                 style={{ fontVariationSettings: "'FILL' 1", fontSize: '32px' }}
@@ -39,16 +48,16 @@ export default function RegisterPage() {
               <span className="text-headline-md font-headline-md font-extrabold text-primary tracking-tight">
                 Pocket Agencom
               </span>
-            </Link>
+            </div>
           </div>
 
           {/* Header */}
           <div className="mb-8">
             <h1 className="text-display-lg-mobile md:text-display-lg font-display-lg-mobile md:font-display-lg mb-2 text-primary">
-              Get Started
+              Bắt đầu ngay
             </h1>
             <p className="text-body-lg font-body-lg text-on-surface-variant">
-              Create your account to streamline your agency workflow.
+              Tạo tài khoản để tiếp cận các công cụ tiếp thị thông minh.
             </p>
           </div>
 
@@ -60,7 +69,7 @@ export default function RegisterPage() {
                 htmlFor="reg-name"
                 className="block text-label-sm font-label-sm text-on-surface mb-2 ml-1"
               >
-                Full Name
+                Họ và tên
               </label>
               <div className="relative">
                 <User
@@ -73,7 +82,7 @@ export default function RegisterPage() {
                   required
                   value={form.name}
                   onChange={update('name')}
-                  placeholder="Alex Morgan"
+                  placeholder="Nguyễn Văn A"
                   className="w-full pl-12 pr-4 py-4 rounded-full bg-surface-container-low border-transparent focus:border-secondary-container focus:bg-surface-container-lowest focus:ring-2 focus:ring-secondary-container transition-all outline-none text-body-md font-body-md"
                 />
               </div>
@@ -85,7 +94,7 @@ export default function RegisterPage() {
                 htmlFor="reg-email"
                 className="block text-label-sm font-label-sm text-on-surface mb-2 ml-1"
               >
-                Email Address
+                Địa chỉ Email
               </label>
               <div className="relative">
                 <Mail
@@ -110,7 +119,7 @@ export default function RegisterPage() {
                 htmlFor="reg-password"
                 className="block text-label-sm font-label-sm text-on-surface mb-2 ml-1"
               >
-                Password
+                Mật khẩu
               </label>
               <div className="relative">
                 <Lock
@@ -135,7 +144,7 @@ export default function RegisterPage() {
                 htmlFor="reg-confirm-password"
                 className="block text-label-sm font-label-sm text-on-surface mb-2 ml-1"
               >
-                Confirm Password
+                Xác nhận mật khẩu
               </label>
               <div className="relative">
                 <ShieldCheck
@@ -169,13 +178,13 @@ export default function RegisterPage() {
                 htmlFor="terms"
                 className="text-body-md font-body-md text-on-surface-variant text-sm"
               >
-                I agree to the{' '}
+                Tôi đồng ý với{' '}
                 <a href="#" className="text-primary font-bold hover:underline">
-                  Terms of Service
+                  Điều khoản Dịch vụ
                 </a>{' '}
-                and{' '}
+                và{' '}
                 <a href="#" className="text-primary font-bold hover:underline">
-                  Privacy Policy
+                  Chính sách Bảo mật
                 </a>
                 .
               </label>
@@ -186,19 +195,19 @@ export default function RegisterPage() {
               type="submit"
               className="w-full py-4 rounded-full bg-secondary-container text-on-secondary-container font-headline-md text-headline-md shadow-ambient hover:bg-secondary-container/80 hover:-translate-y-0.5 transition-all duration-200 mt-8 flex justify-center items-center gap-2"
             >
-              Create Account
+              Tạo tài khoản
               <ArrowRight size={20} />
             </button>
           </form>
 
           <div className="mt-8 text-center">
             <p className="text-body-md font-body-md text-on-surface-variant">
-              Already have an account?{' '}
+              Đã có tài khoản?{' '}
               <Link
                 to="/login"
                 className="text-primary font-bold hover:underline"
               >
-                Log in
+                Đăng nhập
               </Link>
             </p>
           </div>
@@ -234,10 +243,10 @@ export default function RegisterPage() {
               </div>
               <div>
                 <h3 className="text-label-sm font-label-sm text-primary mb-1">
-                  Effortless Management
+                  Quản lý dễ dàng
                 </h3>
                 <p className="text-body-md font-body-md text-on-surface-variant text-sm">
-                  Focus on growth, we'll handle the complex details.
+                  Bạn tập trung phát triển, chúng tôi lo phần phức tạp.
                 </p>
               </div>
             </div>
