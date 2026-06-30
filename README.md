@@ -84,12 +84,84 @@ pocket-agencom/
 
 ---
 
-## 🚀 Hướng dẫn Khởi chạy Dự án
+## 🚀 Hướng dẫn Khởi chạy Dự án (Quick Start)
 
-### Khởi động nhanh cho cả hai dịch vụ từ thư mục gốc:
-Để chạy song song cả 2 dự án một cách thuận tiện nhất, bạn có thể cài đặt package `concurrently` ở cấp độ toàn hệ thống hoặc tại thư mục gốc:
+Dự án đã được cấu hình Monorepo ở thư mục gốc để khởi chạy song song cả Frontend và Backend một cách tự động và dễ dàng.
+
+### 1. Chuẩn bị Môi trường (Environment Setup)
+
+Đảm bảo bạn đã có các file `.env` cần thiết cho cả 2 phía:
+
+- **Backend**: Hãy tạo hoặc kiểm tra file `backend/.env` (tham khảo cấu trúc tại `backend/.env.example`) và điền URL cơ sở dữ liệu PostgreSQL của bạn:
+  ```env
+  DATABASE_URL="postgresql://username:password@localhost:5432/database_name"
+  DIRECT_URL="postgresql://username:password@localhost:5432/database_name"
+  ```
+- **Frontend**: Dự án đã được cấu hình sẵn file `frontend/.env` kết nối tới API local tại cổng `5000`:
+  ```env
+  VITE_API_URL=http://localhost:5000/api
+  ```
+
+---
+
+### 2. Cài đặt Dependencies
+
+Tại thư mục gốc của dự án, chạy lệnh sau để tự động cài đặt toàn bộ thư viện cần thiết cho thư mục gốc, thư mục `backend` và thư mục `frontend`:
+
 ```bash
-npm install -g concurrently
-concurrently "npm --prefix backend run dev" "npm --prefix frontend run dev"
+npm run install:all
 ```
-*(Chi tiết cài đặt riêng lẻ từng thư mục đã được liệt kê chi tiết trong tài liệu gốc).*
+
+---
+
+### 3. Đồng bộ Cơ sở dữ liệu (Prisma Database Setup)
+
+Nếu đây là lần đầu khởi chạy hoặc cơ sở dữ liệu của bạn chưa được đồng bộ, di chuyển vào thư mục `backend` và đồng bộ cấu trúc bảng cũng như dữ liệu mẫu (seed):
+
+```bash
+cd backend
+# Tạo bảng trong cơ sở dữ liệu
+npx prisma db push
+
+# Chạy seed dữ liệu mẫu
+npx prisma db seed
+
+# Quay lại thư mục gốc
+cd ..
+```
+
+---
+
+### 4. Khởi chạy Hệ thống
+
+Tại thư mục gốc của dự án, bạn chỉ cần chạy một lệnh duy nhất:
+
+```bash
+npm run dev
+```
+
+Hệ thống sẽ tự động khởi chạy song song cả 2 dịch vụ:
+- **Backend API**: Chạy trên cổng `5000` (được theo dõi tự động tải lại bằng `nodemon`).
+- **Frontend Client**: Chạy trên cổng `5173` (Vite dev server).
+
+Bạn có thể truy cập Frontend trực tiếp tại địa chỉ [http://localhost:5173/](http://localhost:5173/).
+
+---
+
+### 🚀 Hướng dẫn khởi chạy thủ công (nếu cần tách biệt)
+
+Nếu bạn muốn chạy riêng lẻ từng thư mục:
+
+- **Khởi chạy Backend**:
+  ```bash
+  cd backend
+  npm install
+  npm run dev
+  ```
+- **Khởi chạy Frontend**:
+  ```bash
+  cd frontend
+  npm install
+  npm run dev
+  ```
+
