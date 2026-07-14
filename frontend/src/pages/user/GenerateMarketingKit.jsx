@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Store, Users, Target, Wand2, ArrowRight, ChevronDown, Check, Sparkles, Loader2 } from 'lucide-react';
+import { Store, Users, Target, Wand2, ArrowRight, ChevronDown, Check, Loader2 } from 'lucide-react';
 import { useGeneratePlan } from '../../hooks/useMarketingPlans';
 import { toast } from '../../store/toastStore';
+import AILoadingScreen from '../../components/ai/AILoadingScreen';
 
 export default function GenerateMarketingKit() {
   const navigate = useNavigate();
@@ -229,21 +230,8 @@ export default function GenerateMarketingKit() {
         </div>
       </form>
 
-      {/* Loading Overlay */}
-      {isLoading && (
-        <div className="fixed inset-0 bg-surface-container-lowest/90 dark:bg-tertiary-container/95 backdrop-blur-md z-50 flex flex-col items-center justify-center transition-all duration-300">
-          <div className="relative mb-6">
-            <div className="w-16 h-16 rounded-full border-4 border-secondary-container border-t-secondary animate-spin" />
-            <Sparkles className="absolute inset-0 m-auto text-secondary animate-pulse" size={24} />
-          </div>
-          <h2 className="text-headline-md font-bold text-primary dark:text-inverse-primary mb-2 animate-pulse">
-            Đang thiết lập bộ công cụ của bạn...
-          </h2>
-          <p className="text-body-md text-on-surface-variant text-center max-w-sm px-4">
-            AI của chúng tôi đang tập hợp chiến lược tiếp thị phù hợp cho bạn. Quá trình này thường chỉ mất vài giây.
-          </p>
-        </div>
-      )}
+      {/* AI Loading Overlay */}
+      {isLoading && <AILoadingScreen />}
     </div>
   );
 }

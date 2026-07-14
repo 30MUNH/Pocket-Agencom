@@ -131,71 +131,39 @@ export default function MarketingResult() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Card 1 */}
-          <div className="bg-surface-container-lowest dark:bg-tertiary-container rounded-[2rem] p-8 shadow-[0_4px_24px_rgba(255,143,163,0.08)] hover:-translate-y-1 hover:shadow-[0_8px_32px_rgba(255,143,163,0.12)] transition-all duration-300 flex flex-col h-full border border-transparent hover:border-secondary-container/50">
-            <div className="flex justify-between items-start mb-6">
-              <span className="text-label-sm font-label-sm text-secondary dark:text-secondary-fixed uppercase tracking-widest">
-                Carousel Instagram
-              </span>
-              <Heart className="text-secondary-container dark:text-outline-variant cursor-pointer hover:fill-secondary" size={18} />
+          {contentIdeas.map((idea, index) => (
+            <div
+              key={index}
+              className={`bg-surface-container-lowest dark:bg-tertiary-container rounded-[2rem] p-8 shadow-[0_4px_24px_rgba(255,143,163,0.08)] hover:-translate-y-1 hover:shadow-[0_8px_32px_rgba(255,143,163,0.12)] transition-all duration-300 flex flex-col h-full border border-transparent hover:border-secondary-container/50 ${
+                index === contentIdeas.length - 1
+                  ? 'bg-gradient-to-br from-surface-container-lowest to-secondary-container/10 dark:to-secondary-fixed-dim/5'
+                  : ''
+              }`}
+            >
+              <div className="flex justify-between items-start mb-6">
+                <span className="text-label-sm font-label-sm text-secondary dark:text-secondary-fixed uppercase tracking-widest">
+                  {idea.channel || 'Đa kênh'}
+                </span>
+                <Heart className="text-secondary-container dark:text-outline-variant cursor-pointer hover:fill-secondary" size={18} />
+              </div>
+              <h4 className="text-lg font-bold text-primary dark:text-inverse-primary mb-3">
+                {idea.title}
+              </h4>
+              <p className="text-body-md text-on-surface-variant flex-1 mb-6">
+                {idea.description}
+              </p>
+              <div className="flex flex-wrap gap-2 mt-auto">
+                {idea.format && (
+                  <span className="bg-surface-container dark:bg-surface-variant/40 px-3 py-1 rounded-md text-xs text-on-surface-variant dark:text-inverse-on-surface">
+                    {idea.format}
+                  </span>
+                )}
+                <span className="bg-surface-container dark:bg-surface-variant/40 px-3 py-1 rounded-md text-xs text-on-surface-variant dark:text-inverse-on-surface">
+                  {idea.channel || 'Marketing'}
+                </span>
+              </div>
             </div>
-            <h4 className="text-lg font-bold text-primary dark:text-inverse-primary mb-3">"Hậu trường Thiết kế"</h4>
-            <p className="text-body-md text-on-surface-variant flex-1 mb-6">
-              Một bài viết giáo dục gồm 5 trang chi tiết về nguồn cung ứng bền vững của chất liệu bộ sưu tập mùa xuân.
-            </p>
-            <div className="flex flex-wrap gap-2 mt-auto">
-              <span className="bg-surface-container dark:bg-surface-variant/40 px-3 py-1 rounded-md text-xs text-on-surface-variant dark:text-inverse-on-surface">
-                Giáo dục
-              </span>
-              <span className="bg-surface-container dark:bg-surface-variant/40 px-3 py-1 rounded-md text-xs text-on-surface-variant dark:text-inverse-on-surface">
-                Giá trị Thương hiệu
-              </span>
-            </div>
-          </div>
-
-          {/* Card 2 */}
-          <div className="bg-surface-container-lowest dark:bg-tertiary-container rounded-[2rem] p-8 shadow-[0_4px_24px_rgba(255,143,163,0.08)] hover:-translate-y-1 hover:shadow-[0_8px_32px_rgba(255,143,163,0.12)] transition-all duration-300 flex flex-col h-full border border-transparent hover:border-secondary-container/50">
-            <div className="flex justify-between items-start mb-6">
-              <span className="text-label-sm font-label-sm text-secondary dark:text-secondary-fixed uppercase tracking-widest">
-                Bản tin Email
-              </span>
-              <Mail className="text-secondary-container dark:text-outline-variant" size={18} />
-            </div>
-            <h4 className="text-lg font-bold text-primary dark:text-inverse-primary mb-3">Quyền truy cập sớm VIP</h4>
-            <p className="text-body-md text-on-surface-variant flex-1 mb-6">
-              Thông báo mở cổng mua sắm sớm 24 giờ độc quyền dành cho những người đăng ký email hiện tại.
-            </p>
-            <div className="flex flex-wrap gap-2 mt-auto">
-              <span className="bg-surface-container dark:bg-surface-variant/40 px-3 py-1 rounded-md text-xs text-on-surface-variant dark:text-inverse-on-surface">
-                Chuyển đổi
-              </span>
-              <span className="bg-surface-container dark:bg-surface-variant/40 px-3 py-1 rounded-md text-xs text-on-surface-variant dark:text-inverse-on-surface">
-                Khách hàng thân thiết
-              </span>
-            </div>
-          </div>
-
-          {/* Card 3 */}
-          <div className="bg-surface-container-lowest dark:bg-tertiary-container rounded-[2rem] p-8 shadow-[0_4px_24px_rgba(255,143,163,0.08)] hover:-translate-y-1 hover:shadow-[0_8px_32px_rgba(255,143,163,0.12)] transition-all duration-300 flex flex-col h-full border border-transparent hover:border-secondary-container/50 bg-gradient-to-br from-surface-container-lowest to-secondary-container/10 dark:to-secondary-fixed-dim/5">
-            <div className="flex justify-between items-start mb-6">
-              <span className="text-label-sm font-label-sm text-secondary dark:text-secondary-fixed uppercase tracking-widest">
-                Bài viết Blog
-              </span>
-              <FileText className="text-secondary-container dark:text-outline-variant" size={18} />
-            </div>
-            <h4 className="text-lg font-bold text-primary dark:text-inverse-primary mb-3">Hướng dẫn Phối đồ Mùa xuân</h4>
-            <p className="text-body-md text-on-surface-variant flex-1 mb-6">
-              Nội dung SEO dạng dài giới thiệu 5 cách phối đồ cho các sản phẩm chính của đợt ra mắt mới.
-            </p>
-            <div className="flex flex-wrap gap-2 mt-auto">
-              <span className="bg-surface-container dark:bg-surface-variant/40 px-3 py-1 rounded-md text-xs text-on-surface-variant dark:text-inverse-on-surface">
-                SEO
-              </span>
-              <span className="bg-surface-container dark:bg-surface-variant/40 px-3 py-1 rounded-md text-xs text-on-surface-variant dark:text-inverse-on-surface">
-                Nhận diện
-              </span>
-            </div>
-          </div>
+          ))}
         </div>
       </section>
 
@@ -270,79 +238,55 @@ export default function MarketingResult() {
             </div>
 
             <div className="space-y-4">
-              {/* Script Item 1 */}
-              <div className="bg-surface-container-lowest dark:bg-tertiary-container rounded-2xl p-6 shadow-sm border border-surface-variant/50 hover:shadow-[0_4px_16px_rgba(255,143,163,0.05)] transition-shadow flex flex-col sm:flex-row gap-6 items-start">
-                <div className="w-full sm:w-32 h-24 rounded-xl overflow-hidden shrink-0 relative bg-surface-variant/30 dark:bg-surface-variant/10 flex items-center justify-center">
-                  <Video className="text-outline" size={32} />
-                  <div className="absolute inset-0 bg-primary/5 hover:bg-primary/10 transition-colors cursor-pointer flex items-center justify-center">
-                    <span className="bg-white/80 dark:bg-surface/80 rounded-full p-1.5 shadow-sm text-primary dark:text-inverse-primary">
-                      <Play size={14} fill="currentColor" />
-                    </span>
+              {videoScripts.map((script, index) => (
+                <div
+                  key={index}
+                  className="bg-surface-container-lowest dark:bg-tertiary-container rounded-2xl p-6 shadow-sm border border-surface-variant/50 hover:shadow-[0_4px_16px_rgba(255,143,163,0.05)] transition-shadow flex flex-col sm:flex-row gap-6 items-start"
+                >
+                  <div className="w-full sm:w-32 h-24 rounded-xl overflow-hidden shrink-0 relative bg-surface-variant/30 dark:bg-surface-variant/10 flex items-center justify-center">
+                    <Video className="text-outline" size={32} />
+                    <div className="absolute inset-0 bg-primary/5 hover:bg-primary/10 transition-colors cursor-pointer flex items-center justify-center">
+                      <span className="bg-white/80 dark:bg-surface/80 rounded-full p-1.5 shadow-sm text-primary dark:text-inverse-primary">
+                        <Play size={14} fill="currentColor" />
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex-1 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-lg font-bold text-primary dark:text-inverse-primary">
+                        {script.scene}
+                      </h4>
+                      <span className="text-xs font-bold text-on-surface-variant bg-surface-container dark:bg-outline/20 px-2.5 py-1 rounded shrink-0 ml-2">
+                        Cảnh {index + 1}
+                      </span>
+                    </div>
+                    <p className="text-sm text-on-surface-variant font-medium">
+                      {script.action}
+                    </p>
+                    {script.dialogue && (
+                      <p className="text-sm text-on-surface-variant italic border-l-2 border-secondary/40 pl-3">
+                        "{script.dialogue}"
+                      </p>
+                    )}
+                    <button
+                      onClick={() =>
+                        copyToClipboard(
+                          `scene-${index}`,
+                          `[${script.scene}] ${script.action}\nLời thoại: ${script.dialogue || ''}`
+                        )
+                      }
+                      className="text-label-sm font-label-sm text-secondary hover:text-primary dark:text-secondary-fixed-dim dark:hover:text-primary-fixed flex items-center gap-1.5 transition-colors"
+                    >
+                      <Copy size={14} />
+                      {copiedScript === `scene-${index}` ? 'Đã sao chép!' : 'Sao chép Kịch bản'}
+                    </button>
                   </div>
                 </div>
-                <div className="flex-1 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <h4 className="text-lg font-bold text-primary dark:text-inverse-primary">"Sự phối hợp hoàn hảo" (TikTok)</h4>
-                    <span className="text-xs font-bold text-on-surface-variant bg-surface-container dark:bg-outline/20 px-2.5 py-1 rounded">
-                      0:15s
-                    </span>
-                  </div>
-                  <p className="text-sm text-on-surface-variant">
-                    Một video chuyển cảnh nhịp độ nhanh thể hiện cùng một chiếc áo khoác được phối theo ba cách. Tập trung vào âm thanh thịnh hành sôi động.
-                  </p>
-                  <button
-                    onClick={() =>
-                      copyToClipboard(
-                        'Sự phối hợp hoàn hảo',
-                        'Phân cảnh 1: Chuyển cảnh (0-5s). Cầm sản phẩm, búng tay. Phân cảnh 2: Người mẫu stylist bước vào mặc màu phối A. Phân cảnh 3: Xoay người để đổi sang mặc màu phối B.'
-                      )
-                    }
-                    className="text-label-sm font-label-sm text-secondary hover:text-primary dark:text-secondary-fixed-dim dark:hover:text-primary-fixed flex items-center gap-1.5 transition-colors"
-                  >
-                    <Copy size={14} />
-                    {copiedScript === 'Sự phối hợp hoàn hảo' ? 'Đã sao chép!' : 'Sao chép Kịch bản'}
-                  </button>
-                </div>
-              </div>
-
-              {/* Script Item 2 */}
-              <div className="bg-surface-container-lowest dark:bg-tertiary-container rounded-2xl p-6 shadow-sm border border-surface-variant/50 hover:shadow-[0_4px_16px_rgba(255,143,163,0.05)] transition-shadow flex flex-col sm:flex-row gap-6 items-start">
-                <div className="w-full sm:w-32 h-24 rounded-xl overflow-hidden shrink-0 relative bg-surface-variant/30 dark:bg-surface-variant/10 flex items-center justify-center">
-                  <Video className="text-outline" size={32} />
-                  <div className="absolute inset-0 bg-primary/5 hover:bg-primary/10 transition-colors cursor-pointer flex items-center justify-center">
-                    <span className="bg-white/80 dark:bg-surface/80 rounded-full p-1.5 shadow-sm text-primary dark:text-inverse-primary">
-                      <Play size={14} fill="currentColor" />
-                    </span>
-                  </div>
-                </div>
-                <div className="flex-1 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <h4 className="text-lg font-bold text-primary dark:text-inverse-primary">"Đóng gói đơn hàng cùng tôi" (Reels)</h4>
-                    <span className="text-xs font-bold text-on-surface-variant bg-surface-container dark:bg-outline/20 px-2.5 py-1 rounded">
-                      0:30s
-                    </span>
-                  </div>
-                  <p className="text-sm text-on-surface-variant">
-                    Video đóng gói phong cách ASMR nêu bật trải nghiệm đập hộp cao cấp và bao bì thân thiện với môi trường.
-                  </p>
-                  <button
-                    onClick={() =>
-                      copyToClipboard(
-                        'Đóng gói đơn hàng cùng tôi',
-                        'Thiết kế âm thanh: tiếng giấy sột soạt, tiếng nắp hộp trượt. Phân cảnh 1: Đặt sản phẩm vào giấy lót màu hồng. Phân cảnh 2: Dán nhãn botanical để niêm phong. Phân cảnh 3: Đặt thiệp cảm ơn vào.'
-                      )
-                    }
-                    className="text-label-sm font-label-sm text-secondary hover:text-primary dark:text-secondary-fixed-dim dark:hover:text-primary-fixed flex items-center gap-1.5 transition-colors"
-                  >
-                    <Copy size={14} />
-                    {copiedScript === 'Đóng gói đơn hàng cùng tôi' ? 'Đã sao chép!' : 'Sao chép Kịch bản'}
-                  </button>
-                </div>
-              </div>
+              ))}
             </div>
           </section>
 
-          {/* Section: Marketing Playbook (Rich Text) */}
+          {/* Section: Marketing Playbook */}
           <section className="bg-surface-container-lowest dark:bg-tertiary-container rounded-[2.5rem] p-8 md:p-12 shadow-[0_4px_24px_rgba(255,143,163,0.08)] space-y-8">
             <div className="flex items-center gap-4 border-b border-surface-variant/50 pb-6">
               <div className="w-10 h-10 rounded-xl bg-primary text-on-primary flex items-center justify-center shadow-md">
@@ -350,48 +294,46 @@ export default function MarketingResult() {
               </div>
               <div>
                 <h3 className="text-headline-md font-bold text-primary dark:text-inverse-primary">Cẩm nang Tiếp thị</h3>
-                <p className="text-sm text-on-surface-variant mt-1">Tổng quan chiến lược và các trụ cột thông điệp cốt lõi.</p>
+                <p className="text-sm text-on-surface-variant mt-1">Quy trình thực thi chi tiết từ A đến Z do AI thiết kế.</p>
               </div>
             </div>
 
-            <div className="space-y-6">
-              <div className="space-y-2">
-                <h4 className="font-bold text-primary dark:text-inverse-primary text-lg">Mục tiêu Cốt lõi</h4>
-                <p className="text-on-surface-variant text-body-md leading-relaxed">
-                  Thúc đẩy doanh số bán hàng trực tuyến tăng 25% trong hai tuần đầu tiên ra mắt Bộ sưu tập Mùa xuân bằng cách tận dụng tính khan hiếm, quyền truy cập độc quyền và nội dung giáo dục chất lượng cao trên các kênh truyền thông xã hội.
-                </p>
+            {plan.playbook ? (
+              <div className="prose prose-sm max-w-none text-on-surface-variant dark:text-inverse-on-surface/80 leading-relaxed whitespace-pre-wrap">
+                {plan.playbook.split('\n').map((line, i) => {
+                  const trimmed = line.trim();
+                  if (!trimmed) return <br key={i} />;
+                  // Render lines starting with ## as section headers
+                  if (trimmed.startsWith('##')) {
+                    return (
+                      <h4 key={i} className="font-bold text-primary dark:text-inverse-primary text-lg mt-6 mb-2">
+                        {trimmed.replace(/^#+\s*/, '')}
+                      </h4>
+                    );
+                  }
+                  // Render lines starting with numbers or dashes as list items
+                  if (/^(\d+\.|[-•])/.test(trimmed)) {
+                    return (
+                      <div key={i} className="flex gap-3 py-1">
+                        <span className="text-secondary dark:text-secondary-fixed font-bold shrink-0">•</span>
+                        <span>{trimmed.replace(/^(\d+\.\s*|[-•]\s*)/, '')}</span>
+                      </div>
+                    );
+                  }
+                  // Bold lines containing **text**
+                  if (trimmed.startsWith('**') && trimmed.endsWith('**')) {
+                    return (
+                      <p key={i} className="font-bold text-primary dark:text-inverse-primary mt-4 mb-1">
+                        {trimmed.replace(/\*\*/g, '')}
+                      </p>
+                    );
+                  }
+                  return <p key={i} className="mb-2">{line}</p>;
+                })}
               </div>
-
-              <div className="space-y-2">
-                <h4 className="font-bold text-primary dark:text-inverse-primary text-lg">Chân dung Khách hàng Mục tiêu</h4>
-                <p className="text-on-surface-variant text-body-md leading-relaxed">
-                  <strong>"Thế hệ Millennial thông thái"</strong> - Độ tuổi 25-35. Đánh giá cao tính bền vững, chất lượng hơn số lượng, và tính thẩm mỹ. Hoạt động chủ yếu trên Instagram và TikTok. Thích nghe kể chuyện thương hiệu chân thực và minh bạch.
-                </p>
-              </div>
-
-              <div className="space-y-4">
-                <h4 className="font-bold text-primary dark:text-inverse-primary text-lg">Các Trụ cột Thông điệp Chính</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="bg-surface-container dark:bg-surface-variant/20 p-5 rounded-xl border border-surface-variant/50 border-l-4 border-l-secondary">
-                    <strong className="block text-primary dark:text-inverse-primary mb-1">1. Chất lượng Bền vững</strong>
-                    <span className="text-sm text-on-surface-variant">Tập trung vào vật liệu bền đẹp lâu dài và phương pháp sản xuất nhân văn.</span>
-                  </div>
-                  <div className="bg-surface-container dark:bg-surface-variant/20 p-5 rounded-xl border border-surface-variant/50 border-l-4 border-l-secondary">
-                    <strong className="block text-primary dark:text-inverse-primary mb-1">2. Tính Linh hoạt Dễ dàng</strong>
-                    <span className="text-sm text-on-surface-variant">Nêu bật cách các sản phẩm dễ dàng phối đồ với nhau để mặc hàng ngày.</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <h4 className="font-bold text-primary dark:text-inverse-primary text-lg font-headline-md font-bold">Các Điểm nổi bật trong Tiến độ Ra mắt</h4>
-                <ul className="list-disc pl-5 space-y-2 text-on-surface-variant text-body-md">
-                  <li><strong>Tuần -1 (Tạo tò mò):</strong> Hé lộ hình ảnh làm mờ, đếm ngược trên story, chiến dịch xây dựng danh sách email.</li>
-                  <li><strong>Tuần 0 (Ra mắt chính thức):</strong> Email quyền truy cập sớm cho VIP, video ra mắt đầu tư chỉn chu, unbox từ người ảnh hưởng.</li>
-                  <li><strong>Tuần 1 (Duy trì):</strong> Chia sẻ nội dung do người dùng tự tạo (UGC), phân tích sâu vào từng sản phẩm cụ thể.</li>
-                </ul>
-              </div>
-            </div>
+            ) : (
+              <p className="text-on-surface-variant text-body-md">Chưa có nội dung playbook.</p>
+            )}
           </section>
         </div>
       </div>
