@@ -45,20 +45,19 @@ export default function RegisterPage() {
 
   return (
     <div className="bg-background text-on-background min-h-screen font-body-md antialiased flex flex-col md:flex-row relative">
-      <Link
-        to="/"
-        className="absolute top-6 left-6 z-20 flex items-center gap-2 px-4 py-2 bg-surface-container-lowest rounded-full shadow-sm border border-surface-container/20 text-on-surface-variant hover:text-primary hover:shadow-md transition-all text-xs font-semibold"
-      >
-        <ArrowLeft size={14} />
-        <span>Quay về trang chủ</span>
-      </Link>
-
       <main className="flex-1 flex flex-col justify-center items-center p-gutter lg:px-section-padding-desktop w-full md:w-1/2 bg-surface-container-lowest">
         <div className="w-full max-w-md">
-          <div className="mb-12">
+          <div className="flex items-center justify-between mb-12">
             <span className="text-headline-md font-headline-md font-extrabold text-primary tracking-tight">
               Pocket Agencom
             </span>
+            <Link
+              to="/"
+              className="flex items-center gap-2 px-4 py-2 bg-surface-container-lowest rounded-full shadow-sm border border-surface-container/20 text-on-surface-variant hover:text-primary hover:shadow-md transition-all text-xs font-semibold"
+            >
+              <ArrowLeft size={14} />
+              <span>Quay về</span>
+            </Link>
           </div>
 
           <div className="mb-8">

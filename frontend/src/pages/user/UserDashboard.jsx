@@ -1,3 +1,4 @@
+import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Lightbulb,
@@ -10,7 +11,10 @@ import {
   MoreVertical,
   Eye,
   ArrowRight,
+  Loader2,
 } from 'lucide-react';
+import { useAuthStore } from '../../store/authStore';
+import { useMarketingPlans } from '../../hooks/useMarketingPlans';
 
 const QUICK_ACTIONS = [
   {
@@ -72,12 +76,49 @@ const RECOMMENDED_TEMPLATES = [
 ];
 
 export default function UserDashboard() {
+  const user = useAuthStore((s) => s.user);
+  const { data: plansData, isLoading: isPlansLoading } = useMarketingPlans();
+
+  const recentPlans = useMemo(() => {
+    return plansData?.slice(0, 3) || [];
+  }, [plansData]);
+
+  const getStatusLabel = (status) => {
+    switch (status) {
+      case 'draft': return 'Bản nháp';
+      case 'saved': return 'Đã lưu';
+      case 'reviewed': return 'Đã kiểm duyệt';
+      case 'approved': return 'Đã phê duyệt';
+      case 'need_revision': return 'Cần chỉnh sửa';
+      default: return status;
+    }
+  };
+
+  const getStatusBg = (status) => {
+    switch (status) {
+      case 'approved': return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300';
+      case 'need_revision': return 'bg-rose-100 text-rose-800 dark:bg-rose-950/40 dark:text-rose-300';
+      case 'reviewed': return 'bg-blue-100 text-blue-800 dark:bg-blue-950/40 dark:text-blue-300';
+      default: return 'bg-secondary-container text-on-secondary-container';
+    }
+  };
+
+  const formatDate = (dateStr) => {
+    if (!dateStr) return 'Vừa xong';
+    try {
+      const d = new Date(dateStr);
+      return d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    } catch (e) {
+      return 'Vừa xong';
+    }
+  };
+
   return (
     <div className="flex-1 w-full space-y-12">
       {/* Welcome Header */}
       <section>
         <h2 className="text-display-lg-mobile md:text-display-lg font-display-lg text-primary mb-2">
-          Chào mừng trở lại, Sarah.
+          Chào mừng trở lại, {user?.name || 'Khách hàng'}.
         </h2>
         <p className="text-body-lg font-body-lg text-on-surface-variant">
           Dưới đây là tổng quan nhanh các hoạt động tiếp thị của bạn hôm nay.
@@ -151,8 +192,21 @@ export default function UserDashboard() {
             </Link>
           </div>
           <div className="flex flex-col gap-4">
-            {RECENT_PLANS.map((plan) => {
-              const Icon = plan.icon;
+            {isPlansLoading && (
+              <div className="flex items-center justify-center py-10 gap-2 text-on-surface-variant">
+                <Loader2 className="animate-spin" size={20} />
+                Đang tải kế hoạch...
+              </div>
+            )}
+            
+            {!isPlansLoading && recentPlans.length === 0 && (
+              <div className="text-center p-8 bg-surface-container-lowest dark:bg-tertiary-container rounded-3xl border border-surface-container/20">
+                <p className="text-on-surface-variant text-sm">Bạn chưa tạo kế hoạch marketing nào.</p>
+                <Link to="/marketing-kit" className="text-primary font-bold text-xs mt-2 inline-block">Tạo kế hoạch bằng AI ngay</Link>
+              </div>
+            )}
+
+            {!isPlansLoading && recentPlans.map((plan) => {
               return (
                 <div
                   key={plan.id}
@@ -160,24 +214,27 @@ export default function UserDashboard() {
                 >
                   <div className="flex items-center gap-4">
                     <div className="w-12 h-12 rounded-full bg-secondary-container/50 flex items-center justify-center text-primary shrink-0">
-                      <Icon size={24} />
+                      <Megaphone size={24} />
                     </div>
                     <div>
-                      <h4 className="text-label-sm font-label-sm text-primary mb-1">
-                        {plan.title}
+                      <h4 className="text-label-sm font-label-sm text-primary mb-1 line-clamp-1 max-w-[250px] md:max-w-[400px]">
+                        {plan.goal}
                       </h4>
                       <p className="text-body-md font-body-md text-on-surface-variant text-sm">
-                        {plan.updated}
+                        Loại: {plan.campaignType || 'Tiêu chuẩn'} • {formatDate(plan.createdAt)}
                       </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
-                    <span className={`px-3 py-1 font-label-sm text-[11px] rounded-full ${plan.statusBg}`}>
-                      {plan.status}
+                    <span className={`px-3 py-1 font-label-sm text-[11px] rounded-full font-bold ${getStatusBg(plan.status)}`}>
+                      {getStatusLabel(plan.status)}
                     </span>
-                    <button className="w-8 h-8 rounded-full hover:bg-surface-container flex items-center justify-center text-on-surface-variant">
-                      <MoreVertical size={20} />
-                    </button>
+                    <Link
+                      to={`/plans/result/${plan.id}`}
+                      className="w-8 h-8 rounded-full hover:bg-surface-container flex items-center justify-center text-on-surface-variant"
+                    >
+                      <Eye size={18} />
+                    </Link>
                   </div>
                 </div>
               );

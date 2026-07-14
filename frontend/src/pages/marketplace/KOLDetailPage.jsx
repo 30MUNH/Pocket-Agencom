@@ -1,6 +1,7 @@
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Check, Star, Globe, Loader2 } from 'lucide-react';
+import { ArrowLeft, Check, Star, Globe, Loader2, MessageSquare, Calendar, TrendingUp, Users } from 'lucide-react';
 import { useKol, mapKolToCreator } from '../../hooks/useKols';
+import BrandElementCard from '../../components/marketplace/BrandElementCard';
 
 export default function KOLDetailPage() {
   const { id } = useParams();

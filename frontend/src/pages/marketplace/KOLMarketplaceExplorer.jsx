@@ -1,18 +1,28 @@
 import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, X, MapPin, Grid, List } from 'lucide-react';
+import { Search, X, MapPin, Grid, List, Loader2 } from 'lucide-react';
 import CreatorCard from '../../components/marketplace/CreatorCard';
-import { CREATORS_DATA } from './mockData';
+import { useKols, mapKolToCreator } from '../../hooks/useKols';
 
 export default function KOLMarketplaceExplorer() {
+  const { data, isLoading, error } = useKols({ limit: 100 });
+  const creators = useMemo(() => (data?.data || []).map(mapKolToCreator), [data]);
+
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [selectedLocation, setSelectedLocation] = useState('All');
   const [tier, setTier] = useState('All'); // 'All', 'Nano', 'Micro', 'Macro'
   const [sortBy, setSortBy] = useState('Highest Engagement');
 
-  const categories = ['Thời trang & Phong cách sống', 'Làm đẹp & Phong cách sống', 'Công nghệ & Đồ chơi Công nghệ', 'Sức khỏe & Thể hình', 'Công nghệ & Đánh giá'];
-  const locations = ['Hà Nội', 'TP. Hồ Chí Minh', 'Los Angeles, CA', 'San Francisco, CA', 'New York, NY'];
+  const categories = [
+    'Thời trang & Lối sống',
+    'Công nghệ & Đồ chơi số',
+    'Mỹ phẩm & Làm đẹp',
+    'Ẩm thực & Du lịch',
+    'Giáo dục & Phát triển bản thân',
+    'Sức khỏe & Thể thao',
+  ];
+  const locations = ['Hà Nội', 'TP. Hồ Chí Minh', 'Đà Nẵng'];
 
   // Active chips count helper
   const activeChips = useMemo(() => {
@@ -42,7 +52,7 @@ export default function KOLMarketplaceExplorer() {
   };
 
   const processedCreators = useMemo(() => {
-    let result = [...CREATORS_DATA];
+    let result = [...creators];
 
     // Search filter
     if (searchQuery.trim()) {
@@ -270,13 +280,25 @@ export default function KOLMarketplaceExplorer() {
           </div>
 
           {/* Explorer Grids */}
-          {processedCreators.length === 0 ? (
+          {isLoading && (
+            <div className="flex items-center justify-center py-20 text-on-surface-variant gap-2">
+              <Loader2 className="animate-spin" size={24} />
+              Đang tải KOL...
+            </div>
+          )}
+          {error && (
+            <div className="text-center py-20 text-error">
+              Không thể tải danh sách KOL: {error.message}
+            </div>
+          )}
+          {!isLoading && !error && processedCreators.length === 0 && (
             <div className="text-center p-12 bg-surface-container-lowest dark:bg-tertiary-container rounded-3xl border border-surface-container/20">
               <p className="text-on-surface-variant text-sm font-medium">
                 Không tìm thấy nhà sáng tạo nào phù hợp với tìm kiếm hoặc bộ lọc của bạn.
               </p>
             </div>
-          ) : (
+          )}
+          {!isLoading && !error && processedCreators.length > 0 && (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
               {processedCreators.map((creator) => (
                 <CreatorCard key={creator.id} creator={creator} />

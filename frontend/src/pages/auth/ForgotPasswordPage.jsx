@@ -15,25 +15,23 @@ export default function ForgotPasswordPage() {
 
   return (
     <div className="bg-surface font-body-md text-on-surface min-h-screen flex items-center justify-center relative overflow-hidden">
-      {/* Back to Homepage Button */}
-      <Link
-        to="/"
-        className="absolute top-6 left-6 z-20 flex items-center gap-2 px-4 py-2 bg-surface-container-lowest rounded-full shadow-sm border border-surface-container/20 text-on-surface-variant hover:text-primary hover:shadow-md transition-all text-xs font-semibold"
-      >
-        <ArrowLeft size={14} />
-        <span>Quay về trang chủ</span>
-      </Link>
-
       {/* Ambient glow backgrounds */}
       <div className="ambient-glow" style={{ top: '-200px', left: '-200px' }} />
       <div className="ambient-glow" style={{ bottom: '-200px', right: '-200px' }} />
 
       <div className="w-full max-w-md px-gutter relative z-10">
-        {/* Logo */}
-        <div className="text-center mb-8">
+        {/* Logo and Back Link */}
+        <div className="flex items-center justify-between mb-8 pb-4 border-b border-surface-container-high">
           <span className="text-headline-md font-headline-md font-extrabold text-primary">
             Pocket Agencom
           </span>
+          <Link
+            to="/"
+            className="flex items-center gap-2 px-3 py-1.5 bg-surface-container-lowest rounded-full shadow-sm border border-surface-container/20 text-on-surface-variant hover:text-primary hover:shadow-md transition-all text-xs font-semibold"
+          >
+            <ArrowLeft size={14} />
+            <span>Quay về</span>
+          </Link>
         </div>
 
         {/* Forgot Password Card */}

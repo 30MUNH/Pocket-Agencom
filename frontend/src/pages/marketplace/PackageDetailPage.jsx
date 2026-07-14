@@ -1,14 +1,52 @@
 import { useParams, Link } from 'react-router-dom';
 import { useMemo } from 'react';
-import { ArrowLeft, CheckCircle2, Video, Star } from 'lucide-react';
-import { PACKAGES_DATA } from './mockData';
+import { ArrowLeft, CheckCircle2, Video, Star, Loader2, XCircle } from 'lucide-react';
+import { usePackage } from '../../hooks/usePackage';
 
 export default function PackageDetailPage() {
   const { id } = useParams();
+  const { data: pkg, isLoading, error } = usePackage(id);
 
-  const pkg = useMemo(() => {
-    return PACKAGES_DATA.find((p) => p.id === id) || PACKAGES_DATA[0];
-  }, [id]);
+  const features = useMemo(() => {
+    if (!pkg) return [];
+    return [
+      { title: 'Loại dịch vụ', desc: pkg.serviceType || 'Không có thông tin' },
+      { title: 'Thời gian bàn giao', desc: pkg.deliveryTime || 'Không có thông tin' },
+      { title: 'Chính sách sửa đổi', desc: pkg.revisionPolicy || 'Không có thông tin' },
+      { title: 'Sản phẩm bàn giao (Deliverables)', desc: pkg.deliverables || 'Không có thông tin' },
+    ];
+  }, [pkg]);
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] gap-4 text-on-surface-variant">
+        <Loader2 className="animate-spin text-primary" size={40} />
+        <p className="text-sm font-bold tracking-wide">Đang tải thông tin gói dịch vụ...</p>
+      </div>
+    );
+  }
+
+  if (error || !pkg) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] gap-6 text-center max-w-md mx-auto">
+        <div className="w-16 h-16 rounded-full bg-error-container/20 text-error flex items-center justify-center">
+          <XCircle size={32} />
+        </div>
+        <div className="space-y-2">
+          <h3 className="text-lg font-bold text-primary">Không thể tải thông tin</h3>
+          <p className="text-xs text-on-surface-variant leading-relaxed">
+            {error?.message || 'Không tìm thấy thông tin gói dịch vụ được yêu cầu.'}
+          </p>
+        </div>
+        <Link
+          to="/plans"
+          className="px-6 py-3 bg-secondary-container hover:bg-secondary-fixed text-on-secondary-container dark:bg-on-secondary-fixed-variant dark:text-secondary-fixed rounded-full font-bold text-sm transition-all active:scale-95"
+        >
+          Quay lại Kế hoạch tiếp thị
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
@@ -19,7 +57,7 @@ export default function PackageDetailPage() {
           className="flex items-center gap-2 text-on-surface-variant hover:text-primary transition-colors group inline-flex"
         >
           <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
-          <span className="font-label-sm uppercase tracking-widest text-[11px] font-bold">Quay lại Danh sách Gói dịch vụ</span>
+          <span className="font-label-sm uppercase tracking-widest text-[11px] font-bold">Quay lại Kế hoạch tiếp thị</span>
         </Link>
       </div>
 
@@ -28,32 +66,45 @@ export default function PackageDetailPage() {
         {/* Main Card: Package Overview Header */}
         <div className="col-span-12 lg:col-span-8 bg-surface-container-lowest dark:bg-tertiary-container rounded-[2rem] p-8 md:p-12 shadow-[4px_24px_40px_rgba(255,143,163,0.08)] border border-surface-container/20 relative overflow-hidden flex flex-col justify-between">
           <div className="absolute top-0 right-0 p-8">
-            <span className="bg-secondary-container text-on-secondary-container dark:bg-on-secondary-fixed-variant dark:text-secondary-fixed px-4 py-1.5 rounded-full text-xs font-bold">
+            <span className="bg-secondary-container text-on-secondary-container dark:bg-on-secondary-fixed-variant dark:text-secondary-fixed px-4 py-1.5 rounded-full text-xs font-bold animate-pulse">
               Đang mở đăng ký
             </span>
           </div>
 
           <div className="max-w-2xl space-y-6">
             <h2 className="text-display-lg-mobile md:text-display-lg font-bold text-primary dark:text-inverse-primary leading-tight">
-              {pkg.name}
+              {pkg.packageName}
             </h2>
+            {pkg.kol && (
+              <div className="flex items-center gap-3">
+                <img
+                  src={pkg.kol.avatarUrl || 'https://api.dicebear.com/7.x/avataaars/svg'}
+                  alt={pkg.kol.name}
+                  className="w-10 h-10 rounded-full border border-surface-container-lowest bg-surface-container object-cover"
+                />
+                <div>
+                  <p className="text-xs font-bold text-primary dark:text-inverse-primary">{pkg.kol.name}</p>
+                  <p className="text-[10px] text-on-surface-variant">{pkg.kol.niche} • {pkg.kol.location}</p>
+                </div>
+              </div>
+            )}
             <p className="text-body-lg text-on-surface-variant leading-relaxed">
-              {pkg.description}
+              {pkg.description || 'Không có mô tả chi tiết cho gói dịch vụ này.'}
             </p>
           </div>
 
           <div className="mt-12 flex flex-wrap gap-8 items-center border-t border-surface-variant/40 pt-8">
             <div>
-              <p className="text-[11px] font-bold text-outline uppercase tracking-wider mb-1">Chu kỳ Thanh toán</p>
+              <p className="text-[11px] font-bold text-outline uppercase tracking-wider mb-1">Thời gian bàn giao</p>
               <p className="font-headline-md text-base font-bold text-primary dark:text-inverse-primary">
-                {pkg.billingCycle}
+                {pkg.deliveryTime || 'N/A'}
               </p>
             </div>
             <div className="w-px h-12 bg-surface-variant/40 hidden md:block"></div>
             <div>
-              <p className="text-[11px] font-bold text-outline uppercase tracking-wider mb-1">Cam kết</p>
+              <p className="text-[11px] font-bold text-outline uppercase tracking-wider mb-1">Chính sách sửa đổi</p>
               <p className="font-headline-md text-base font-bold text-primary dark:text-inverse-primary">
-                {pkg.commitment}
+                {pkg.revisionPolicy || 'N/A'}
               </p>
             </div>
           </div>
@@ -63,14 +114,16 @@ export default function PackageDetailPage() {
         <div className="col-span-12 lg:col-span-4 flex flex-col gap-gutter">
           <div className="bg-surface-container-lowest dark:bg-tertiary-container rounded-[2rem] p-8 shadow-[4px_24px_40px_rgba(255,143,163,0.08)] border border-surface-container/20 text-center flex flex-col items-center justify-center flex-1">
             <p className="text-[11px] font-bold text-outline uppercase tracking-wider mb-4">Chi phí Đầu tư</p>
-            <div className="flex items-baseline gap-2 mb-8">
-              <span className="text-display-lg font-bold text-primary dark:text-inverse-primary">${pkg.price}</span>
-              <span className="text-on-surface-variant text-sm font-semibold">/ tháng</span>
+            <div className="flex items-baseline gap-1 mb-8">
+              <span className="text-display-lg font-bold text-primary dark:text-inverse-primary">
+                {Number(pkg.price).toLocaleString('vi-VN')}
+              </span>
+              <span className="text-on-surface-variant text-sm font-semibold">đ</span>
             </div>
             
             <div className="w-full space-y-4">
               <button
-                onClick={() => alert(`Cảm ơn bạn đã lựa chọn ${pkg.name}! Đang chuyển hướng đến cổng thanh toán...`)}
+                onClick={() => alert(`Cảm ơn bạn đã lựa chọn ${pkg.packageName}! Đang chuyển hướng đến cổng thanh toán...`)}
                 className="w-full py-4 bg-secondary-container hover:bg-secondary-fixed text-on-secondary-container dark:bg-on-secondary-fixed-variant dark:text-secondary-fixed rounded-full font-bold text-sm hover:shadow-md transition-all active:scale-95"
               >
                 Đăng ký ngay
@@ -106,7 +159,7 @@ export default function PackageDetailPage() {
           </h3>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {pkg.features.map((feature) => (
+            {features.map((feature) => (
               <div key={feature.title} className="flex gap-4">
                 <div className="w-10 h-10 rounded-full bg-secondary-container text-on-secondary-container dark:bg-on-secondary-fixed-variant dark:text-secondary-fixed flex items-center justify-center shrink-0">
                   <Star size={16} className="fill-current text-secondary dark:text-secondary-fixed" />

@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
 
+const prisma = require('./src/config/prisma');
 const apiRoutes = require('./src/routes');
 const { errorHandler } = require('./src/middleware/errorHandler');
 const { success } = require('./src/utils/response');
@@ -32,6 +33,30 @@ app.use((req, res) => {
 
 app.use(errorHandler);
 
-app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
+app.listen(PORT, async () => {
+  console.log(`\n🚀 Server is running on http://localhost:${PORT}`);
+
+  // Database connection check
+  try {
+    const result = await prisma.$queryRaw`SELECT version()`;
+    const version = result[0]?.version || 'Unknown';
+    console.log(`✅ Database connected successfully!`);
+    console.log(`   PostgreSQL: ${version}`);
+
+    // Quick table count to confirm data is accessible
+    const kolCount = await prisma.kolProfile.count();
+    const userCount = await prisma.user.count();
+    const bookingCount = await prisma.kolBooking.count();
+    const planCount = await prisma.marketingPlan.count();
+    console.log(`📊 Data summary:`);
+    console.log(`   - Users: ${userCount}`);
+    console.log(`   - KOL Profiles: ${kolCount}`);
+    console.log(`   - Bookings: ${bookingCount}`);
+    console.log(`   - Marketing Plans: ${planCount}`);
+    console.log('');
+  } catch (err) {
+    console.error(`❌ Database connection FAILED!`);
+    console.error(`   Error: ${err.message}`);
+    console.error(`   Hint: Check DATABASE_URL in .env file\n`);
+  }
 });

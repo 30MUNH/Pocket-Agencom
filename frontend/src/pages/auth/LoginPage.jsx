@@ -26,22 +26,24 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-surface to-secondary-container/20 flex items-center justify-center p-gutter font-body-md text-on-surface relative">
-      <Link
-        to="/"
-        className="absolute top-6 left-6 z-20 flex items-center gap-2 px-4 py-2 bg-surface-container-lowest rounded-full shadow-sm border border-surface-container/20 text-on-surface-variant hover:text-primary hover:shadow-md transition-all text-xs font-semibold"
-      >
-        <ArrowLeft size={14} />
-        <span>Quay về trang chủ</span>
-      </Link>
-
       <div className="fixed top-[-10%] left-[-10%] w-[40vw] h-[40vw] rounded-full bg-secondary-container/30 blur-[100px] pointer-events-none z-0" />
       <div className="fixed bottom-[-10%] right-[-10%] w-[30vw] h-[30vw] rounded-full bg-secondary-container/20 blur-[80px] pointer-events-none z-0" />
 
       <div className="w-full max-w-[440px] bg-surface-container-lowest rounded-xl p-8 md:p-12 shadow-ambient relative z-10 transition-all duration-300">
-        <div className="text-center mb-10">
-          <h1 className="font-headline-md text-headline-md text-primary font-bold mb-2">
+        <div className="flex items-center justify-between mb-8 pb-4 border-b border-surface-variant/30">
+          <span className="font-headline-md text-headline-md text-primary font-bold">
             Pocket Agencom
-          </h1>
+          </span>
+          <Link
+            to="/"
+            className="flex items-center gap-2 px-3 py-1.5 bg-surface-container-low rounded-full shadow-sm border border-surface-container/20 text-on-surface-variant hover:text-primary hover:shadow-md transition-all text-xs font-semibold"
+          >
+            <ArrowLeft size={14} />
+            <span>Quay về</span>
+          </Link>
+        </div>
+
+        <div className="text-center mb-8">
           <p className="font-body-md text-body-md text-on-surface-variant">
             Chào mừng trở lại. Vui lòng nhập thông tin đăng nhập.
           </p>
