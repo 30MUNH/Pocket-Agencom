@@ -2,6 +2,7 @@ const prisma = require('../config/prisma');
 const { AppError } = require('../middleware/errorHandler');
 const { isValidPlanTransition } = require('../validators/marketingPlan.validator');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
+const { findSimilarStrategies } = require('./ragService');
 
 // ── Gemini SDK Initialization ──────────────────────────────────────────────────
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
@@ -40,7 +41,7 @@ Trả về DUY NHẤT một JSON object hợp lệ theo đúng cấu trúc sau (
 
 // ── Gemini-powered AI Content Generator ────────────────────────────────────────
 async function generateAIContent(data) {
-  const userPrompt = `Hãy tạo kế hoạch marketing cho chiến dịch sau:
+  let userPrompt = `Hãy tạo kế hoạch marketing cho chiến dịch sau:
 
 - Loại chiến dịch: ${data.campaignType}
 - Ngành hàng: ${data.businessType}
@@ -54,6 +55,17 @@ Yêu cầu:
 - Tạo kịch bản video ngắn (videoScripts) gồm ít nhất 4 phân cảnh chi tiết.
 - Tạo danh sách checklist công việc (checklist) gồm ít nhất 5 mục hành động cụ thể.
 - Tạo playbook hướng dẫn quy trình thực thi từ A đến Z.`;
+
+  // RAG: enrich prompt with past successful strategies (findSimilarStrategies returns [] on failure)
+  const similar = await findSimilarStrategies(
+    `${data.businessType} - ${data.campaignType} - ${data.goal}`
+  );
+  if (similar.length > 0) {
+    userPrompt += `
+
+Dưới đây là các case study và chiến lược đã thành công trong quá khứ. Hãy tham khảo phong cách và định dạng của chúng để xây dựng kế hoạch mới:
+${similar.map((s, i) => `--- Case study ${i + 1} ---\n${s.content}`).join('\n\n')}`;
+  }
 
   try {
     const result = await geminiModel.generateContent({
