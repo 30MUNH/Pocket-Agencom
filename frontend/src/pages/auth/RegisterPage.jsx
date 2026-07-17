@@ -58,7 +58,7 @@ export default function RegisterPage() {
         <div className="w-full max-w-md">
           <div className="flex items-center justify-between mb-12">
             <span className="text-headline-md font-headline-md font-extrabold text-primary tracking-tight">
-              Pocket Agencom
+              Pocket <span className="text-[#F897A8]">Agen</span>com
             </span>
             <Link
               to="/"

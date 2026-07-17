@@ -35,7 +35,7 @@ export default function LoginPage() {
       <div className="w-full max-w-[440px] bg-surface-container-lowest rounded-xl p-8 md:p-12 shadow-ambient relative z-10 transition-all duration-300">
         <div className="flex items-center justify-between mb-8 pb-4 border-b border-surface-variant/30">
           <span className="font-headline-md text-headline-md text-primary font-bold">
-            Pocket Agencom
+            Pocket <span className="text-[#F897A8]">Agen</span>com
           </span>
           <Link
             to="/"

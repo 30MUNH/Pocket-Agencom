@@ -23,7 +23,7 @@ export default function ForgotPasswordPage() {
         {/* Logo and Back Link */}
         <div className="flex items-center justify-between mb-8 pb-4 border-b border-surface-container-high">
           <span className="text-headline-md font-headline-md font-extrabold text-primary">
-            Pocket Agencom
+            Pocket <span className="text-[#F897A8]">Agen</span>com
           </span>
           <Link
             to="/"

@@ -118,11 +118,15 @@ export default function LandingPage() {
       {/* Public Navigation Header */}
       <header className="sticky top-0 z-50 bg-surface/90 dark:bg-surface-dim/90 backdrop-blur-md px-6 lg:px-12 h-20 flex items-center justify-between border-b border-surface-container-high dark:border-outline/10">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-secondary-container dark:bg-secondary/40 flex items-center justify-center">
-            <Rocket className="text-secondary dark:text-white" size={20} />
+          <div className="w-10 h-10 rounded-xl bg-secondary-container dark:bg-secondary/40 flex items-center justify-center overflow-hidden">
+            <img
+              alt="Agency Logo"
+              className="w-full h-full object-cover"
+              src="/Logo.png"
+            />
           </div>
           <span className="text-headline-md font-bold text-primary dark:text-inverse-primary">
-            Pocket Agencom
+            Pocket <span className="text-[#F897A8]">Agen</span>com
           </span>
         </div>
 
@@ -654,7 +658,7 @@ export default function LandingPage() {
         <div className="grid grid-cols-1 md:grid-cols-5 gap-8 py-16 px-6 lg:px-12 max-w-container-max mx-auto">
           <div className="col-span-2 space-y-4">
             <span className="text-headline-md font-bold text-primary dark:text-inverse-primary block">
-              Pocket Agencom
+              Pocket <span className="text-[#F897A8]">Agen</span>com
             </span>
             <p className="text-on-surface-variant text-sm max-w-xs leading-relaxed">
               Trợ lý tiếp thị cho doanh nghiệp vừa và nhỏ thời đại mới. Đơn giản, tinh tế, hiệu quả.

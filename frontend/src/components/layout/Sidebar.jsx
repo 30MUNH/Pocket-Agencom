@@ -69,12 +69,12 @@ export default function Sidebar({ isOpen, onClose, userRole = 'user' }) {
             <img
               alt="Agency Logo"
               className="w-full h-full object-cover"
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuABvgqTpEzAVJS3X5DCoJATOMivDwThuouFa_NwU-ZeY7DZJvLhNW7jaUOhaumxNWkDBAsr2vpvschkNz2TwwxyJhXjcll0knl1pHx6RvpB5quuWGX6kI7SR8Wp6_xav0lUrqnDbutk36YEo2-7XqwtGGYa117puAxlP7soBagyMi5c1nZLk5bhW7lQ33DS2JB5X48xhYongko4KuSjMbc_HSkC0TGO5xbn9bxbrGcDWr3Uc8ziISvfrbtMczIBGrns7N__g7jmJeo"
+              src="/Logo.png"
             />
           </div>
           <div>
             <h1 className="text-headline-md font-headline-md font-extrabold text-primary tracking-tight">
-              Pocket Agencom
+              Pocket <span className="text-[#F897A8]">Agen</span>com
             </h1>
             <p className="text-label-sm font-label-sm text-on-surface-variant mt-1">
               Hỗ trợ Tiếp thị
