@@ -6,6 +6,7 @@ const prisma = require('./src/config/prisma');
 const apiRoutes = require('./src/routes');
 const { errorHandler } = require('./src/middleware/errorHandler');
 const { success } = require('./src/utils/response');
+const setupStorage = require('./src/utils/setupStorage');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -57,6 +58,9 @@ app.listen(PORT, async () => {
     const version = result[0]?.version || 'Unknown';
     console.log(`✅ Database connected successfully!`);
     console.log(`   PostgreSQL: ${version}`);
+
+    // Set up Supabase Storage bucket and RLS policies via SQL
+    await setupStorage();
 
     // Quick table count to confirm data is accessible
     const kolCount = await prisma.kolProfile.count();

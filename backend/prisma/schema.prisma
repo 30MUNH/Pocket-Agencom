@@ -14,6 +14,7 @@ enum UserRole {
   user
   staff
   admin
+  kol
 }
 
 enum AccountStatus {
@@ -118,10 +119,11 @@ model User {
   updatedAt    DateTime      @default(now()) @updatedAt @map("updated_at")
 
   businessProfile  BusinessProfile?
+  kolProfile       KolProfile?      @relation("OwnKolProfile")
   marketingPlans   MarketingPlan[]  @relation("UserPlans")
   reviewedPlans    MarketingPlan[]  @relation("ReviewedPlans")
   createdTemplates Template[]
-  createdKols      KolProfile[]
+  createdKols      KolProfile[]     @relation("CreatedKols")
   bookings         KolBooking[]     @relation("UserBookings")
   assignedBookings KolBooking[]     @relation("StaffBookings")
   bookingReviews   BookingReview[]
@@ -197,12 +199,15 @@ model Template {
 
 model KolProfile {
   id                 Int       @id @default(autoincrement())
+  userId             Int?      @unique @map("user_id")
   name               String
   avatarUrl          String?   @map("avatar_url")
   coverUrl           String?   @map("cover_url")
   bio                String?
-  kolType            KolType   @map("kol_type")
-  niche              String
+  kolType            KolType   @default(content_creator) @map("kol_type")
+  niche              String    @default("General")
+  categories         String[]  @default([])
+  platforms          Json?     @default("{}")
   location           String?
   followerCount      Int       @default(0) @map("follower_count")
   engagementRate     Decimal   @default(0) @map("engagement_rate")
@@ -213,13 +218,16 @@ model KolProfile {
   audienceLocation   String?   @map("audience_location")
   audienceInterests  String?   @map("audience_interests")
   priceFrom          Decimal?  @map("price_from")
+  bookingPrice       Float?
   isVerified         Boolean   @default(false) @map("is_verified")
+  isPublic           Boolean   @default(false) @map("is_public")
   status             KolStatus @default(active)
   createdById        Int?      @map("created_by")
   createdAt          DateTime  @default(now()) @map("created_at")
   updatedAt          DateTime  @default(now()) @updatedAt @map("updated_at")
 
-  createdBy         User?                 @relation(fields: [createdById], references: [id])
+  user              User?                 @relation("OwnKolProfile", fields: [userId], references: [id])
+  createdBy         User?                 @relation("CreatedKols", fields: [createdById], references: [id])
   platformAccounts  KolPlatformAccount[]
   servicePackages   KolServicePackage[]
   availabilitySlots KolAvailabilitySlot[]

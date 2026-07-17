@@ -1,25 +1,71 @@
-import { useState } from 'react';
-import { User, Lock, Bell, Camera, LogOut, Share2 } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { User as UserIcon, Lock, Bell, Camera, LogOut, Share2, Loader2 } from 'lucide-react';
 import SocialLinkManager from '../../components/settings/SocialLinkManager';
+import { useAuthStore } from '../../store/authStore';
+import { useUpdateProfile, useUpdateBusinessProfile } from '../../hooks/useAuth';
+import { uploadApi } from '../../api/uploadApi';
 
 export default function UserSettings() {
   const [activeTab, setActiveTab] = useState('profile');
+  const user = useAuthStore((s) => s.user);
+  
   const [form, setForm] = useState({
-    fullName: 'Sarah Jenkins',
-    emailAddress: 'sarah.j@example.com',
-    phoneNumber: '+1 (555) 123-4567',
-    companyName: 'Lumina Designs',
+    fullName: user?.name || '',
+    emailAddress: user?.email || '',
+    phoneNumber: user?.phone || '',
+    companyName: user?.businessProfile?.businessName || '',
   });
+
+  const fileInputRef = useRef(null);
+  const [isUploading, setIsUploading] = useState(false);
+
+  const updateProfileMutation = useUpdateProfile();
+  const updateBusinessProfileMutation = useUpdateBusinessProfile();
 
   const handleChange = (field) => (e) => {
     setForm((prev) => ({ ...prev, [field]: e.target.value }));
   };
 
-  const handleSave = (e) => {
+  const handleAvatarClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleAvatarChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    try {
+      const response = await uploadApi.uploadAvatar(file);
+      const url = response.url || response;
+      await updateProfileMutation.mutateAsync({ avatarUrl: url });
+    } catch (err) {
+      console.error(err);
+      alert(err.message || 'Không thể tải ảnh lên. Vui lòng thử lại.');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleSave = async (e) => {
     e.preventDefault();
-    // TODO: Integrate with settings API
-    console.log('Saved profile details:', form);
-    alert('Đã lưu thay đổi hồ sơ thành công!');
+    try {
+      await updateProfileMutation.mutateAsync({
+        name: form.fullName,
+        phone: form.phoneNumber,
+      });
+
+      if (user?.role === 'user') {
+        await updateBusinessProfileMutation.mutateAsync({
+          businessName: form.companyName,
+        });
+      }
+
+      alert('Đã lưu thay đổi hồ sơ thành công!');
+    } catch (err) {
+      console.error(err);
+      alert(err.message || 'Lỗi khi lưu thay đổi. Vui lòng thử lại.');
+    }
   };
 
   return (
@@ -47,7 +93,7 @@ export default function UserSettings() {
                   : 'text-on-surface-variant hover:bg-surface-container-low'
               }`}
             >
-              <User size={18} className="mr-3 text-secondary shrink-0" />
+              <UserIcon size={18} className="mr-3 text-secondary shrink-0" />
               <span className="text-label-sm font-label-sm">Thông tin Hồ sơ</span>
             </button>
 
@@ -103,17 +149,41 @@ export default function UserSettings() {
                     Cập nhật thông tin cá nhân và thông tin công ty của bạn.
                   </p>
                 </div>
-                <div className="w-20 h-20 rounded-full bg-secondary-container overflow-hidden relative group cursor-pointer border-4 border-surface-container-lowest shadow-ambient shrink-0">
-                  <img
-                    className="w-full h-full object-cover"
-                    alt="Sarah Jenkins Profile Avatar"
-                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuB7VP5f0w3Bu3fNn9QIpjESkDg0zwfEZFNGQ5xfrSIi80lunN_0vPkp-2SFxFEsM0UbSStVuGMP_yfraH5amhUhhOKneloOV913S2IDrtoTC-bYi8lZlcMoTGQUPQfNe-z_RJ3fy2opXCywtXERSQVNqR24RNViaCf8VOOUOHqEPDLVEsKpH_TkI9njQCKNKxWXxF99pMTNnVfY0CPQl1lx35FQaT-_NzSF_RABUZhJdj4TAf0s9N3KreP_33edpqI-ha4MWdfEpOw"
-                  />
-                  <div className="absolute inset-0 bg-primary/40 hidden group-hover:flex items-center justify-center transition-all">
-                    <Camera size={20} className="text-white" />
-                  </div>
+                
+                {/* Avatar upload wrapper */}
+                <div 
+                  onClick={handleAvatarClick}
+                  className="w-20 h-20 rounded-full bg-secondary-container overflow-hidden relative group cursor-pointer border-4 border-surface-container-lowest shadow-ambient shrink-0 flex items-center justify-center"
+                >
+                  {isUploading ? (
+                    <div className="absolute inset-0 bg-primary/40 flex items-center justify-center">
+                      <Loader2 className="animate-spin text-white" size={24} />
+                    </div>
+                  ) : (
+                    <>
+                      <img
+                        className="w-full h-full object-cover"
+                        alt={`${user?.name} Profile Avatar`}
+                        src={
+                          user?.avatarUrl ||
+                          `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user?.name || 'user')}`
+                        }
+                      />
+                      <div className="absolute inset-0 bg-primary/40 hidden group-hover:flex items-center justify-center transition-all">
+                        <Camera size={20} className="text-white" />
+                      </div>
+                    </>
+                  )}
                 </div>
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleAvatarChange}
+                  accept="image/*"
+                  className="hidden"
+                />
               </div>
+
               <form onSubmit={handleSave} className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
                 <div className="space-y-2">
                   <label className="block text-label-sm font-label-sm text-on-surface-variant" htmlFor="fullName">
@@ -132,11 +202,11 @@ export default function UserSettings() {
                     Địa chỉ Email
                   </label>
                   <input
-                    className="w-full bg-surface-container-lowest text-primary border border-surface-variant rounded-xl px-4 py-3 text-body-md font-body-md focus:outline-none focus:ring-2 focus:ring-secondary-container focus:border-transparent transition-all"
+                    className="w-full bg-surface-container-lowest text-primary/60 border border-surface-variant rounded-xl px-4 py-3 text-body-md font-body-md focus:outline-none cursor-not-allowed"
                     id="emailAddress"
                     type="email"
                     value={form.emailAddress}
-                    onChange={handleChange('emailAddress')}
+                    disabled
                   />
                 </div>
                 <div className="space-y-2">
@@ -151,24 +221,27 @@ export default function UserSettings() {
                     onChange={handleChange('phoneNumber')}
                   />
                 </div>
-                <div className="space-y-2">
-                  <label className="block text-label-sm font-label-sm text-on-surface-variant" htmlFor="companyName">
-                    Tên công ty
-                  </label>
-                  <input
-                    className="w-full bg-surface-container-lowest text-primary border border-surface-variant rounded-xl px-4 py-3 text-body-md font-body-md focus:outline-none focus:ring-2 focus:ring-secondary-container focus:border-transparent transition-all"
-                    id="companyName"
-                    type="text"
-                    value={form.companyName}
-                    onChange={handleChange('companyName')}
-                  />
-                </div>
+                {user?.role === 'user' && (
+                  <div className="space-y-2">
+                    <label className="block text-label-sm font-label-sm text-on-surface-variant" htmlFor="companyName">
+                      Tên công ty
+                    </label>
+                    <input
+                      className="w-full bg-surface-container-lowest text-primary border border-surface-variant rounded-xl px-4 py-3 text-body-md font-body-md focus:outline-none focus:ring-2 focus:ring-secondary-container focus:border-transparent transition-all"
+                      id="companyName"
+                      type="text"
+                      value={form.companyName}
+                      onChange={handleChange('companyName')}
+                    />
+                  </div>
+                )}
                 <div className="md:col-span-2 pt-6 flex justify-end">
                   <button
                     type="submit"
+                    disabled={updateProfileMutation.isPending || updateBusinessProfileMutation.isPending}
                     className="bg-secondary-container text-on-secondary-container hover:bg-secondary hover:text-on-secondary hover:shadow-ambient px-8 py-3 rounded-full text-label-sm font-label-sm transition-all duration-200 transform hover:-translate-y-[2px]"
                   >
-                    Lưu Thay đổi
+                    {(updateProfileMutation.isPending || updateBusinessProfileMutation.isPending) ? 'Đang lưu...' : 'Lưu Thay đổi'}
                   </button>
                 </div>
               </form>
@@ -176,7 +249,7 @@ export default function UserSettings() {
           )}
 
           {activeTab === 'security' && (
-            <section className="bg-surface-container-lowest rounded-3xl shadow-ambient p-8 md:p-12 border border-surface-container/20 animate-pulse">
+            <section className="bg-surface-container-lowest rounded-3xl shadow-ambient p-8 md:p-12 border border-surface-container/20">
               <h3 className="text-headline-md font-headline-md text-primary mb-6">Cài đặt Bảo mật</h3>
               <p className="text-body-md font-body-md text-on-surface-variant">
                 Cấu hình xác thực hai yếu tố, đặt lại mật khẩu và quản lý khóa API tại đây. (Đang phát triển)
@@ -185,7 +258,7 @@ export default function UserSettings() {
           )}
 
           {activeTab === 'notifications' && (
-            <section className="bg-surface-container-lowest rounded-3xl shadow-ambient p-8 md:p-12 border border-surface-container/20 animate-pulse">
+            <section className="bg-surface-container-lowest rounded-3xl shadow-ambient p-8 md:p-12 border border-surface-container/20">
               <h3 className="text-headline-md font-headline-md text-primary mb-6">Tùy chọn Nhận thông báo</h3>
               <p className="text-body-md font-body-md text-on-surface-variant">
                 Kiểm soát thông báo email, cập nhật tiếp thị và nhật ký hệ thống. (Đang phát triển)
@@ -209,7 +282,8 @@ export default function UserSettings() {
               <button
                 onClick={() => {
                   if (confirm('Bạn có chắc chắn muốn đăng xuất không?')) {
-                    window.location.href = '/';
+                    useAuthStore.getState().logout();
+                    window.location.href = '/login';
                   }
                 }}
                 className="bg-surface-container-lowest border border-outline text-primary hover:bg-secondary-container/50 px-8 py-3 rounded-full text-label-sm font-label-sm transition-all duration-200 flex items-center justify-center gap-2 group shrink-0"

@@ -29,8 +29,17 @@ export default function DashboardLayout() {
       if (!isStaffPath) {
         navigate('/dashboard');
       }
+    } else if (userRole === 'kol') {
+      const isKolPath =
+        path === '/dashboard' ||
+        path.startsWith('/kol/') ||
+        path === '/help' ||
+        path === '/settings';
+      if (!isKolPath) {
+        navigate('/dashboard');
+      }
     } else {
-      const isRestrictedPath = path.startsWith('/admin') || path.startsWith('/staff');
+      const isRestrictedPath = path.startsWith('/admin') || path.startsWith('/staff') || path.startsWith('/kol/');
       if (isRestrictedPath) {
         navigate('/dashboard');
       }

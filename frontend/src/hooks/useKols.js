@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { kolApi } from '../api/kolApi';
 
 export function useKols(params = {}) {
@@ -134,4 +134,29 @@ export function mapKolToCreator(kol) {
     pastCampaigns,
     testimonials,
   };
+}
+
+export function useKolDirectory(params = {}) {
+  return useQuery({
+    queryKey: ['kol-directory', params],
+    queryFn: () => kolApi.listDirectory(params),
+  });
+}
+
+export function useMyKolProfile() {
+  return useQuery({
+    queryKey: ['kol-profile', 'me'],
+    queryFn: () => kolApi.getMyProfile(),
+  });
+}
+
+export function useUpdateKolProfile() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: kolApi.updateMyProfile,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['kol-profile', 'me'] });
+      queryClient.invalidateQueries({ queryKey: ['kol-directory'] });
+    },
+  });
 }

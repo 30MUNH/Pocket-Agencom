@@ -4,6 +4,7 @@ import LoginPage from './pages/auth/LoginPage';
 import RegisterPage from './pages/auth/RegisterPage';
 import ForgotPasswordPage from './pages/auth/ForgotPasswordPage';
 import LandingPage from './pages/public/LandingPage';
+import KolDirectory from './pages/public/KolDirectory';
 import DashboardLayout from './components/layout/DashboardLayout';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import UserDashboard from './pages/user/UserDashboard';
@@ -28,6 +29,8 @@ import AdminKOLManagement from './pages/admin/AdminKOLManagement';
 import ManageUsers from './pages/admin/ManageUsers';
 import StaffDashboard from './pages/staff/StaffDashboard';
 import StaffBookingManagement from './pages/staff/StaffBookingManagement';
+import KolDashboard from './pages/kol/KolDashboard';
+import KolProfileSettings from './pages/kol/KolProfileSettings';
 
 function DashboardRoute() {
   const { userRole } = useOutletContext();
@@ -36,6 +39,8 @@ function DashboardRoute() {
       return <AdminDashboard />;
     case 'staff':
       return <StaffDashboard />;
+    case 'kol':
+      return <KolDashboard />;
     case 'user':
     default:
       return <UserDashboard />;
@@ -52,6 +57,7 @@ function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/kols" element={<KolDirectory />} />
 
         <Route
           path="/bookings/:id"
@@ -91,6 +97,16 @@ function App() {
           <Route path="/help" element={<HelpCenter />} />
           <Route path="/settings" element={<UserSettings />} />
           <Route path="/business-profile" element={<BusinessProfile />} />
+
+          {/* KOL Protected Routes */}
+          <Route
+            path="/kol/profile"
+            element={
+              <ProtectedRoute roles={['kol']}>
+                <KolProfileSettings />
+              </ProtectedRoute>
+            }
+          />
 
           <Route
             path="/admin/users"

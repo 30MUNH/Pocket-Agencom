@@ -10,6 +10,7 @@ import {
   Settings,
   Users,
   Building2,
+  Star,
 } from 'lucide-react';
 
 export default function Sidebar({ isOpen, onClose, userRole = 'user' }) {
@@ -28,6 +29,12 @@ export default function Sidebar({ isOpen, onClose, userRole = 'user' }) {
         return [
           { path: '/dashboard', label: 'Bảng điều khiển', icon: LayoutDashboard },
           { path: '/staff/bookings', label: 'Bảng đặt lịch', icon: CalendarDays },
+          { path: '/help', label: 'Trung tâm trợ giúp', icon: HelpCircle },
+        ];
+      case 'kol':
+        return [
+          { path: '/dashboard', label: 'Bảng điều khiển', icon: LayoutDashboard },
+          { path: '/kol/profile', label: 'Hồ sơ KOL', icon: Star },
           { path: '/help', label: 'Trung tâm trợ giúp', icon: HelpCircle },
         ];
       case 'user':
@@ -94,6 +101,8 @@ export default function Sidebar({ isOpen, onClose, userRole = 'user' }) {
                   ? location.pathname.startsWith('/marketing-kit')
                   : item.path === '/admin/kols'
                   ? location.pathname.startsWith('/admin/kols')
+                  : item.path === '/kol/profile'
+                  ? location.pathname.startsWith('/kol/')
                   : location.pathname === item.path;
 
               return (

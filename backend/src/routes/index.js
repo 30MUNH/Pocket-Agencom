@@ -5,14 +5,17 @@ const marketingPlanRoutes = require('./marketingPlanRoutes');
 const kolRoutes = require('./kolRoutes');
 const packageRoutes = require('./packageRoutes');
 const socialRoutes = require('./socialRoutes');
+const uploadRoutes = require('./uploadRoutes');
 
 const router = express.Router();
 
+// Mount all feature routers
 router.use('/auth', authRoutes);
 router.use('/bookings', bookingRoutes);
 router.use('/marketing-plans', marketingPlanRoutes);
 router.use('/kols', kolRoutes);
 router.use('/packages', packageRoutes);
 router.use('/social-platforms', socialRoutes);
+router.use('/upload', uploadRoutes);
 
 module.exports = router;

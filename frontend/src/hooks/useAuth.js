@@ -27,3 +27,34 @@ export function useCurrentUser() {
     staleTime: 5 * 60 * 1000,
   });
 }
+
+export function useUpdateProfile() {
+  const queryClient = useQueryClient();
+  const updateUser = useAuthStore((s) => s.updateUser);
+  return useMutation({
+    mutationFn: authApi.updateProfile,
+    onSuccess: (updatedUser) => {
+      updateUser(updatedUser);
+      queryClient.setQueryData(['auth', 'me'], updatedUser);
+      queryClient.invalidateQueries({ queryKey: ['auth', 'me'] });
+    },
+  });
+}
+
+export function useUpdateBusinessProfile() {
+  const queryClient = useQueryClient();
+  const updateUser = useAuthStore((s) => s.updateUser);
+  return useMutation({
+    mutationFn: authApi.updateBusinessProfile,
+    onSuccess: (updatedProfile) => {
+      const currentUser = useAuthStore.getState().user;
+      const updatedUser = {
+        ...currentUser,
+        businessProfile: updatedProfile,
+      };
+      updateUser(updatedUser);
+      queryClient.setQueryData(['auth', 'me'], updatedUser);
+      queryClient.invalidateQueries({ queryKey: ['auth', 'me'] });
+    },
+  });
+}
