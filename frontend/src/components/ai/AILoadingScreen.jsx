@@ -135,7 +135,7 @@ export default function AILoadingScreen() {
 
         {/* Reassuring footer */}
         <p className="mt-8 text-[10px] text-outline dark:text-outline-variant tracking-wide uppercase font-semibold">
-          Gemini AI đang làm việc • Thường mất 20-30 giây
+          Thường mất 20-30 giây
         </p>
       </div>
 

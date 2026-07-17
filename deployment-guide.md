@@ -79,7 +79,7 @@ Nếu bạn muốn giới hạn CORS trong tương lai, hãy cấu hình ở fil
 app.use(cors({
   origin: process.env.FRONTEND_URL || '*',
   credentials: true
-}));
+})); h hãy 
 ```
 
 ---

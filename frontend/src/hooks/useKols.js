@@ -122,7 +122,7 @@ export function mapKolToCreator(kol) {
     engagement: Number(kol.engagementRate) || 0,
     camps: kol.completedCampaigns,
     startingPrice: Number(kol.priceFrom) || 0,
-    priceRange: kol.priceFrom ? `$${Math.round(Number(kol.priceFrom) / 23000)}+` : 'Liên hệ',
+    priceRange: kol.priceFrom ? `Từ ${Number(kol.priceFrom).toLocaleString('vi-VN')} VND` : 'Liên hệ',
     platforms,
     avatar: kol.avatarUrl,
     coverImage: kol.coverUrl,

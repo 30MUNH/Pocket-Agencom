@@ -15,6 +15,8 @@ import {
 } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import { useMarketingPlans } from '../../hooks/useMarketingPlans';
+import TrendBulletin from '../../components/dashboard/TrendBulletin';
+
 
 const QUICK_ACTIONS = [
   {
@@ -177,6 +179,9 @@ export default function UserDashboard() {
           );
         })}
       </section>
+
+      {/* Trending Newsletter Section */}
+      <TrendBulletin />
 
       {/* Main Content Splitted Area */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

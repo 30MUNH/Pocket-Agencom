@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Mail, Lock, ArrowLeft, Loader2 } from 'lucide-react';
+import { Mail, Lock, ArrowLeft, Loader2, Eye, EyeOff } from 'lucide-react';
 import { useLogin } from '../../hooks/useAuth';
 import { toast } from '../../store/toastStore';
 
@@ -8,9 +8,12 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [remember, setRemember] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const loginMutation = useLogin();
+
+  const isFormValid = email.trim() !== '' && password.trim() !== '';
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -78,13 +81,20 @@ export default function LoginPage() {
               <input
                 id="login-password"
                 name="password"
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full pl-12 pr-4 py-4 bg-tertiary-fixed rounded-full border-none font-body-md text-body-md text-on-surface placeholder:text-outline-variant focus:ring-2 focus:ring-secondary-container focus:outline-none transition-shadow"
+                className="w-full pl-12 pr-12 py-4 bg-tertiary-fixed rounded-full border-none font-body-md text-body-md text-on-surface placeholder:text-outline-variant focus:ring-2 focus:ring-secondary-container focus:outline-none transition-shadow"
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-outline-variant hover:text-primary transition-colors focus:outline-none"
+              >
+                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
             </div>
           </div>
 
@@ -110,7 +120,11 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loginMutation.isPending}
-              className="w-full flex justify-center items-center gap-2 py-4 px-4 border border-transparent rounded-full shadow-sm font-label-sm text-label-sm bg-secondary-container text-on-secondary-container hover:bg-secondary-container/80 hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-secondary-container transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
+              className={`w-full flex justify-center items-center gap-2 py-4 px-4 border border-transparent rounded-full shadow-sm font-label-sm text-label-sm transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed ${
+                isFormValid
+                  ? 'bg-[#ff758f] text-white hover:bg-[#ff5c7a] hover:-translate-y-0.5'
+                  : 'bg-[#F9E3E5] text-[#b38a90]'
+              }`}
             >
               {loginMutation.isPending ? (
                 <>

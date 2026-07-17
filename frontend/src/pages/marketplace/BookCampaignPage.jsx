@@ -85,7 +85,7 @@ export default function BookCampaignPage() {
     return (
       <div className="text-center py-20">
         <p className="text-on-surface-variant mb-4">Không tìm thấy KOL.</p>
-        <Link to="/marketplace" className="text-primary font-bold">Quay lại Chợ KOL</Link>
+        <Link to="/marketplace" className="text-primary font-bold">Quay lại KOL/KOC</Link>
       </div>
     );
   }

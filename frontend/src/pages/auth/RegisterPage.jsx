@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { User, Mail, Lock, ShieldCheck, ArrowRight, ArrowLeft, Loader2 } from 'lucide-react';
+import { User, Mail, Lock, ShieldCheck, ArrowRight, ArrowLeft, Loader2, Eye, EyeOff } from 'lucide-react';
 import { useRegister } from '../../hooks/useAuth';
 import { toast } from '../../store/toastStore';
 
@@ -12,8 +12,17 @@ export default function RegisterPage() {
     confirmPassword: '',
     agreeTerms: false,
   });
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const navigate = useNavigate();
   const registerMutation = useRegister();
+
+  const isFormValid =
+    form.name.trim() !== '' &&
+    form.email.trim() !== '' &&
+    form.password.trim() !== '' &&
+    form.confirmPassword.trim() !== '' &&
+    form.agreeTerms;
 
   const update = (field) => (e) => {
     const value = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
@@ -96,7 +105,14 @@ export default function RegisterPage() {
               </label>
               <div className="relative">
                 <Lock size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant" />
-                <input id="reg-password" type="password" required minLength={8} value={form.password} onChange={update('password')} placeholder="••••••••" className="w-full pl-12 pr-4 py-4 rounded-full bg-surface-container-low border-transparent focus:border-secondary-container focus:bg-surface-container-lowest focus:ring-2 focus:ring-secondary-container transition-all outline-none text-body-md font-body-md" />
+                <input id="reg-password" type={showPassword ? 'text' : 'password'} required minLength={8} value={form.password} onChange={update('password')} placeholder="••••••••" className="w-full pl-12 pr-12 py-4 rounded-full bg-surface-container-low border-transparent focus:border-secondary-container focus:bg-surface-container-lowest focus:ring-2 focus:ring-secondary-container transition-all outline-none text-body-md font-body-md" />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-primary transition-colors focus:outline-none"
+                >
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
               </div>
             </div>
 
@@ -106,7 +122,14 @@ export default function RegisterPage() {
               </label>
               <div className="relative">
                 <ShieldCheck size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant" />
-                <input id="reg-confirm-password" type="password" required value={form.confirmPassword} onChange={update('confirmPassword')} placeholder="••••••••" className="w-full pl-12 pr-4 py-4 rounded-full bg-surface-container-low border-transparent focus:border-secondary-container focus:bg-surface-container-lowest focus:ring-2 focus:ring-secondary-container transition-all outline-none text-body-md font-body-md" />
+                <input id="reg-confirm-password" type={showConfirmPassword ? 'text' : 'password'} required value={form.confirmPassword} onChange={update('confirmPassword')} placeholder="••••••••" className="w-full pl-12 pr-12 py-4 rounded-full bg-surface-container-low border-transparent focus:border-secondary-container focus:bg-surface-container-lowest focus:ring-2 focus:ring-secondary-container transition-all outline-none text-body-md font-body-md" />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-primary transition-colors focus:outline-none"
+                >
+                  {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
               </div>
             </div>
 
@@ -120,7 +143,11 @@ export default function RegisterPage() {
             <button
               type="submit"
               disabled={registerMutation.isPending}
-              className="w-full py-4 rounded-full bg-secondary-container text-on-secondary-container font-headline-md text-headline-md shadow-ambient hover:bg-secondary-container/80 hover:-translate-y-0.5 transition-all duration-200 mt-8 flex justify-center items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
+              className={`w-full py-4 rounded-full font-headline-md text-headline-md shadow-ambient hover:-translate-y-0.5 transition-all duration-200 mt-8 flex justify-center items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed ${
+                isFormValid
+                  ? 'bg-[#ff758f] text-white hover:bg-[#ff5c7a]'
+                  : 'bg-[#F9E3E5] text-[#b38a90]'
+              }`}
             >
               {registerMutation.isPending ? (
                 <>

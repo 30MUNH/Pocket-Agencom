@@ -31,7 +31,7 @@ export default function KOLDetailPage() {
     return (
       <div className="text-center py-20">
         <p className="text-on-surface-variant mb-4">Không tìm thấy KOL.</p>
-        <Link to="/marketplace" className="text-primary font-bold">Quay lại Chợ KOL</Link>
+        <Link to="/marketplace" className="text-primary font-bold">Quay lại KOL/KOC</Link>
       </div>
     );
   }
@@ -45,7 +45,7 @@ export default function KOLDetailPage() {
           className="flex items-center gap-2 text-on-surface-variant hover:text-primary transition-colors group inline-flex"
         >
           <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
-          <span className="font-label-sm uppercase tracking-widest text-[11px] font-bold">Quay lại Chợ KOL/KOC</span>
+          <span className="font-label-sm uppercase tracking-widest text-[11px] font-bold">Quay lại KOL/KOC</span>
         </Link>
       </div>
 
@@ -299,7 +299,7 @@ export default function KOLDetailPage() {
             <p className="text-[10px] text-on-surface-variant uppercase tracking-widest font-bold">Chi phí Ước tính</p>
             <div className="flex items-baseline gap-1.5 mt-2">
               <span className="text-display-lg-mobile font-bold text-primary dark:text-inverse-primary">
-                {creator.priceRange ? creator.priceRange : `$${creator.startingPrice}`}
+                {creator.priceRange ? creator.priceRange : `${(creator.startingPrice || 0).toLocaleString('vi-VN')} VND`}
               </span>
             </div>
             

@@ -2,11 +2,14 @@ const prisma = require('../config/prisma');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const embeddingModel = genAI.getGenerativeModel({ model: 'text-embedding-004' });
+const embeddingModel = genAI.getGenerativeModel({ model: 'gemini-embedding-2' });
 
 // Returns a 768-dim vector for the given text
 async function generateEmbedding(text) {
-  const result = await embeddingModel.embedContent(text);
+  const result = await embeddingModel.embedContent({
+    content: { parts: [{ text }] },
+    outputDimensionality: 768
+  });
   return result.embedding.values;
 }
 

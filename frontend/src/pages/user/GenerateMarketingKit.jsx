@@ -1,25 +1,28 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Store, Users, Target, Wand2, ArrowRight, ChevronDown, Check, Loader2 } from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { Store, Users, Target, Wand2, ArrowRight, ChevronDown, Check, Loader2, Sparkles } from 'lucide-react';
 import { useGeneratePlan } from '../../hooks/useMarketingPlans';
 import { toast } from '../../store/toastStore';
 import AILoadingScreen from '../../components/ai/AILoadingScreen';
 
 export default function GenerateMarketingKit() {
   const navigate = useNavigate();
+  const location = useLocation();
   const generatePlan = useGeneratePlan();
   const [activeStep, setActiveStep] = useState(2);
 
+  const trendData = location.state?.trend;
+
   // Form states
   const [businessType, setBusinessType] = useState('ecommerce');
-  const [campaignType, setCampaignType] = useState('awareness');
+  const [campaignType, setCampaignType] = useState(trendData?.campaignType || 'awareness');
   const [description, setDescription] = useState(
-    "Dòng sản phẩm chăm sóc da hữu cơ mùa hè được thiết kế đặc biệt để bảo vệ da khỏi cái nóng cực độ, với các thành phần thực vật chất lượng cao."
+    trendData?.description || "Dòng sản phẩm chăm sóc da hữu cơ mùa hè được thiết kế đặc biệt để bảo vệ da khỏi cái nóng cực độ, với các thành phần thực vật chất lượng cao."
   );
   const [customerProfile, setCustomerProfile] = useState(
-    "Khách hàng Gen-Z có ý thức bảo vệ môi trường và quan tâm đến các thành phần thuần chay."
+    trendData?.customerProfile || "Khách hàng Gen-Z có ý thức bảo vệ môi trường và quan tâm đến các thành phần thuần chay."
   );
-  const [primaryGoal, setPrimaryGoal] = useState("500 lượt đăng ký mới và tỷ lệ chuyển đổi 10%");
+  const [primaryGoal, setPrimaryGoal] = useState(trendData?.primaryGoal || "500 lượt đăng ký mới và tỷ lệ chuyển đổi 10%");
   const [budget, setBudget] = useState(1500);
 
   const [isLoading, setIsLoading] = useState(false);
@@ -87,6 +90,31 @@ export default function GenerateMarketingKit() {
           <span className="font-label-sm text-label-sm text-on-surface-variant">Xem lại</span>
         </div>
       </div>
+
+      {/* Trend Prefill Notification Banner */}
+      {trendData && (
+        <div className="bg-secondary-container/30 border border-secondary-container rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 animate-fade-in">
+          <div className="flex items-center gap-3">
+            <Sparkles className="text-secondary shrink-0 animate-pulse" size={20} />
+            <p className="text-body-md text-primary font-medium text-sm">
+              Đang áp dụng dữ liệu gợi ý từ xu hướng tiếp thị. Bạn có thể tự do điều chỉnh các thông tin bên dưới.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              setCampaignType('awareness');
+              setDescription('Dòng sản phẩm chăm sóc da hữu cơ mùa hè được thiết kế đặc biệt để bảo vệ da khỏi cái nóng cực độ, với các thành phần thực vật chất lượng cao.');
+              setCustomerProfile('Khách hàng Gen-Z có ý thức bảo vệ môi trường và quan tâm đến các thành phần thuần chay.');
+              setPrimaryGoal('500 lượt đăng ký mới và tỷ lệ chuyển đổi 10%');
+              navigate(location.pathname, { replace: true, state: {} });
+            }}
+            className="text-xs text-secondary hover:text-primary font-bold underline whitespace-nowrap"
+          >
+            Khôi phục mặc định
+          </button>
+        </div>
+      )}
 
       {/* Bento Grid Form */}
       <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-12 gap-gutter">
@@ -200,13 +228,13 @@ export default function GenerateMarketingKit() {
 
             <div className="space-y-2">
               <label className="block text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">
-                Ngân sách Ước tính ($)
+                Ngân sách Ước tính (VND)
               </label>
               <input
                 type="number"
                 value={budget}
                 onChange={(e) => setBudget(Number(e.target.value))}
-                placeholder="500"
+                placeholder="1000000"
                 className="w-full bg-surface-container dark:bg-surface-variant/20 border-none rounded-xl px-4 py-3.5 text-body-md text-primary dark:text-inverse-primary focus:ring-2 focus:ring-secondary focus:bg-surface-container-lowest dark:focus:bg-surface-container-lowest transition-all"
               />
             </div>

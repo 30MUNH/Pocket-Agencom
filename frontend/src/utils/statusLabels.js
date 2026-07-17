@@ -21,13 +21,7 @@ export const PLAN_STATUS_LABELS = {
 export function formatCurrency(amount) {
   if (!amount) return '—';
   const num = Number(amount);
-  if (num > 1000000) {
-    return `${(num / 1000000).toFixed(1)}M VNĐ`;
-  }
-  if (num > 1000) {
-    return `${Math.round(num / 1000)}K VNĐ`;
-  }
-  return `$${num.toLocaleString()}`;
+  return `${num.toLocaleString('vi-VN')} VND`;
 }
 
 export function formatDate(dateStr) {

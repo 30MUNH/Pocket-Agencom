@@ -340,7 +340,7 @@ export default function BookingDetailPage() {
                     to="/marketplace"
                     className="flex-1 py-2.5 rounded-full bg-surface dark:bg-surface-variant/20 text-primary dark:text-inverse-primary font-label-sm text-xs hover:bg-surface-container-high transition-colors text-center border border-surface-variant"
                   >
-                    Chợ KOL/KOC
+                    KOL/KOC
                   </Link>
                   <button
                     onClick={() => alert('Đang mở cuộc trò chuyện với Elena Rivera...')}

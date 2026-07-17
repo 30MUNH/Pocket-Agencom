@@ -36,7 +36,7 @@ export default function Sidebar({ isOpen, onClose, userRole = 'user' }) {
           { path: '/marketing-kit', label: 'Bộ công cụ Marketing', icon: Sparkles },
           { path: '/plans', label: 'Kế hoạch của tôi', icon: ClipboardList },
           { path: '/templates', label: 'Thư viện mẫu', icon: Library },
-          { path: '/marketplace', label: 'Chợ KOL/KOC', icon: Compass },
+          { path: '/marketplace', label: 'KOL/KOC', icon: Compass },
           { path: '/bookings', label: 'Lịch đặt KOL', icon: CalendarDays },
           { path: '/help', label: 'Trung tâm trợ giúp', icon: HelpCircle },
         ];

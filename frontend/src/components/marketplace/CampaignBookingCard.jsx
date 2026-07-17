@@ -70,15 +70,15 @@ export default function CampaignBookingCard({
             htmlFor="budget-input"
             className="block font-label-sm text-label-sm text-on-surface mb-2 font-semibold"
           >
-            Ngân sách Đề xuất (USD)
+            Ngân sách Đề xuất (VND)
           </label>
           <div className="relative">
-            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant font-bold">$</span>
+            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant font-bold text-xs">VND</span>
             <input
-              className="w-full bg-surface-container dark:bg-surface-variant/20 border-none rounded-xl pl-8 pr-4 py-3 text-body-md focus:ring-2 focus:ring-secondary-fixed focus:bg-surface-container-lowest transition-all font-bold text-lg text-primary dark:text-inverse-primary"
+              className="w-full bg-surface-container dark:bg-surface-variant/20 border-none rounded-xl pl-14 pr-4 py-3 text-body-md focus:ring-2 focus:ring-secondary-fixed focus:bg-surface-container-lowest transition-all font-bold text-lg text-primary dark:text-inverse-primary"
               id="budget-input"
               type="number"
-              placeholder="0.00"
+              placeholder="0"
               value={budget}
               onChange={(e) => onBudgetChange(e.target.value)}
             />
@@ -86,7 +86,7 @@ export default function CampaignBookingCard({
           <p className="text-[11px] text-on-surface-variant mt-2 leading-relaxed">
             Mức giá thông thường của nhà sáng tạo bắt đầu từ khoảng{' '}
             <span className="font-semibold text-primary dark:text-inverse-primary">
-              {creator.priceRange ? creator.priceRange : `$${creator.startingPrice || 150}`}
+              {creator.priceRange ? creator.priceRange : `${(creator.startingPrice || 0).toLocaleString('vi-VN')} VND`}
             </span>.
           </p>
         </div>

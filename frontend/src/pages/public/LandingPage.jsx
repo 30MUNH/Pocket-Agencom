@@ -91,7 +91,7 @@ const TESTIMONIALS = [
     avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuC8VsQQK0-T3KtHp4yQNnGxqUZHR0gYFB48W6-N0iSIKJWT86AKdN3FB66mRCRc6T2pxo_ELz_UrACweONEoLlCZDmvEMQeeYDd9sjf8ipU6aFDAWqhcW89RX8QasjLQ-poOwtzaYWdKLgC5IdXq_gnlo71aqPhN2foWlscbwKxi71_bcVML3f00ccUKB8lZ5Q560eBvLlhgD9m0QDUCUYj2_8lsXRCToQmZ2jXgfRdKSCcFzhqsmtVmmCu_sP5NZwjuECe92afpgM',
   },
   {
-    quote: '"Chợ KOL là một bước ngoặt lớn. Chúng tôi đã đặt 3 nhà sáng tạo nội dung cho buổi khai trương quán cà phê mới và lượng khách tăng 40%."',
+    quote: '"KOL là một bước ngoặt lớn. Chúng tôi đã đặt 3 nhà sáng tạo nội dung cho buổi khai trương quán cà phê mới và lượng khách tăng 40%."',
     name: 'Minh Đức',
     role: 'Chủ quán Cà phê',
     avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCRBox4HF0uPZla7hWKp6Ez1VN3ffJ9YyRFPR-7OXSKCqmKwqNAcgjpztlY2p5I2hqySmKMqdNiDiNIa3ew0hMecjkYSVP4SCpocQb3JH5xK1bkKcc_r5mFog4cFLwa1WF_YJefGS2AoXmjxo0LdREc-2pT1qyE1bUNggUblL4ELDMRrOChSrneWafzlPcQPZvahU899_VsEuAfRsynFvMLpZmoPZPOlo4Xw2FUt6M8b4jijVYUb17UpR9pNbUJAvKsT-skdqPN74s',
@@ -132,7 +132,7 @@ export default function LandingPage() {
             Tính năng
           </a>
           <a href="#marketplace" className="text-on-surface-variant hover:text-primary dark:text-outline-variant dark:hover:text-inverse-primary text-sm font-semibold transition-colors">
-            Chợ KOL/KOC
+            KOL/KOC
           </a>
           <a href="#pricing" className="text-on-surface-variant hover:text-primary dark:text-outline-variant dark:hover:text-inverse-primary text-sm font-semibold transition-colors">
             Bảng giá
@@ -353,7 +353,7 @@ export default function LandingPage() {
               <div className="w-12 h-12 bg-secondary-container dark:bg-outline/20 rounded-xl flex items-center justify-center mb-4">
                 <Users className="text-[#FF8FA3]" size={20} />
               </div>
-              <h3 className="font-bold text-xl mb-1 text-primary dark:text-inverse-primary">Chợ KOL/KOC</h3>
+              <h3 className="font-bold text-xl mb-1 text-primary dark:text-inverse-primary">KOL/KOC</h3>
               <p className="text-on-surface-variant text-sm">Tiếp cận trực tiếp các nhà sáng tạo nội dung chất lượng đã được kiểm duyệt.</p>
             </div>
           </div>
@@ -431,7 +431,7 @@ export default function LandingPage() {
               className="bg-primary text-on-primary px-6 py-3 rounded-full font-bold hover:opacity-90 transition-all text-sm uppercase flex items-center gap-2"
             >
               <Compass size={14} />
-              Khám phá Chợ KOL/KOC
+              Khám phá KOL/KOC
             </Link>
           </div>
 
@@ -666,7 +666,7 @@ export default function LandingPage() {
             </h5>
             <ul className="space-y-2 text-on-surface-variant text-sm">
               <li><a href="#features" className="hover:text-secondary transition-colors">Tính năng</a></li>
-              <li><a href="#marketplace" className="hover:text-secondary transition-colors">Chợ KOL/KOC</a></li>
+              <li><a href="#marketplace" className="hover:text-secondary transition-colors">KOL/KOC</a></li>
               <li><a href="#pricing" className="hover:text-secondary transition-colors">Bảng giá</a></li>
             </ul>
           </div>

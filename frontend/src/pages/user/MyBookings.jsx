@@ -35,7 +35,7 @@ export default function MyBookings() {
             Đơn đặt campaign
           </h1>
           <p className="font-body-lg text-body-lg text-on-surface-variant">
-            Quản lý và theo dõi các chiến dịch chợ sáng tạo KOL của bạn.
+            Quản lý và theo dõi các chiến dịch tiếp thị KOL của bạn.
           </p>
         </div>
 
