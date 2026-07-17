@@ -145,6 +145,11 @@ model BusinessProfile {
   marketingGoal      String?  @map("marketing_goal")
   budgetRange        String?  @map("budget_range")
   location           String?
+  usp                String?  @map("usp")
+  brandVoice         String?  @map("brand_voice")
+  priceRange         String?  @map("price_range")
+  bestSellingProduct String?  @map("best_selling_product")
+  monthlyMarketingBudget String? @map("monthly_marketing_budget")
   createdAt          DateTime @default(now()) @map("created_at")
   updatedAt          DateTime @default(now()) @updatedAt @map("updated_at")
 

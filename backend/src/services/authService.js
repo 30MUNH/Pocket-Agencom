@@ -120,6 +120,11 @@ async function updateBusinessProfile(userId, data) {
       marketingGoal: data.marketingGoal,
       budgetRange: data.budgetRange,
       location: data.location,
+      usp: data.usp,
+      brandVoice: data.brandVoice,
+      priceRange: data.priceRange,
+      bestSellingProduct: data.bestSellingProduct,
+      monthlyMarketingBudget: data.monthlyMarketingBudget,
     },
     create: {
       userId,
@@ -130,6 +135,11 @@ async function updateBusinessProfile(userId, data) {
       marketingGoal: data.marketingGoal,
       budgetRange: data.budgetRange,
       location: data.location,
+      usp: data.usp,
+      brandVoice: data.brandVoice,
+      priceRange: data.priceRange,
+      bestSellingProduct: data.bestSellingProduct,
+      monthlyMarketingBudget: data.monthlyMarketingBudget,
     },
   });
   return profile;

@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Store, Users, Target, Wand2, ArrowRight, ChevronDown, Check, Loader2, Sparkles } from 'lucide-react';
 import { useGeneratePlan } from '../../hooks/useMarketingPlans';
 import { toast } from '../../store/toastStore';
+import { authApi } from '../../api/authApi';
 import AILoadingScreen from '../../components/ai/AILoadingScreen';
 
 export default function GenerateMarketingKit() {
@@ -10,6 +11,8 @@ export default function GenerateMarketingKit() {
   const location = useLocation();
   const generatePlan = useGeneratePlan();
   const [activeStep, setActiveStep] = useState(2);
+  const [profileData, setProfileData] = useState(null);
+  const [checkingProfile, setCheckingProfile] = useState(true);
 
   const trendData = location.state?.trend;
 
@@ -26,6 +29,70 @@ export default function GenerateMarketingKit() {
   const [budget, setBudget] = useState(1500);
 
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    const verifyProfile = async () => {
+      try {
+        const user = await authApi.me();
+        if (user?.businessProfile) {
+          setProfileData(user.businessProfile);
+        }
+      } catch (err) {
+        console.error('Failed to verify business profile:', err);
+      } finally {
+        setCheckingProfile(false);
+      }
+    };
+    verifyProfile();
+  }, []);
+
+  if (checkingProfile) {
+    return (
+      <div className="flex-1 w-full flex flex-col items-center justify-center py-20 gap-3 text-on-surface-variant">
+        <Loader2 className="animate-spin text-secondary" size={32} />
+        <span className="text-body-md font-medium">Đang xác thực thông tin doanh nghiệp...</span>
+      </div>
+    );
+  }
+
+  const isProfileIncomplete = !profileData || !profileData.usp || !profileData.brandVoice;
+
+  if (isProfileIncomplete) {
+    return (
+      <div className="flex-1 w-full space-y-8 animate-fade-in">
+        <div>
+          <h2 className="text-display-lg-mobile md:text-display-lg font-display-lg text-primary dark:text-inverse-primary mb-2">
+            Tạo Bộ công cụ Marketing
+          </h2>
+          <p className="text-body-lg text-on-surface-variant max-w-2xl">
+            AI của chúng tôi thiết lập một chiến lược tiếp thị thống nhất phù hợp chính xác với thương hiệu của bạn.
+          </p>
+        </div>
+
+        <div className="max-w-2xl mx-auto mt-12 bg-surface-container-lowest dark:bg-tertiary-container rounded-[2rem] p-8 md:p-10 shadow-ambient border border-amber-200/50 dark:border-amber-500/20 text-center space-y-6 relative overflow-hidden">
+          <div className="absolute -right-16 -top-16 w-48 h-48 bg-amber-500/10 rounded-full blur-2xl pointer-events-none" />
+          <div className="w-20 h-20 bg-amber-500/10 text-amber-600 dark:text-amber-400 rounded-full flex items-center justify-center mx-auto ring-8 ring-amber-500/5">
+            <Sparkles size={36} className="animate-pulse" />
+          </div>
+          <div className="space-y-3">
+            <h3 className="text-headline-md font-bold text-primary">Cần Bổ sung Thông tin Thương hiệu</h3>
+            <p className="text-body-md text-on-surface-variant leading-relaxed max-w-md mx-auto">
+              AI cần hiểu rõ thương hiệu của bạn để tạo ra chiến dịch xuất sắc nhất. Vui lòng hoàn thiện Hồ sơ Doanh nghiệp trước khi tiếp tục.
+            </p>
+          </div>
+          <div className="pt-4 flex flex-col sm:flex-row gap-4 justify-center">
+            <button
+              onClick={() => navigate('/business-profile')}
+              className="bg-secondary text-on-secondary hover:bg-secondary/95 px-8 py-3.5 rounded-full text-label-sm font-bold shadow-md hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center justify-center gap-2 uppercase tracking-wider"
+            >
+              Hoàn thiện Hồ sơ ngay
+              <ArrowRight size={16} />
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault();

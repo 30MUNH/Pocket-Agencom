@@ -13,7 +13,12 @@ import {
   X, 
   Loader2,
   ExternalLink,
-  MessageSquare
+  MessageSquare,
+  Share2,
+  Briefcase,
+  Layers,
+  Volume2,
+  Award
 } from 'lucide-react';
 import { authApi } from '../../api/authApi';
 
@@ -68,7 +73,7 @@ export default function BusinessProfile() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
-  // Form states
+  // Form states with all required fields
   const [form, setForm] = useState({
     businessName: '',
     businessType: 'General',
@@ -76,13 +81,17 @@ export default function BusinessProfile() {
     targetCustomer: '',
     marketingGoal: '',
     budgetRange: '',
-    location: ''
+    location: '',
+    usp: '',
+    brandVoice: 'Chuyên nghiệp',
+    priceRange: 'Trung cấp',
+    bestSellingProduct: '',
+    monthlyMarketingBudget: ''
   });
 
   const fetchProfile = async () => {
     try {
-      const response = await authApi.me();
-      const user = response.data;
+      const user = await authApi.me();
       if (user?.businessProfile) {
         setProfile(user.businessProfile);
         setForm({
@@ -92,7 +101,12 @@ export default function BusinessProfile() {
           targetCustomer: user.businessProfile.targetCustomer || '',
           marketingGoal: user.businessProfile.marketingGoal || '',
           budgetRange: user.businessProfile.budgetRange || '',
-          location: user.businessProfile.location || ''
+          location: user.businessProfile.location || '',
+          usp: user.businessProfile.usp || '',
+          brandVoice: user.businessProfile.brandVoice || 'Chuyên nghiệp',
+          priceRange: user.businessProfile.priceRange || 'Trung cấp',
+          bestSellingProduct: user.businessProfile.bestSellingProduct || '',
+          monthlyMarketingBudget: user.businessProfile.monthlyMarketingBudget || ''
         });
       }
     } catch (err) {
@@ -110,8 +124,8 @@ export default function BusinessProfile() {
     e.preventDefault();
     setIsSaving(true);
     try {
-      const response = await authApi.updateBusinessProfile(form);
-      setProfile(response.data);
+      const updatedProfile = await authApi.updateBusinessProfile(form);
+      setProfile(updatedProfile);
       setIsEditing(false);
       await fetchProfile();
       alert('Cập nhật hồ sơ doanh nghiệp thành công!');
@@ -162,7 +176,7 @@ export default function BusinessProfile() {
   if (isLoading) {
     return (
       <div className="flex-1 w-full flex flex-col items-center justify-center py-20 gap-3 text-on-surface-variant">
-        <Loader2 className="animate-spin" size={32} />
+        <Loader2 className="animate-spin text-secondary" size={32} />
         <span className="text-body-md font-medium">Đang tải hồ sơ doanh nghiệp...</span>
       </div>
     );
@@ -183,7 +197,7 @@ export default function BusinessProfile() {
             Hồ sơ Doanh nghiệp
           </h2>
           <p className="text-body-lg font-body-lg text-on-surface-variant max-w-2xl mt-1">
-            Quản lý thông tin chi tiết về thương hiệu và theo dõi hiệu suất các kênh truyền thông liên kết.
+            Quản lý định vị thương hiệu và cung cấp dữ liệu chi tiết cho thuật toán AI thiết lập chiến lược tiếp thị.
           </p>
         </div>
 
@@ -198,41 +212,42 @@ export default function BusinessProfile() {
         )}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Left column: Business Profile Details Card */}
-        <div className="lg:col-span-1">
-          {isEditing ? (
-            <form onSubmit={handleSave} className="bg-surface-container-lowest rounded-3xl p-6 md:p-8 shadow-ambient border border-surface-container/20 space-y-6">
-              <div className="flex items-center justify-between border-b border-surface-container pb-4">
-                <h3 className="text-headline-sm font-headline-sm text-primary flex items-center gap-2">
-                  <Building2 className="w-5 h-5 text-secondary" />
-                  Sửa Hồ sơ
-                </h3>
-                <button
-                  type="button"
-                  onClick={() => setIsEditing(false)}
-                  className="p-2 hover:bg-surface-container rounded-full text-on-surface-variant transition-colors"
-                >
-                  <X size={18} />
-                </button>
+      {isEditing ? (
+        <form onSubmit={handleSave} className="space-y-6">
+          {/* Bento Grid layout for Form Editing */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            {/* Bento Card 1: Tổng quan Doanh nghiệp */}
+            <div className="bg-surface-container-lowest rounded-3xl p-6 md:p-8 shadow-ambient border border-surface-container/20 space-y-6">
+              <div className="flex items-center gap-2 border-b border-surface-container pb-3">
+                <div className="p-2 bg-primary-container text-primary rounded-xl">
+                  <Building2 size={20} />
+                </div>
+                <h3 className="text-headline-sm font-bold text-primary">Tổng quan Doanh nghiệp</h3>
               </div>
 
               <div className="space-y-4">
                 <div className="space-y-1">
-                  <label className="block text-label-xs font-bold text-on-surface-variant">Tên Doanh nghiệp</label>
+                  <label className="block text-label-xs font-bold text-on-surface-variant uppercase tracking-wider">
+                    Tên Doanh nghiệp <span className="text-red-500">*</span>
+                  </label>
                   <input
                     type="text"
+                    required
                     value={form.businessName}
                     onChange={(e) => setForm({ ...form, businessName: e.target.value })}
                     className="w-full bg-surface-container-lowest text-primary border border-surface-variant rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-secondary-container"
-                    placeholder="Tên thương hiệu..."
+                    placeholder="Nhập tên thương hiệu của bạn..."
                   />
                 </div>
 
                 <div className="space-y-1">
-                  <label className="block text-label-xs font-bold text-on-surface-variant">Lĩnh vực kinh doanh</label>
+                  <label className="block text-label-xs font-bold text-on-surface-variant uppercase tracking-wider">
+                    Lĩnh vực kinh doanh <span className="text-red-500">*</span>
+                  </label>
                   <input
                     type="text"
+                    required
                     value={form.businessType}
                     onChange={(e) => setForm({ ...form, businessType: e.target.value })}
                     className="w-full bg-surface-container-lowest text-primary border border-surface-variant rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-secondary-container"
@@ -241,53 +256,12 @@ export default function BusinessProfile() {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="block text-label-xs font-bold text-on-surface-variant">Mô tả Sản phẩm/Dịch vụ</label>
-                  <textarea
-                    value={form.productDescription}
-                    onChange={(e) => setForm({ ...form, productDescription: e.target.value })}
-                    rows={4}
-                    className="w-full bg-surface-container-lowest text-primary border border-surface-variant rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-secondary-container"
-                    placeholder="Mô tả chi tiết về sản phẩm hoặc dịch vụ cốt lõi của bạn..."
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="block text-label-xs font-bold text-on-surface-variant">Khách hàng Mục tiêu</label>
-                  <textarea
-                    value={form.targetCustomer}
-                    onChange={(e) => setForm({ ...form, targetCustomer: e.target.value })}
-                    rows={3}
-                    className="w-full bg-surface-container-lowest text-primary border border-surface-variant rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-secondary-container"
-                    placeholder="Ví dụ: Giới trẻ 18-25 tuổi tại các thành phố lớn..."
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="block text-label-xs font-bold text-on-surface-variant">Mục tiêu Tiếp thị</label>
+                  <label className="block text-label-xs font-bold text-on-surface-variant uppercase tracking-wider">
+                    Địa điểm / Vị trí kinh doanh <span className="text-red-500">*</span>
+                  </label>
                   <input
                     type="text"
-                    value={form.marketingGoal}
-                    onChange={(e) => setForm({ ...form, marketingGoal: e.target.value })}
-                    className="w-full bg-surface-container-lowest text-primary border border-surface-variant rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-secondary-container"
-                    placeholder="Ví dụ: Tăng nhận diện thương hiệu, Đẩy doanh số..."
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="block text-label-xs font-bold text-on-surface-variant">Ngân sách dự kiến</label>
-                  <input
-                    type="text"
-                    value={form.budgetRange}
-                    onChange={(e) => setForm({ ...form, budgetRange: e.target.value })}
-                    className="w-full bg-surface-container-lowest text-primary border border-surface-variant rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-secondary-container"
-                    placeholder="Ví dụ: 10,000,000 VND / tháng..."
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="block text-label-xs font-bold text-on-surface-variant">Khu vực địa lý</label>
-                  <input
-                    type="text"
+                    required
                     value={form.location}
                     onChange={(e) => setForm({ ...form, location: e.target.value })}
                     className="w-full bg-surface-container-lowest text-primary border border-surface-variant rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-secondary-container"
@@ -295,38 +269,198 @@ export default function BusinessProfile() {
                   />
                 </div>
               </div>
+            </div>
 
-              <div className="flex gap-3 pt-4">
-                <button
-                  type="submit"
-                  disabled={isSaving}
-                  className="flex-1 bg-secondary-container text-on-secondary-container hover:bg-secondary hover:text-on-secondary disabled:opacity-50 px-6 py-3 rounded-full text-label-sm font-bold transition-all flex items-center justify-center gap-2"
-                >
-                  {isSaving ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <Save size={16} />
-                  )}
-                  Lưu thay đổi
-                </button>
-              </div>
-            </form>
-          ) : (
+            {/* Bento Card 2: Định vị & Sản phẩm */}
             <div className="bg-surface-container-lowest rounded-3xl p-6 md:p-8 shadow-ambient border border-surface-container/20 space-y-6">
+              <div className="flex items-center gap-2 border-b border-surface-container pb-3">
+                <div className="p-2 bg-secondary-container text-secondary rounded-xl">
+                  <Award size={20} />
+                </div>
+                <h3 className="text-headline-sm font-bold text-primary">Định vị & Sản phẩm</h3>
+              </div>
+
+              <div className="space-y-4">
+                <div className="space-y-1">
+                  <label className="block text-label-xs font-bold text-on-surface-variant uppercase tracking-wider">
+                    USP (Điểm khác biệt độc nhất) <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={form.usp}
+                    onChange={(e) => setForm({ ...form, usp: e.target.value })}
+                    className="w-full bg-surface-container-lowest text-primary border border-surface-variant rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-secondary-container"
+                    placeholder="Ví dụ: Nguyên liệu 100% hữu cơ, Bảo hành 10 năm..."
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="block text-label-xs font-bold text-on-surface-variant uppercase tracking-wider">
+                    Hình ảnh xuất hiện (Brand Voice) <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    required
+                    value={form.brandVoice}
+                    onChange={(e) => setForm({ ...form, brandVoice: e.target.value })}
+                    className="w-full bg-surface-container-lowest text-primary border border-surface-variant rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-secondary-container"
+                  >
+                    <option value="Chuyên nghiệp, tin cậy">Chuyên nghiệp, tin cậy</option>
+                    <option value="Hài hước, gần gũi, bắt trend">Hài hước, gần gũi, bắt trend</option>
+                    <option value="Sang trọng, cao cấp, tinh tế">Sang trọng, cao cấp, tinh tế</option>
+                    <option value="Mạnh mẽ, năng động, thể thao">Mạnh mẽ, năng động, thể thao</option>
+                    <option value="Nhẹ nhàng, thư thái, tự nhiên">Nhẹ nhàng, thư thái, tự nhiên</option>
+                    <option value="Đột phá, nổi loạn, độc lạ">Đột phá, nổi loạn, độc lạ</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="block text-label-xs font-bold text-on-surface-variant uppercase tracking-wider">
+                    Phân khúc giá <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    required
+                    value={form.priceRange}
+                    onChange={(e) => setForm({ ...form, priceRange: e.target.value })}
+                    className="w-full bg-surface-container-lowest text-primary border border-surface-variant rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-secondary-container"
+                  >
+                    <option value="Giá rẻ / Bình dân">Giá rẻ / Bình dân</option>
+                    <option value="Trung cấp">Trung cấp</option>
+                    <option value="Cận cao cấp">Cận cao cấp</option>
+                    <option value="Cao cấp / Xa xỉ">Cao cấp / Xa xỉ</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="block text-label-xs font-bold text-on-surface-variant uppercase tracking-wider">
+                    Sản phẩm bán chạy nhất <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={form.bestSellingProduct}
+                    onChange={(e) => setForm({ ...form, bestSellingProduct: e.target.value })}
+                    className="w-full bg-surface-container-lowest text-primary border border-surface-variant rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-secondary-container"
+                    placeholder="Ví dụ: Kem chống nắng thuần chay, Combo trà sữa..."
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Bento Card 3: Khách hàng & Ngân sách */}
+            <div className="bg-surface-container-lowest rounded-3xl p-6 md:p-8 shadow-ambient border border-surface-container/20 space-y-6">
+              <div className="flex items-center gap-2 border-b border-surface-container pb-3">
+                <div className="p-2 bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 rounded-xl">
+                  <Users size={20} />
+                </div>
+                <h3 className="text-headline-sm font-bold text-primary">Khách hàng & Ngân sách</h3>
+              </div>
+
+              <div className="space-y-4">
+                <div className="space-y-1">
+                  <label className="block text-label-xs font-bold text-on-surface-variant uppercase tracking-wider">
+                    Mô tả Sản phẩm / Dịch vụ <span className="text-red-500">*</span>
+                  </label>
+                  <textarea
+                    required
+                    value={form.productDescription}
+                    onChange={(e) => setForm({ ...form, productDescription: e.target.value })}
+                    rows={2}
+                    className="w-full bg-surface-container-lowest text-primary border border-surface-variant rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-secondary-container"
+                    placeholder="Mô tả chi tiết về sản phẩm cốt lõi..."
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="block text-label-xs font-bold text-on-surface-variant uppercase tracking-wider">
+                    Khách hàng Mục tiêu <span className="text-red-500">*</span>
+                  </label>
+                  <textarea
+                    required
+                    value={form.targetCustomer}
+                    onChange={(e) => setForm({ ...form, targetCustomer: e.target.value })}
+                    rows={2}
+                    className="w-full bg-surface-container-lowest text-primary border border-surface-variant rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-secondary-container"
+                    placeholder="Ví dụ: Giới trẻ 18-25 quan tâm môi trường..."
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="block text-label-xs font-bold text-on-surface-variant uppercase tracking-wider">
+                    Mục tiêu Tiếp thị <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={form.marketingGoal}
+                    onChange={(e) => setForm({ ...form, marketingGoal: e.target.value })}
+                    className="w-full bg-surface-container-lowest text-primary border border-surface-variant rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-secondary-container"
+                    placeholder="Ví dụ: Tăng nhận diện thương hiệu, Thúc đẩy doanh thu..."
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="block text-label-xs font-bold text-on-surface-variant uppercase tracking-wider">
+                    Ngân sách tiếp thị hàng tháng <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={form.monthlyMarketingBudget}
+                    onChange={(e) => setForm({ ...form, monthlyMarketingBudget: e.target.value })}
+                    className="w-full bg-surface-container-lowest text-primary border border-surface-variant rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-secondary-container"
+                    placeholder="Ví dụ: 10,000,000 - 20,000,000 VND..."
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex gap-4 justify-end pt-4">
+            <button
+              type="button"
+              onClick={() => setIsEditing(false)}
+              className="bg-outline-variant/20 hover:bg-outline-variant/35 text-primary px-8 py-3 rounded-full text-label-sm font-bold transition-all flex items-center justify-center gap-2"
+            >
+              Hủy
+            </button>
+            <button
+              type="submit"
+              disabled={isSaving}
+              className="bg-primary text-on-primary hover:opacity-90 disabled:opacity-50 px-8 py-3 rounded-full text-label-sm font-bold transition-all flex items-center justify-center gap-2 shadow-md"
+            >
+              {isSaving ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Save size={16} />
+              )}
+              Lưu toàn bộ hồ sơ
+            </button>
+          </div>
+        </form>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 animate-fade-in">
+          {/* Left Column: Business Profile Bento Sections */}
+          <div className="lg:col-span-2 space-y-6">
+            
+            {/* Bento block: Brand details */}
+            <div className="bg-surface-container-lowest rounded-[2rem] p-6 md:p-8 shadow-ambient border border-surface-container/20 space-y-6 relative overflow-hidden">
+              <div className="absolute -right-16 -top-16 w-48 h-48 bg-primary-container/20 rounded-full blur-2xl pointer-events-none" />
+              
               <div className="border-b border-surface-container pb-4">
-                <h3 className="text-headline-sm font-headline-sm text-primary flex items-center gap-2">
-                  <Building2 className="w-5 h-5 text-secondary" />
-                  Hồ sơ Doanh nghiệp
+                <h3 className="text-headline-md font-bold text-primary flex items-center gap-3">
+                  <Building2 className="w-6 h-6 text-secondary" />
+                  Hồ sơ Thương hiệu
                 </h3>
               </div>
 
-              <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <span className="text-body-xs font-bold text-on-surface-variant uppercase tracking-wider block mb-1">
                     Tên Doanh nghiệp
                   </span>
                   <p className="text-body-lg font-bold text-primary">
-                    {profile?.businessName || 'Chưa thiết lập tên doanh nghiệp'}
+                    {profile?.businessName || 'Chưa thiết lập'}
                   </p>
                 </div>
 
@@ -334,12 +468,12 @@ export default function BusinessProfile() {
                   <span className="text-body-xs font-bold text-on-surface-variant uppercase tracking-wider block mb-1">
                     Lĩnh vực kinh doanh
                   </span>
-                  <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-secondary-container text-primary font-bold text-xs uppercase tracking-wider">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-secondary-container text-primary font-bold text-xs uppercase tracking-wider">
                     {profile?.businessType || 'Chưa phân loại'}
                   </span>
                 </div>
 
-                <div>
+                <div className="md:col-span-2">
                   <span className="text-body-xs font-bold text-on-surface-variant uppercase tracking-wider block mb-1">
                     Mô tả Sản phẩm / Dịch vụ
                   </span>
@@ -348,182 +482,167 @@ export default function BusinessProfile() {
                   </p>
                 </div>
 
-                <div>
+                <div className="md:col-span-2">
                   <span className="text-body-xs font-bold text-on-surface-variant uppercase tracking-wider block mb-1">
                     Khách hàng Mục tiêu
                   </span>
                   <p className="text-body-md text-on-surface-variant leading-relaxed">
-                    {profile?.targetCustomer || 'Chưa cung cấp đối tượng mục tiêu.'}
+                    {profile?.targetCustomer || 'Chưa cung cấp khách hàng mục tiêu.'}
                   </p>
-                </div>
-
-                <div className="grid grid-cols-1 gap-4 pt-4 border-t border-surface-container">
-                  <div className="flex items-start gap-3">
-                    <Target className="w-5 h-5 text-secondary shrink-0 mt-0.5" />
-                    <div>
-                      <span className="text-body-xs text-on-surface-variant block">Mục tiêu tiếp thị</span>
-                      <p className="text-sm font-bold text-primary">{profile?.marketingGoal || 'Chưa thiết lập'}</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-3">
-                    <Coins className="w-5 h-5 text-secondary shrink-0 mt-0.5" />
-                    <div>
-                      <span className="text-body-xs text-on-surface-variant block">Ngân sách dự kiến</span>
-                      <p className="text-sm font-bold text-primary">{profile?.budgetRange || 'Chưa thiết lập'}</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-3">
-                    <Globe className="w-5 h-5 text-secondary shrink-0 mt-0.5" />
-                    <div>
-                      <span className="text-body-xs text-on-surface-variant block">Địa điểm/Khu vực</span>
-                      <p className="text-sm font-bold text-primary">{profile?.location || 'Toàn quốc'}</p>
-                    </div>
-                  </div>
                 </div>
               </div>
             </div>
-          )}
-        </div>
 
-        {/* Right column: Bento-style Social Analytics Grid */}
-        <div className="lg:col-span-2 space-y-6">
-          <h3 className="text-headline-sm font-headline-sm text-primary flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-secondary" />
-            Phân tích Kênh Truyền thông
-          </h3>
-
-          {socialLinks.length === 0 ? (
-            <div className="bg-surface-container-lowest rounded-3xl p-10 border border-dashed border-outline-variant/60 text-center space-y-4">
-              <div className="w-16 h-16 bg-secondary-container text-primary rounded-full flex items-center justify-center mx-auto">
-                <Users size={28} />
+            {/* Bento block: Brand positioning */}
+            <div className="bg-surface-container-lowest rounded-[2rem] p-6 md:p-8 shadow-ambient border border-surface-container/20 space-y-6 relative overflow-hidden">
+              <div className="absolute -left-16 -bottom-16 w-48 h-48 bg-secondary-container/25 rounded-full blur-2xl pointer-events-none" />
+              
+              <div className="border-b border-surface-container pb-4">
+                <h3 className="text-headline-md font-bold text-primary flex items-center gap-3">
+                  <Sparkles className="w-6 h-6 text-secondary" />
+                  Định vị Chiến lược (Dùng cho AI)
+                </h3>
               </div>
-              <div className="max-w-md mx-auto space-y-2">
-                <h4 className="text-label-lg font-bold text-primary">Chưa có kênh liên kết nào hoạt động</h4>
-                <p className="text-body-md text-on-surface-variant">
-                  Hãy kết nối tài khoản TikTok, Facebook hoặc Instagram trong mục Cài đặt để AI thực hiện phân tích số liệu và xuất nhận xét chiến lược.
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="bg-surface-container-low p-4 rounded-2xl border border-surface-container/30 space-y-1">
+                  <span className="text-body-xs font-bold text-secondary uppercase tracking-wider block">
+                    USP (Điểm khác biệt độc nhất)
+                  </span>
+                  <p className="text-body-md font-bold text-primary">
+                    {profile?.usp || 'Chưa thiết lập điểm khác biệt'}
+                  </p>
+                </div>
+
+                <div className="bg-surface-container-low p-4 rounded-2xl border border-surface-container/30 space-y-1">
+                  <span className="text-body-xs font-bold text-secondary uppercase tracking-wider block">
+                    Hình ảnh xuất hiện (Brand Voice)
+                  </span>
+                  <p className="text-body-md font-bold text-primary flex items-center gap-2">
+                    <Volume2 size={16} className="text-secondary shrink-0" />
+                    {profile?.brandVoice || 'Chưa thiết lập'}
+                  </p>
+                </div>
+
+                <div className="bg-surface-container-low p-4 rounded-2xl border border-surface-container/30 space-y-1">
+                  <span className="text-body-xs font-bold text-secondary uppercase tracking-wider block">
+                    Phân khúc giá
+                  </span>
+                  <p className="text-body-md font-bold text-primary">
+                    {profile?.priceRange || 'Chưa thiết lập'}
+                  </p>
+                </div>
+
+                <div className="bg-surface-container-low p-4 rounded-2xl border border-surface-container/30 space-y-1">
+                  <span className="text-body-xs font-bold text-secondary uppercase tracking-wider block">
+                    Sản phẩm bán chạy nhất
+                  </span>
+                  <p className="text-body-md font-bold text-primary">
+                    {profile?.bestSellingProduct || 'Chưa thiết lập'}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Bento Card for Social Link Call To Action */}
+            <div className="bg-gradient-to-r from-secondary-container/40 to-primary-container/20 rounded-[2rem] p-6 md:p-8 shadow-ambient border border-surface-container/20 flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden">
+              <div className="absolute right-0 bottom-0 w-36 h-36 bg-primary-container/20 rounded-full blur-2xl pointer-events-none" />
+              <div className="space-y-2 max-w-xl">
+                <div className="flex items-center gap-3">
+                  <Share2 className="w-5 h-5 text-secondary shrink-0" />
+                  <h4 className="text-label-lg font-bold text-primary">Liên kết Mạng xã hội</h4>
+                </div>
+                <p className="text-body-md text-on-surface-variant leading-relaxed">
+                  Kết nối tài khoản TikTok, Facebook hoặc Instagram của thương hiệu. AI của Agencom sẽ tự động tải số liệu phân tích và đưa ra phản hồi, giúp xây dựng kịch bản và kế hoạch tối ưu hơn.
                 </p>
               </div>
               <a
                 href="/settings"
-                className="inline-block bg-primary text-on-primary font-bold px-6 py-3 rounded-full text-label-sm shadow-sm hover:opacity-90 transition-opacity"
+                className="bg-secondary text-on-secondary hover:opacity-90 px-6 py-3 rounded-full text-label-sm font-bold shadow-md transition-all whitespace-nowrap flex items-center gap-2"
               >
-                Liên kết ngay
+                Quản lý liên kết <ExternalLink size={14} />
               </a>
             </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              {/* Bento Card 1: Total Reach */}
-              <div className="bg-surface-container-lowest rounded-3xl p-6 shadow-ambient border border-surface-container/20 flex items-center justify-between gap-4">
-                <div className="space-y-1">
-                  <span className="text-body-xs font-bold text-on-surface-variant uppercase tracking-wider block">
-                    Tổng lượng tiếp cận (Reach)
-                  </span>
-                  <h4 className="text-display-md font-display-md text-primary">
-                    {formatFollowers(totalFollowers)}
-                  </h4>
-                  <span className="text-body-xs text-secondary block font-bold">
-                    Người theo dõi tích lũy
-                  </span>
-                </div>
-                <div className="w-14 h-14 bg-secondary-container text-primary rounded-2xl flex items-center justify-center">
-                  <Users className="w-7 h-7" />
-                </div>
-              </div>
+          </div>
 
-              {/* Bento Card 2: Average Engagement */}
-              <div className="bg-surface-container-lowest rounded-3xl p-6 shadow-ambient border border-surface-container/20 flex items-center justify-between gap-4">
-                <div className="space-y-1">
-                  <span className="text-body-xs font-bold text-on-surface-variant uppercase tracking-wider block">
-                    Tương tác trung bình
-                  </span>
-                  <h4 className="text-display-md font-display-md text-primary">
-                    {avgEngagement}%
-                  </h4>
-                  <span className="text-body-xs text-emerald-600 dark:text-emerald-400 block font-bold flex items-center gap-1">
-                    <TrendingUp className="w-4 h-4" />
-                    Rất ấn tượng
-                  </span>
-                </div>
-                <div className="w-14 h-14 bg-secondary-container text-primary rounded-2xl flex items-center justify-center">
-                  <Activity className="w-7 h-7" />
-                </div>
-              </div>
+          {/* Right Column: Mini Info Cards & Social Analytics Summary */}
+          <div className="lg:col-span-1 space-y-6">
+            <div className="bg-surface-container-lowest rounded-3xl p-6 md:p-8 shadow-ambient border border-surface-container/20 space-y-6">
+              <h3 className="text-headline-sm font-bold text-primary flex items-center gap-2 pb-3 border-b border-surface-container">
+                <Target className="w-5 h-5 text-secondary" />
+                Thông số Tiếp thị
+              </h3>
 
-              {/* Bento Cards 3+: Platform specific cards */}
-              {socialLinks.map((plat) => (
-                <div 
-                  key={plat.id}
-                  className="sm:col-span-2 bg-surface-container-lowest rounded-3xl p-6 md:p-8 shadow-ambient border border-surface-container/20 space-y-6"
-                >
-                  <div className="flex items-center justify-between gap-4">
-                    <div className="flex items-center gap-3">
-                      <div className={`p-2.5 rounded-2xl flex items-center justify-center ${getPlatformColor(plat.platform)}`}>
-                        {getPlatformIcon(plat.platform, "w-6 h-6")}
-                      </div>
-                      <div>
-                        <h5 className="text-label-lg font-bold text-primary capitalize flex items-center gap-2">
-                          {plat.platform}
-                          <a 
-                            href={plat.url} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="text-on-surface-variant hover:text-primary transition-colors inline-block"
-                          >
-                            <ExternalLink className="w-4 h-4" />
-                          </a>
-                        </h5>
-                        <span className="text-body-xs text-on-surface-variant">Số liệu phân tích mới nhất</span>
-                      </div>
-                    </div>
-
-                    <div className="flex gap-4">
-                      <div className="text-right">
-                        <span className="text-body-xs text-on-surface-variant block">Followers</span>
-                        <span className="text-label-md font-bold text-primary">{formatFollowers(plat.followersCount)}</span>
-                      </div>
-                      <div className="text-right">
-                        <span className="text-body-xs text-on-surface-variant block">Tương tác</span>
-                        <span className="text-label-md font-bold text-primary">{plat.engagementRate}%</span>
-                      </div>
-                    </div>
+              <div className="space-y-5">
+                <div className="flex items-start gap-3">
+                  <div className="p-2 bg-secondary-container text-primary rounded-xl shrink-0 mt-0.5">
+                    <Target size={16} />
                   </div>
-
-                  {plat.aiInsight && (
-                    <div className="bg-surface-container-low rounded-2xl p-5 space-y-4">
-                      <div className="flex items-center gap-2 text-label-xs font-bold text-primary uppercase tracking-wider">
-                        <MessageSquare className="w-4 h-4 text-secondary" />
-                        Nhận xét chiến lược bằng AI
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-body-md text-on-surface-variant">
-                        {plat.aiInsight.split('\n\n').map((section, idx) => {
-                          const lines = section.split('\n');
-                          const title = lines[0].replace('### ', '');
-                          const items = lines.slice(1).map(l => l.replace('- ', ''));
-                          const isStrength = title.includes('Điểm mạnh');
-                          return (
-                            <div key={idx} className="space-y-2">
-                              <span className={`font-bold text-sm block ${isStrength ? 'text-emerald-700 dark:text-emerald-400' : 'text-amber-700 dark:text-amber-400'}`}>
-                                {title}
-                              </span>
-                              <ul className="list-disc pl-4 space-y-1 text-sm">
-                                {items.map((item, i) => (
-                                  <li key={i}>{item}</li>
-                                ))}
-                              </ul>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
+                  <div>
+                    <span className="text-body-xs text-on-surface-variant block">Mục tiêu chiến dịch</span>
+                    <p className="text-sm font-bold text-primary">{profile?.marketingGoal || 'Chưa thiết lập'}</p>
+                  </div>
                 </div>
-              ))}
+
+                <div className="flex items-start gap-3">
+                  <div className="p-2 bg-secondary-container text-primary rounded-xl shrink-0 mt-0.5">
+                    <Coins size={16} />
+                  </div>
+                  <div>
+                    <span className="text-body-xs text-on-surface-variant block">Ngân sách tháng</span>
+                    <p className="text-sm font-bold text-primary">{profile?.monthlyMarketingBudget || 'Chưa thiết lập'}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <div className="p-2 bg-secondary-container text-primary rounded-xl shrink-0 mt-0.5">
+                    <Globe size={16} />
+                  </div>
+                  <div>
+                    <span className="text-body-xs text-on-surface-variant block">Vị trí hoạt động</span>
+                    <p className="text-sm font-bold text-primary">{profile?.location || 'Toàn quốc'}</p>
+                  </div>
+                </div>
+              </div>
             </div>
-          )}
+
+            {/* Bento Card: Channels Stats Summary */}
+            <div className="bg-surface-container-lowest rounded-3xl p-6 md:p-8 shadow-ambient border border-surface-container/20 space-y-6">
+              <h3 className="text-headline-sm font-bold text-primary flex items-center gap-2 pb-3 border-b border-surface-container">
+                <Activity className="w-5 h-5 text-emerald-600" />
+                Truyền thông tích lũy
+              </h3>
+
+              {socialLinks.length === 0 ? (
+                <div className="text-center py-6 space-y-2">
+                  <p className="text-body-md text-on-surface-variant text-sm">Chưa có kênh liên kết nào hoạt động.</p>
+                  <a href="/settings" className="text-xs font-bold text-secondary hover:underline">Liên kết ngay</a>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-on-surface-variant">Tổng lượng người theo dõi:</span>
+                    <span className="text-sm font-bold text-primary">{formatFollowers(totalFollowers)}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-on-surface-variant">Tương tác trung bình:</span>
+                    <span className="text-sm font-bold text-primary">{avgEngagement}%</span>
+                  </div>
+                  <div className="space-y-2 pt-2">
+                    {socialLinks.map(link => (
+                      <div key={link.id} className="flex items-center gap-2 text-sm text-on-surface-variant capitalize">
+                        {getPlatformIcon(link.platform, "w-4 h-4 text-secondary")}
+                        <span>{link.platform}</span>
+                        <span className="ml-auto font-bold text-primary">{formatFollowers(link.followersCount)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

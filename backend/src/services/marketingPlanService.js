@@ -54,7 +54,26 @@ Trả về DUY NHẤT một JSON object hợp lệ theo đúng cấu trúc sau (
 }`;
 
 // ── Gemini-powered AI Content Generator ────────────────────────────────────────
-async function generateAIContent(data) {
+async function generateAIContent(data, profile) {
+  const usp = profile?.usp || 'Chưa xác định';
+  const brandVoice = profile?.brandVoice || 'Chuyên nghiệp, tin cậy';
+  const priceRange = profile?.priceRange || 'Chưa xác định';
+  const bestSellingProduct = profile?.bestSellingProduct || 'Chưa xác định';
+  const location = profile?.location || 'Chưa xác định';
+
+  const ENRICHED_SYSTEM_PROMPT = `${SYSTEM_PROMPT}
+
+THÔNG TIN THƯƠNG HIỆU DOANH NGHIỆP (BẮT BUỘC TUÂN THỦ CHẶT CHẼ):
+- Điểm khác biệt độc nhất (USP): ${usp}
+- Phong cách & Giọng điệu thương hiệu (Brand Voice): ${brandVoice}
+- Phân khúc giá sản phẩm: ${priceRange}
+- Sản phẩm bán chạy nhất: ${bestSellingProduct}
+- Khu vực hoạt động/Địa điểm: ${location}
+
+YÊU CẦU ĐẶC BIỆT:
+1. Giọng điệu (tone of voice) trong toàn bộ kịch bản hội thoại (videoScripts) và mô tả ý tưởng nội dung (contentIdeas) PHẢI thể hiện rõ ràng nét tính cách thương hiệu "${brandVoice}" đã được định hình.
+2. Các gợi ý tiếp thị và playbook hành động phải làm nổi bật điểm khác biệt thương hiệu (USP) "${usp}" và định vị sản phẩm bán chạy nhất "${bestSellingProduct}" của doanh nghiệp.`;
+
   let userPrompt = `Hãy tạo kế hoạch marketing cho chiến dịch sau:
 
 - Loại chiến dịch: ${data.campaignType}
@@ -84,7 +103,7 @@ ${similar.map((s, i) => `--- Case study ${i + 1} ---\n${s.content}`).join('\n\n'
   try {
     const result = await geminiModel.generateContent({
       contents: [{ role: 'user', parts: [{ text: userPrompt }] }],
-      systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
+      systemInstruction: { parts: [{ text: ENRICHED_SYSTEM_PROMPT }] },
     });
 
     const responseText = result.response.text();
@@ -205,24 +224,26 @@ function formatPlan(plan) {
 }
 
 async function generatePlan(userId, data) {
-  const aiContent = await generateAIContent(data);
+  let profile = await prisma.businessProfile.findUnique({ where: { userId } });
+  
+  const aiContent = await generateAIContent(data, profile);
 
   const plan = await prisma.$transaction(async (tx) => {
-    let profile = await tx.businessProfile.findUnique({ where: { userId } });
+    let profileTx = await tx.businessProfile.findUnique({ where: { userId } });
 
-    if (profile) {
-      profile = await tx.businessProfile.update({
-        where: { id: profile.id },
+    if (profileTx) {
+      profileTx = await tx.businessProfile.update({
+        where: { id: profileTx.id },
         data: {
           businessType: data.businessType,
           productDescription: data.productDescription,
           targetCustomer: data.targetCustomer,
           marketingGoal: data.goal,
-          budgetRange: data.budget ? `${data.budget} VND` : profile.budgetRange,
+          budgetRange: data.budget ? `${data.budget} VND` : profileTx.budgetRange,
         },
       });
     } else {
-      profile = await tx.businessProfile.create({
+      profileTx = await tx.businessProfile.create({
         data: {
           userId,
           businessType: data.businessType,
@@ -237,7 +258,7 @@ async function generatePlan(userId, data) {
     const created = await tx.marketingPlan.create({
       data: {
         userId,
-        businessProfileId: profile.id,
+        businessProfileId: profileTx.id,
         goal: data.goal,
         campaignType: data.campaignType,
         budget: data.budget,
