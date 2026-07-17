@@ -9,6 +9,7 @@ import {
   HelpCircle,
   Settings,
   Users,
+  Building2,
 } from 'lucide-react';
 
 export default function Sidebar({ isOpen, onClose, userRole = 'user' }) {
@@ -33,6 +34,7 @@ export default function Sidebar({ isOpen, onClose, userRole = 'user' }) {
       default:
         return [
           { path: '/dashboard', label: 'Bảng điều khiển', icon: LayoutDashboard },
+          { path: '/business-profile', label: 'Hồ sơ Doanh nghiệp', icon: Building2 },
           { path: '/marketing-kit', label: 'Bộ công cụ Marketing', icon: Sparkles },
           { path: '/plans', label: 'Kế hoạch của tôi', icon: ClipboardList },
           { path: '/templates', label: 'Thư viện mẫu', icon: Library },

@@ -12,6 +12,7 @@ import TemplateLibrary from './pages/user/TemplateLibrary';
 import MyBookings from './pages/user/MyBookings';
 import HelpCenter from './pages/user/HelpCenter';
 import UserSettings from './pages/user/UserSettings';
+import BusinessProfile from './pages/user/BusinessProfile';
 import GenerateMarketingKit from './pages/user/GenerateMarketingKit';
 import MarketingResult from './pages/user/MarketingResult';
 import PlanReviewPage from './pages/staff/PlanReviewPage';
@@ -89,6 +90,7 @@ function App() {
           <Route path="/bookings" element={<MyBookings />} />
           <Route path="/help" element={<HelpCenter />} />
           <Route path="/settings" element={<UserSettings />} />
+          <Route path="/business-profile" element={<BusinessProfile />} />
 
           <Route
             path="/admin/users"

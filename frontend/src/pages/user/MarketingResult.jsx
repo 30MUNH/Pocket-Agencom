@@ -1,8 +1,26 @@
 import { useState, useMemo, useEffect } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
-import { Lightbulb, Heart, Mail, FileText, ClipboardCheck, Check, PlayCircle, Play, Video, Copy, BookOpen, RefreshCw, Download, Clock, Loader2 } from 'lucide-react';
+import { Lightbulb, Heart, Mail, FileText, ClipboardCheck, Check, PlayCircle, Play, Video, Copy, BookOpen, RefreshCw, Download, Clock, Loader2, Target } from 'lucide-react';
 import { useMarketingPlan, useSavePlan } from '../../hooks/useMarketingPlans';
 import { toast } from '../../store/toastStore';
+
+function renderBoldText(text) {
+  if (!text) return '';
+  const parts = text.split(/\*\*([^*]+)\*\*/g);
+  return parts.map((part, idx) => {
+    if (idx % 2 === 1) {
+      return (
+        <strong 
+          key={idx} 
+          className="font-bold text-secondary dark:text-secondary-fixed bg-secondary-container/30 dark:bg-secondary/15 px-1.5 py-0.5 rounded-md inline shadow-sm text-sm"
+        >
+          {part}
+        </strong>
+      );
+    }
+    return part;
+  });
+}
 
 export default function MarketingResult() {
   const [searchParams] = useSearchParams();
@@ -13,6 +31,15 @@ export default function MarketingResult() {
 
   const contentIdeas = plan?.contentIdeas || [];
   const videoScripts = plan?.videoScripts || [];
+  const seoKeywords = plan?.seoKeywords || [];
+
+  const handleCopyAllKeywords = () => {
+    if (seoKeywords.length === 0) return;
+    const textToCopy = seoKeywords.join(', ');
+    navigator.clipboard.writeText(textToCopy);
+    toast.success('Đã sao chép từ khóa!');
+  };
+
   const initialChecklist = useMemo(() => {
     if (Array.isArray(plan?.checklist)) {
       return plan.checklist.map((item, i) =>
@@ -286,55 +313,166 @@ export default function MarketingResult() {
             </div>
           </section>
 
-          {/* Section: Marketing Playbook */}
-          <section className="bg-surface-container-lowest dark:bg-tertiary-container rounded-[2.5rem] p-8 md:p-12 shadow-[0_4px_24px_rgba(255,143,163,0.08)] space-y-8">
-            <div className="flex items-center gap-4 border-b border-surface-variant/50 pb-6">
-              <div className="w-10 h-10 rounded-xl bg-primary text-on-primary flex items-center justify-center shadow-md">
-                <BookOpen size={18} />
-              </div>
-              <div>
-                <h3 className="text-headline-md font-bold text-primary dark:text-inverse-primary">Cẩm nang Tiếp thị</h3>
-                <p className="text-sm text-on-surface-variant mt-1">Quy trình thực thi chi tiết từ A đến Z do AI thiết kế.</p>
+          {/* Two-column layout: SEO Keywords + Playbook */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            {/* Left Column: SEO Keyword Suggestions (4 spans) */}
+            <div className="lg:col-span-4 lg:sticky lg:top-24 space-y-6">
+              <div className="bg-surface-container-lowest dark:bg-tertiary-container rounded-[2.5rem] p-6 md:p-8 shadow-[0_4px_24px_rgba(255,143,163,0.08)] border border-surface-variant/40 space-y-6">
+                <div className="flex items-center gap-3 border-b border-surface-variant/30 pb-4">
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+                    <Target size={18} />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-primary dark:text-inverse-primary leading-tight">Gợi ý từ khóa chuẩn SEO</h3>
+                    <p className="text-xs text-on-surface-variant mt-0.5">Từ khóa đấu thầu & SEO tối ưu</p>
+                  </div>
+                </div>
+
+                {seoKeywords.length > 0 ? (
+                  <>
+                    <div className="flex flex-wrap gap-2">
+                      {seoKeywords.map((keyword, i) => (
+                        <span 
+                          key={i} 
+                          className="px-3 py-1.5 rounded-xl bg-surface-container-high dark:bg-surface-variant/40 text-primary dark:text-inverse-on-surface text-xs font-medium border border-outline-variant/20 hover:border-primary/50 transition-colors cursor-default"
+                        >
+                          {keyword}
+                        </span>
+                      ))}
+                    </div>
+                    
+                    <button
+                      onClick={handleCopyAllKeywords}
+                      className="w-full py-3 rounded-full text-label-sm font-label-sm text-on-primary bg-primary hover:bg-primary/95 transition-all shadow-sm hover:shadow flex items-center justify-center gap-2 mt-4"
+                    >
+                      <Copy size={14} />
+                      Sao chép tất cả
+                    </button>
+                  </>
+                ) : (
+                  <p className="text-on-surface-variant text-body-md">Chưa có từ khóa SEO gợi ý.</p>
+                )}
               </div>
             </div>
 
-            {plan.playbook ? (
-              <div className="prose prose-sm max-w-none text-on-surface-variant dark:text-inverse-on-surface/80 leading-relaxed whitespace-pre-wrap">
-                {plan.playbook.split('\n').map((line, i) => {
-                  const trimmed = line.trim();
-                  if (!trimmed) return <br key={i} />;
-                  // Render lines starting with ## as section headers
-                  if (trimmed.startsWith('##')) {
-                    return (
-                      <h4 key={i} className="font-bold text-primary dark:text-inverse-primary text-lg mt-6 mb-2">
-                        {trimmed.replace(/^#+\s*/, '')}
-                      </h4>
-                    );
-                  }
-                  // Render lines starting with numbers or dashes as list items
-                  if (/^(\d+\.|[-•])/.test(trimmed)) {
-                    return (
-                      <div key={i} className="flex gap-3 py-1">
-                        <span className="text-secondary dark:text-secondary-fixed font-bold shrink-0">•</span>
-                        <span>{trimmed.replace(/^(\d+\.\s*|[-•]\s*)/, '')}</span>
-                      </div>
-                    );
-                  }
-                  // Bold lines containing **text**
-                  if (trimmed.startsWith('**') && trimmed.endsWith('**')) {
-                    return (
-                      <p key={i} className="font-bold text-primary dark:text-inverse-primary mt-4 mb-1">
-                        {trimmed.replace(/\*\*/g, '')}
-                      </p>
-                    );
-                  }
-                  return <p key={i} className="mb-2">{line}</p>;
-                })}
-              </div>
-            ) : (
-              <p className="text-on-surface-variant text-body-md">Chưa có nội dung playbook.</p>
-            )}
-          </section>
+            {/* Right Column: Playbook (8 spans) */}
+            <div className="lg:col-span-8">
+              <section className="bg-surface-container-lowest dark:bg-tertiary-container rounded-[2.5rem] p-8 md:p-12 shadow-[0_4px_24px_rgba(255,143,163,0.08)] space-y-8">
+                <div className="flex items-center gap-4 border-b border-surface-variant/50 pb-6">
+                  <div className="w-10 h-10 rounded-xl bg-primary text-on-primary flex items-center justify-center shadow-md">
+                    <BookOpen size={18} />
+                  </div>
+                  <div>
+                    <h3 className="text-headline-md font-bold text-primary dark:text-inverse-primary">Cẩm nang Tiếp thị</h3>
+                    <p className="text-sm text-on-surface-variant mt-1">Quy trình thực thi chi tiết từng bước do AI thiết kế.</p>
+                  </div>
+                </div>
+
+                {plan.playbook ? (
+                  Array.isArray(plan.playbook) ? (
+                    /* Timeline / Card layout for structured playbook */
+                    <div className="relative border-l-2 border-dashed border-outline-variant/60 ml-4 pl-6 md:pl-8 space-y-12">
+                      {plan.playbook.map((phase, idx) => (
+                        <div key={idx} className="relative group">
+                          {/* Timeline dot */}
+                          <span className="absolute -left-[41px] md:-left-[49px] top-1.5 flex items-center justify-center w-8 h-8 rounded-full bg-secondary-container text-primary font-bold border-4 border-surface-container-lowest dark:border-tertiary-container text-xs shadow-sm z-10 transition-transform group-hover:scale-110 duration-200">
+                            {idx + 1}
+                          </span>
+
+                          {/* Phase Card */}
+                          <div className="bg-surface-container-lowest dark:bg-surface-variant/20 rounded-3xl p-6 md:p-8 border border-surface-variant/40 shadow-sm hover:shadow-md transition-all duration-300 space-y-6">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-surface-variant/20 pb-4">
+                              <h4 className="text-xl font-bold text-primary dark:text-inverse-primary">
+                                {phase.phaseName}
+                              </h4>
+                              {phase.duration && (
+                                <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800 text-xs font-bold shrink-0 self-start sm:self-auto">
+                                  <Clock size={12} />
+                                  {phase.duration}
+                                </span>
+                              )}
+                            </div>
+
+                            {phase.objective && (
+                              <div className="bg-surface-container dark:bg-surface-variant/40 rounded-2xl p-4 flex items-start gap-3">
+                                <Target className="w-5 h-5 text-secondary shrink-0 mt-0.5" />
+                                <div>
+                                  <span className="text-[11px] font-bold text-on-surface-variant uppercase tracking-wider block">Mục tiêu cốt lõi</span>
+                                  <p className="text-sm text-primary dark:text-inverse-primary font-medium mt-0.5">{phase.objective}</p>
+                                </div>
+                              </div>
+                            )}
+
+                            {Array.isArray(phase.keyActions) && phase.keyActions.length > 0 && (
+                              <div className="space-y-3">
+                                <span className="text-[11px] font-bold text-on-surface-variant uppercase tracking-wider block">Hành động cụ thể</span>
+                                <ul className="space-y-3">
+                                  {phase.keyActions.map((action, i) => (
+                                    <li key={i} className="flex items-start gap-3 text-sm text-on-surface-variant">
+                                      <span className="w-5 h-5 rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400 flex items-center justify-center shrink-0 mt-0.5 font-bold text-xs">
+                                        ✓
+                                      </span>
+                                      <span className="leading-relaxed">
+                                        {renderBoldText(action)}
+                                      </span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+
+                            {Array.isArray(phase.focusChannels) && phase.focusChannels.length > 0 && (
+                              <div className="flex flex-wrap items-center gap-2 pt-2">
+                                <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mr-2">Kênh tập trung:</span>
+                                {phase.focusChannels.map((channel, i) => (
+                                  <span key={i} className="px-2.5 py-1 rounded-full bg-surface-container dark:bg-surface-variant/40 border border-outline-variant/20 text-xs text-on-surface-variant dark:text-inverse-on-surface">
+                                    {channel}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    /* Legacy string / markdown rendering */
+                    <div className="prose prose-sm max-w-none text-on-surface-variant dark:text-inverse-on-surface/80 leading-relaxed whitespace-pre-wrap">
+                      {plan.playbook.split('\n').map((line, i) => {
+                        const trimmed = line.trim();
+                        if (!trimmed) return <br key={i} />;
+                        if (trimmed.startsWith('##')) {
+                          return (
+                            <h4 key={i} className="font-bold text-primary dark:text-inverse-primary text-lg mt-6 mb-2">
+                              {trimmed.replace(/^#+\s*/, '')}
+                            </h4>
+                          );
+                        }
+                        if (/^(\d+\.|[-•])/.test(trimmed)) {
+                          return (
+                            <div key={i} className="flex gap-3 py-1">
+                              <span className="text-secondary dark:text-secondary-fixed font-bold shrink-0">•</span>
+                              <span>{trimmed.replace(/^(\d+\.\s*|[-•]\s*)/, '')}</span>
+                            </div>
+                          );
+                        }
+                        if (trimmed.startsWith('**') && trimmed.endsWith('**')) {
+                          return (
+                            <p key={i} className="font-bold text-primary dark:text-inverse-primary mt-4 mb-1">
+                              {trimmed.replace(/\*\*/g, '')}
+                            </p>
+                          );
+                        }
+                        return <p key={i} className="mb-2">{line}</p>;
+                      })}
+                    </div>
+                  )
+                ) : (
+                  <p className="text-on-surface-variant text-body-md">Chưa có nội dung playbook.</p>
+                )}
+              </section>
+            </div>
+          </div>
         </div>
       </div>
     </div>

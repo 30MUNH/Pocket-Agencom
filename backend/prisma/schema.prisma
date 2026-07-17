@@ -128,6 +128,7 @@ model User {
   tickets          SupportTicket[]  @relation("UserTickets")
   assignedTickets  SupportTicket[]  @relation("StaffTickets")
   notifications    Notification[]
+  socialPlatforms  SocialPlatform[]
 
   @@map("users")
 }
@@ -147,6 +148,7 @@ model BusinessProfile {
 
   user           User            @relation(fields: [userId], references: [id])
   marketingPlans MarketingPlan[]
+  socialPlatforms SocialPlatform[]
 
   @@map("business_profiles")
 }
@@ -162,6 +164,7 @@ model MarketingPlan {
   videoScripts      String?    @map("video_scripts")
   checklist         String?
   playbook          String?
+  seoKeywords       String?    @map("seo_keywords")
   status            PlanStatus @default(saved)
   reviewedById      Int?       @map("reviewed_by")
   createdAt         DateTime   @default(now()) @map("created_at")
@@ -366,4 +369,22 @@ model Notification {
   user User @relation(fields: [userId], references: [id])
 
   @@map("notifications")
+}
+
+model SocialPlatform {
+  id                String          @id @default(uuid()) @db.Uuid
+  userId            Int             @map("user_id")
+  platform          String          // 'tiktok', 'facebook', 'instagram'
+  url               String
+  followersCount    Int             @map("followers_count")
+  engagementRate    Float           @map("engagement_rate")
+  aiInsight         String?         @map("ai_insight") @db.Text
+  businessProfileId Int             @map("business_profile_id")
+  createdAt         DateTime        @default(now()) @map("created_at")
+  updatedAt         DateTime        @default(now()) @updatedAt @map("updated_at")
+
+  user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  businessProfile BusinessProfile @relation(fields: [businessProfileId], references: [id], onDelete: Cascade)
+
+  @@map("social_platforms")
 }

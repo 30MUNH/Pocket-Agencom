@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { User, Lock, Bell, Camera, LogOut } from 'lucide-react';
+import { User, Lock, Bell, Camera, LogOut, Share2 } from 'lucide-react';
+import SocialLinkManager from '../../components/settings/SocialLinkManager';
 
 export default function UserSettings() {
   const [activeTab, setActiveTab] = useState('profile');
@@ -74,6 +75,19 @@ export default function UserSettings() {
             >
               <Bell size={18} className="mr-3 text-secondary shrink-0" />
               <span className="text-label-sm font-label-sm">Thông báo</span>
+            </button>
+
+            {/* Social Integration Tab */}
+            <button
+              onClick={() => setActiveTab('social')}
+              className={`w-full text-left relative flex items-center rounded-full py-3 px-6 shrink-0 transition-all ${
+                activeTab === 'social'
+                  ? 'bg-secondary-container text-primary font-bold shadow-ambient'
+                  : 'text-on-surface-variant hover:bg-surface-container-low'
+              }`}
+            >
+              <Share2 size={18} className="mr-3 text-secondary shrink-0" />
+              <span className="text-label-sm font-label-sm">Liên kết Mạng xã hội</span>
             </button>
           </div>
         </aside>
@@ -177,6 +191,10 @@ export default function UserSettings() {
                 Kiểm soát thông báo email, cập nhật tiếp thị và nhật ký hệ thống. (Đang phát triển)
               </p>
             </section>
+          )}
+
+          {activeTab === 'social' && (
+            <SocialLinkManager />
           )}
 
           {/* Danger Zone / Logout */}

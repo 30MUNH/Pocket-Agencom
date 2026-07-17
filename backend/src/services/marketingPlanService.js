@@ -25,7 +25,8 @@ QUY TẮC BẮT BUỘC:
 2. Ý tưởng nội dung phải sáng tạo, bắt trend và phù hợp với ngân sách của doanh nghiệp nhỏ.
 3. Kịch bản video phải chi tiết, có phân cảnh rõ ràng với thời gian cụ thể, lời thoại tự nhiên như KOL Việt Nam thực sự.
 4. Checklist phải có tối thiểu 5 mục, mỗi mục là một hành động cụ thể và khả thi.
-5. Playbook phải là hướng dẫn quy trình từng bước chi tiết, từ chuẩn bị đến đo lường kết quả.
+5. Playbook phải là một mảng chứa các giai đoạn chiến dịch cụ thể, được tổ chức tuần tự từ lúc bắt đầu chuẩn bị đến khi đo lường kết quả. Mỗi hành động quan trọng trong keyActions bắt buộc phải dùng định dạng markdown **bold** cho các keywords quan trọng.
+6. seoKeywords phải là một danh sách chứa từ 8-12 từ khóa chuẩn SEO và từ khóa đấu thầu quảng cáo (ad-bidding keywords) tiềm năng và có tỷ lệ chuyển đổi cao nhất cho chiến dịch này tại Việt Nam.
 
 Trả về DUY NHẤT một JSON object hợp lệ theo đúng cấu trúc sau (KHÔNG kèm markdown, backtick, hay văn bản hội thoại):
 {
@@ -36,7 +37,20 @@ Trả về DUY NHẤT một JSON object hợp lệ theo đúng cấu trúc sau (
     { "scene": "string (ví dụ: 0-3s)", "action": "string", "dialogue": "string" }
   ],
   "checklist": [ "string", "string", "..." ],
-  "playbook": "string (hướng dẫn thực thi chi tiết từng bước)"
+  "playbook": [
+    {
+      "phaseName": "string (Tên Giai Đoạn, ví dụ: Giai đoạn 1: Thu hút & Tạo tò mò)",
+      "duration": "string (Thời gian, ví dụ: Ngày 1 - Ngày 7)",
+      "objective": "string (Mục tiêu cốt lõi của giai đoạn này)",
+      "keyActions": [
+        "string (Hành động cụ thể 1, bắt buộc dùng markdown **bold** cho các keywords quan trọng)",
+        "string (Hành động cụ thể 2)",
+        "string (Hành động cụ thể 3)"
+      ],
+      "focusChannels": [ "string", "string", "..." ]
+    }
+  ],
+  "seoKeywords": [ "string", "string", "..." ]
 }`;
 
 // ── Gemini-powered AI Content Generator ────────────────────────────────────────
@@ -54,7 +68,7 @@ Yêu cầu:
 - Tạo ít nhất 3 ý tưởng nội dung (contentIdeas) phù hợp với ngành ${data.businessType} và loại chiến dịch ${data.campaignType}.
 - Tạo kịch bản video ngắn (videoScripts) gồm ít nhất 4 phân cảnh chi tiết.
 - Tạo danh sách checklist công việc (checklist) gồm ít nhất 5 mục hành động cụ thể.
-- Tạo playbook hướng dẫn quy trình thực thi từ A đến Z.`;
+- Tạo playbook hướng dẫn quy trình thực thi gồm các giai đoạn chiến dịch chi tiết (phaseName, duration, objective, keyActions, focusChannels).`;
 
   // RAG: enrich prompt with past successful strategies (findSimilarStrategies returns [] on failure)
   const similar = await findSimilarStrategies(
@@ -77,7 +91,7 @@ ${similar.map((s, i) => `--- Case study ${i + 1} ---\n${s.content}`).join('\n\n'
     const parsed = JSON.parse(responseText);
 
     // Validate required fields exist
-    if (!parsed.contentIdeas || !parsed.videoScripts || !parsed.checklist || !parsed.playbook) {
+    if (!parsed.contentIdeas || !parsed.videoScripts || !parsed.checklist || !parsed.playbook || !parsed.seoKeywords) {
       throw new Error('Gemini response missing required fields');
     }
 
@@ -120,7 +134,51 @@ ${similar.map((s, i) => `--- Case study ${i + 1} ---\n${s.content}`).join('\n\n'
         'Lên lịch đăng bài vào khung giờ vàng tương tác',
         'Theo dõi số liệu và điều chỉnh chiến lược hàng tuần',
       ],
-      playbook: `Quy trình thực thi: 1. Thống nhất brief → 2. Gửi sản phẩm → 3. Duyệt kịch bản → 4. Sản xuất nội dung → 5. Đăng bài & đo lường → 6. Báo cáo ROI. Loại chiến dịch: ${data.campaignType}. Ngân sách: ${data.budget || 'Chưa xác định'}.`,
+      playbook: [
+        {
+          phaseName: 'Giai đoạn 1: Chuẩn bị & Lên kế hoạch',
+          duration: 'Ngày 1 - Ngày 5',
+          objective: 'Xây dựng thông điệp chiến dịch và tuyển chọn đối tác KOL/KOC phù hợp.',
+          keyActions: [
+            'Xác định rõ **thông điệp cốt lõi** và **lợi ích độc đáo** của sản phẩm.',
+            'Lập danh sách **tối thiểu 5 KOC** trong ngành hàng để gửi lời mời hợp tác.',
+            'Chuẩn bị **mẫu sản phẩm thử** để gửi đi đúng hạn.'
+          ],
+          focusChannels: ['Facebook', 'TikTok']
+        },
+        {
+          phaseName: 'Giai đoạn 2: Sản xuất & Triển khai',
+          duration: 'Ngày 6 - Ngày 15',
+          objective: 'Sản xuất các nội dung chất lượng cao và phủ sóng thương hiệu rộng rãi.',
+          keyActions: [
+            'Duyệt **kịch bản video ngắn** từ đối tác KOC trước khi họ bấm máy.',
+            'Đăng bài **theo khung giờ vàng** (11h30 trưa và 20h tối) để tiếp cận nhiều khách hàng nhất.',
+            'Chạy **quảng cáo tăng cường** (Facebook Ads/TikTok Spark Ads) cho các bài viết có tương tác tự nhiên tốt.'
+          ],
+          focusChannels: ['TikTok', 'Facebook']
+        },
+        {
+          phaseName: 'Giai đoạn 3: Đo lường & Tối ưu',
+          duration: 'Ngày 16 - Ngày 20',
+          objective: 'Đánh giá doanh số, lượng tương tác và rút kinh nghiệm cho chiến dịch sau.',
+          keyActions: [
+            'Tổng hợp số lượt xem, bình luận và **tỷ lệ nhấp chuột (CTR)** từ các link tiếp thị.',
+            'Tính toán **chỉ số ROI** (tỷ suất lợi nhuận trên chi phí quảng cáo).',
+            'Chăm sóc các khách hàng cũ qua **tin nhắn tự động** để thúc đẩy mua lại.'
+          ],
+          focusChannels: ['Facebook', 'TikTok', 'Cửa hàng']
+        }
+      ],
+      seoKeywords: [
+        'từ khóa SEO 1',
+        'từ khóa SEO 2',
+        'quảng cáo giá rẻ',
+        'chiến dịch tiếp thị',
+        'tăng tương tác facebook',
+        'quảng cáo tik tok hiệu quả',
+        'chạy quảng cáo chuyên nghiệp',
+        'tối ưu chi phí marketing'
+      ],
     };
   }
 }
@@ -141,6 +199,8 @@ function formatPlan(plan) {
     contentIdeas: parse(plan.contentIdeas),
     videoScripts: parse(plan.videoScripts),
     checklist: parse(plan.checklist),
+    playbook: parse(plan.playbook),
+    seoKeywords: parse(plan.seoKeywords),
   };
 }
 
@@ -184,7 +244,8 @@ async function generatePlan(userId, data) {
         contentIdeas: JSON.stringify(aiContent.contentIdeas),
         videoScripts: JSON.stringify(aiContent.videoScripts),
         checklist: JSON.stringify(aiContent.checklist),
-        playbook: aiContent.playbook,
+        playbook: JSON.stringify(aiContent.playbook),
+        seoKeywords: JSON.stringify(aiContent.seoKeywords),
         status: 'draft',
       },
       include: {

@@ -4,6 +4,7 @@ const bookingRoutes = require('./bookingRoutes');
 const marketingPlanRoutes = require('./marketingPlanRoutes');
 const kolRoutes = require('./kolRoutes');
 const packageRoutes = require('./packageRoutes');
+const socialRoutes = require('./socialRoutes');
 
 const router = express.Router();
 
@@ -12,5 +13,6 @@ router.use('/bookings', bookingRoutes);
 router.use('/marketing-plans', marketingPlanRoutes);
 router.use('/kols', kolRoutes);
 router.use('/packages', packageRoutes);
+router.use('/social-platforms', socialRoutes);
 
 module.exports = router;

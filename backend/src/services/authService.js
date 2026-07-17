@@ -77,7 +77,11 @@ async function getMe(userId) {
       avatarUrl: true,
       phone: true,
       createdAt: true,
-      businessProfile: true,
+      businessProfile: {
+        include: {
+          socialPlatforms: true,
+        },
+      },
     },
   });
 
@@ -88,4 +92,30 @@ async function getMe(userId) {
   return user;
 }
 
-module.exports = { register, login, getMe };
+async function updateBusinessProfile(userId, data) {
+  const profile = await prisma.businessProfile.upsert({
+    where: { userId },
+    update: {
+      businessName: data.businessName,
+      businessType: data.businessType,
+      productDescription: data.productDescription,
+      targetCustomer: data.targetCustomer,
+      marketingGoal: data.marketingGoal,
+      budgetRange: data.budgetRange,
+      location: data.location,
+    },
+    create: {
+      userId,
+      businessName: data.businessName,
+      businessType: data.businessType || 'General',
+      productDescription: data.productDescription || 'Pending profile setup',
+      targetCustomer: data.targetCustomer || 'General audience',
+      marketingGoal: data.marketingGoal,
+      budgetRange: data.budgetRange,
+      location: data.location,
+    },
+  });
+  return profile;
+}
+
+module.exports = { register, login, getMe, updateBusinessProfile };

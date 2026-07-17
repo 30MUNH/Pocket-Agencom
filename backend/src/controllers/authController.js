@@ -28,4 +28,13 @@ async function me(req, res, next) {
   }
 }
 
-module.exports = { register, login, me };
+async function updateBusinessProfile(req, res, next) {
+  try {
+    const profile = await authService.updateBusinessProfile(req.user.id, req.body);
+    return success(res, profile);
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = { register, login, me, updateBusinessProfile };
