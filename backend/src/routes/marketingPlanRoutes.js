@@ -5,6 +5,7 @@ const { validate } = require('../middleware/validate');
 const {
   generatePlanSchema,
   reviewPlanSchema,
+  generatePostSchema,
 } = require('../validators/marketingPlan.validator');
 
 const router = express.Router();
@@ -18,6 +19,12 @@ router.post(
   requireRole('user', 'admin'),
   validate(generatePlanSchema),
   marketingPlanController.generate
+);
+router.post(
+  '/generate-post',
+  requireRole('user', 'admin'),
+  validate(generatePostSchema),
+  marketingPlanController.generatePost
 );
 router.post('/:id/save', requireRole('user', 'admin'), marketingPlanController.save);
 router.patch(

@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
-import { Lightbulb, Heart, Mail, FileText, ClipboardCheck, Check, PlayCircle, Play, Video, Copy, BookOpen, RefreshCw, Download, Clock, Loader2, Target } from 'lucide-react';
-import { useMarketingPlan, useSavePlan } from '../../hooks/useMarketingPlans';
+import { Lightbulb, Heart, Mail, FileText, ClipboardCheck, Check, PlayCircle, Play, Video, Copy, BookOpen, RefreshCw, Download, Clock, Loader2, Target, Sparkles, Image as ImageIcon } from 'lucide-react';
+import { useMarketingPlan, useSavePlan, useGeneratePost } from '../../hooks/useMarketingPlans';
 import { toast } from '../../store/toastStore';
 
 function renderBoldText(text) {
@@ -20,6 +20,173 @@ function renderBoldText(text) {
     }
     return part;
   });
+}
+
+function IdeaCard({ idea, index, totalLength, businessProfileId, existingResources, campaignReason }) {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [detailedContent, setDetailedContent] = useState('');
+  const [copied, setCopied] = useState(false);
+  
+  const generatePostMutation = useGeneratePost();
+
+  const handleGeneratePost = async () => {
+    try {
+      const response = await generatePostMutation.mutateAsync({
+        ideaTitle: idea.title,
+        ideaDescription: idea.description,
+        platform: idea.channel || 'Đa kênh',
+        businessProfileId: Number(businessProfileId),
+        existingResources: existingResources || undefined,
+        campaignReason: campaignReason || undefined,
+      });
+
+      if (response && response.content) {
+        setDetailedContent(response.content);
+        setIsExpanded(true);
+      } else {
+        toast.error('Không nhận được nội dung từ AI.');
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Có lỗi xảy ra khi tạo nội dung.');
+    }
+  };
+
+  const handleCopyPost = () => {
+    navigator.clipboard.writeText(detailedContent);
+    setCopied(true);
+    toast.success('Đã sao chép bài đăng!');
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const isGeneratingPost = generatePostMutation.isPending;
+
+  if (isGeneratingPost) {
+    return (
+      <div className="bg-surface-container-lowest dark:bg-tertiary-container rounded-[2rem] p-8 border border-secondary-container/30 shadow-[0_4px_24px_rgba(255,143,163,0.08)] flex flex-col h-full animate-pulse min-h-[320px]">
+        <div className="flex justify-between items-start mb-6">
+          <div className="h-4 w-16 bg-surface-container-high dark:bg-surface-variant/40 rounded"></div>
+          <Heart className="text-secondary-container dark:text-outline-variant opacity-50" size={18} />
+        </div>
+        <div className="h-6 w-3/4 bg-surface-container-high dark:bg-surface-variant/40 rounded mb-4"></div>
+        <div className="space-y-2 flex-1">
+          <div className="h-4 bg-surface-container-high dark:bg-surface-variant/40 rounded w-full"></div>
+          <div className="h-4 bg-surface-container-high dark:bg-surface-variant/40 rounded w-5/6"></div>
+          <div className="h-4 bg-surface-container-high dark:bg-surface-variant/40 rounded w-2/3"></div>
+        </div>
+        <div className="mt-6 flex items-center justify-center gap-2 py-3 bg-secondary-container/20 rounded-xl">
+          <Loader2 className="animate-spin text-secondary" size={16} />
+          <span className="text-xs font-bold text-secondary">Đang biên soạn bài đăng...</span>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className={`bg-surface-container-lowest dark:bg-tertiary-container rounded-[2rem] p-8 shadow-[0_4px_24px_rgba(255,143,163,0.08)] hover:-translate-y-1 hover:shadow-[0_8px_32px_rgba(255,143,163,0.12)] transition-all duration-500 ease-out flex flex-col h-full border border-transparent hover:border-secondary-container/50 ${
+        index === totalLength - 1 && !isExpanded
+          ? 'bg-gradient-to-br from-surface-container-lowest to-secondary-container/10 dark:to-secondary-fixed-dim/5'
+          : ''
+      } ${isExpanded ? 'md:col-span-3 border-secondary/30 ring-1 ring-secondary/15' : ''}`}
+    >
+      <div className="flex justify-between items-start mb-6">
+        <span className="text-label-sm font-label-sm text-secondary dark:text-secondary-fixed uppercase tracking-widest">
+          {idea.channel || 'Đa kênh'}
+        </span>
+        <Heart className="text-secondary-container dark:text-outline-variant cursor-pointer hover:fill-secondary" size={18} />
+      </div>
+
+      <h4 className="text-lg font-bold text-primary dark:text-inverse-primary mb-3">
+        {idea.title}
+      </h4>
+
+      <div className="flex-1 flex flex-col justify-between">
+        <div className="transition-all duration-500 ease-in-out">
+          {isExpanded ? (
+            <div className="animate-fade-in space-y-4">
+              <p className="text-body-md text-on-surface-variant whitespace-pre-wrap leading-relaxed">
+                {detailedContent}
+              </p>
+
+              {/* Placeholder Image Gallery Grid */}
+              <div className="grid grid-cols-3 gap-2 mt-6">
+                <div className="aspect-square rounded-xl bg-gradient-to-tr from-pink-500/20 to-purple-500/20 dark:from-pink-500/10 dark:to-purple-500/10 border border-secondary-container/20 overflow-hidden relative group">
+                  <img 
+                    src="https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?auto=format&fit=crop&w=200&q=80" 
+                    alt="Mockup 1" 
+                    className="w-full h-full object-cover opacity-85 group-hover:scale-105 transition-transform duration-300"
+                  />
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
+                </div>
+                <div className="aspect-square rounded-xl bg-gradient-to-tr from-pink-500/20 to-purple-500/20 dark:from-pink-500/10 dark:to-purple-500/10 border border-secondary-container/20 overflow-hidden relative group">
+                  <img 
+                    src="https://images.unsplash.com/photo-1611162616305-c69b3fa7fbe0?auto=format&fit=crop&w=200&q=80" 
+                    alt="Mockup 2" 
+                    className="w-full h-full object-cover opacity-85 group-hover:scale-105 transition-transform duration-300"
+                  />
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
+                </div>
+                <div className="aspect-square rounded-xl bg-gradient-to-tr from-pink-500/20 to-purple-500/20 dark:from-pink-500/10 dark:to-purple-500/10 border border-secondary-container/20 overflow-hidden relative group cursor-pointer">
+                  <img 
+                    src="https://images.unsplash.com/photo-1611606063065-ee7946f0787a?auto=format&fit=crop&w=200&q=80" 
+                    alt="Mockup 3" 
+                    className="w-full h-full object-cover opacity-85 group-hover:scale-105 transition-transform duration-300"
+                  />
+                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center backdrop-blur-[2px] group-hover:bg-black/55 transition-colors">
+                    <span className="text-white text-xs font-bold font-display">+6 ảnh</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <p className="text-body-md text-on-surface-variant leading-relaxed">
+              {idea.description}
+            </p>
+          )}
+        </div>
+
+        <div>
+          <div className="flex flex-wrap gap-2 mt-6">
+            {idea.format && (
+              <span className="bg-surface-container dark:bg-surface-variant/40 px-3 py-1 rounded-md text-xs text-on-surface-variant dark:text-inverse-on-surface">
+                {idea.format}
+              </span>
+            )}
+            <span className="bg-surface-container dark:bg-surface-variant/40 px-3 py-1 rounded-md text-xs text-on-surface-variant dark:text-inverse-on-surface">
+              {idea.channel || 'Marketing'}
+            </span>
+          </div>
+
+          {isExpanded ? (
+            <div className="grid grid-cols-2 gap-3 mt-6 pt-4 border-t border-surface-variant/30 animate-fade-in">
+              <button
+                onClick={handleCopyPost}
+                className="py-2.5 px-4 rounded-xl bg-surface-container hover:bg-surface-container-high active:scale-[0.98] text-xs font-bold text-primary flex items-center justify-center gap-1.5 transition-all"
+              >
+                {copied ? <Check size={14} className="text-emerald-500" /> : <Copy size={14} />}
+                {copied ? 'Đã sao chép!' : 'Sao chép'}
+              </button>
+              <button
+                onClick={handleGeneratePost}
+                className="py-2.5 px-4 rounded-xl bg-secondary-container/30 hover:bg-secondary-container/50 active:scale-[0.98] text-xs font-bold text-secondary flex items-center justify-center gap-1.5 transition-all"
+              >
+                <RefreshCw size={14} />
+                Tạo lại
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={handleGeneratePost}
+              className="w-full mt-6 py-3 rounded-xl bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 active:scale-[0.97] text-white text-xs font-bold shadow-md hover:shadow-lg transition-all duration-300 flex items-center justify-center gap-2 group"
+            >
+              <Sparkles size={14} className="group-hover:rotate-12 transition-transform" />
+              Tạo Nội dung
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export default function MarketingResult() {
@@ -159,37 +326,15 @@ export default function MarketingResult() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {contentIdeas.map((idea, index) => (
-            <div
+            <IdeaCard
               key={index}
-              className={`bg-surface-container-lowest dark:bg-tertiary-container rounded-[2rem] p-8 shadow-[0_4px_24px_rgba(255,143,163,0.08)] hover:-translate-y-1 hover:shadow-[0_8px_32px_rgba(255,143,163,0.12)] transition-all duration-300 flex flex-col h-full border border-transparent hover:border-secondary-container/50 ${
-                index === contentIdeas.length - 1
-                  ? 'bg-gradient-to-br from-surface-container-lowest to-secondary-container/10 dark:to-secondary-fixed-dim/5'
-                  : ''
-              }`}
-            >
-              <div className="flex justify-between items-start mb-6">
-                <span className="text-label-sm font-label-sm text-secondary dark:text-secondary-fixed uppercase tracking-widest">
-                  {idea.channel || 'Đa kênh'}
-                </span>
-                <Heart className="text-secondary-container dark:text-outline-variant cursor-pointer hover:fill-secondary" size={18} />
-              </div>
-              <h4 className="text-lg font-bold text-primary dark:text-inverse-primary mb-3">
-                {idea.title}
-              </h4>
-              <p className="text-body-md text-on-surface-variant flex-1 mb-6">
-                {idea.description}
-              </p>
-              <div className="flex flex-wrap gap-2 mt-auto">
-                {idea.format && (
-                  <span className="bg-surface-container dark:bg-surface-variant/40 px-3 py-1 rounded-md text-xs text-on-surface-variant dark:text-inverse-on-surface">
-                    {idea.format}
-                  </span>
-                )}
-                <span className="bg-surface-container dark:bg-surface-variant/40 px-3 py-1 rounded-md text-xs text-on-surface-variant dark:text-inverse-on-surface">
-                  {idea.channel || 'Marketing'}
-                </span>
-              </div>
-            </div>
+              idea={idea}
+              index={index}
+              totalLength={contentIdeas.length}
+              businessProfileId={plan.businessProfileId}
+              existingResources={plan.existingResources}
+              campaignReason={plan.campaignReason}
+            />
           ))}
         </div>
       </section>

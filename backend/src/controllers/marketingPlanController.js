@@ -55,4 +55,13 @@ async function remove(req, res, next) {
   }
 }
 
-module.exports = { generate, list, getById, save, review, remove };
+async function generatePost(req, res, next) {
+  try {
+    const post = await marketingPlanService.generateDetailedPost(req.user, req.body);
+    return success(res, post, 200);
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = { generate, list, getById, save, review, remove, generatePost };

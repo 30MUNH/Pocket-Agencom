@@ -47,3 +47,9 @@ export function useDeletePlan() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['marketing-plans'] }),
   });
 }
+
+export function useGeneratePost() {
+  return useMutation({
+    mutationFn: marketingPlanApi.generatePost,
+  });
+}

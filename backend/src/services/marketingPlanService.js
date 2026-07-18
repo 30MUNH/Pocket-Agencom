@@ -15,6 +15,13 @@ const geminiModel = genAI.getGenerativeModel({
   },
 });
 
+const geminiTextModel = genAI.getGenerativeModel({
+  model: 'gemini-2.5-flash',
+  generationConfig: {
+    temperature: 0.8,
+  },
+});
+
 const SYSTEM_PROMPT = `Bạn là một Chuyên gia Chiến lược Marketing hàng đầu chuyên về Doanh nghiệp Siêu nhỏ và Nhỏ (Micro-SME) tại Việt Nam.
 Bạn có kiến thức sâu rộng về thị trường Việt Nam, hành vi người tiêu dùng Việt, các nền tảng mạng xã hội phổ biến (TikTok, Facebook, Instagram, YouTube Shorts), và xu hướng marketing KOL/KOC tại Việt Nam.
 
@@ -465,6 +472,64 @@ async function deletePlan(id, userId) {
   return { deleted: true };
 }
 
+async function generateDetailedPost(user, { ideaTitle, ideaDescription, platform, businessProfileId, existingResources, campaignReason }) {
+  const profile = await prisma.businessProfile.findUnique({
+    where: { id: Number(businessProfileId) },
+  });
+
+  if (!profile) {
+    throw new AppError('Business profile not found', 404);
+  }
+
+  // Ensure user owns this profile unless they are staff/admin
+  if (user.role === 'user' && profile.userId !== user.id) {
+    throw new AppError('Access denied', 403);
+  }
+
+  const brandVoice = profile.brandVoice || 'Chuyên nghiệp, tin cậy';
+  const usp = profile.usp || 'Chưa xác định';
+  const resources = existingResources || 'Chưa xác định';
+  const reason = campaignReason || 'Chưa xác định';
+
+  const DETAILED_POST_SYSTEM_PROMPT = `Bạn là một Chuyên gia Sáng tạo Nội dung (Content Creator) hàng đầu tại Việt Nam.
+Nhiệm vụ của bạn là viết một bài đăng mạng xã hội (social media post) hoàn chỉnh, sẵn sàng đăng tải dựa trên ý tưởng và nền tảng được cung cấp, phù hợp với tiếng nói thương hiệu và các điểm nổi bật của doanh nghiệp.
+
+BÀI VIẾT CẦN CÓ CẤU TRÚC RÕ RÀNG:
+1. Hook (Tiêu đề/Câu mở đầu thu hút, gây tò mò hoặc đánh trúng nỗi đau khách hàng).
+2. Body (Nội dung chính chia sẻ giá trị, giải pháp hoặc mô tả sản phẩm hấp dẫn).
+3. Call-to-Action (Lời kêu gọi hành động rõ ràng như mua hàng, nhắn tin, bấm link).
+4. Sử dụng emojis phù hợp để tăng tính sinh động.
+5. Hashtags liên quan ở cuối bài viết.
+
+Định dạng đầu ra: Chỉ trả về nội dung văn bản thô (raw text) của bài đăng. KHÔNG thêm bất kỳ giải thích nào trước hoặc sau bài đăng. KHÔNG sử dụng các định dạng markdown bao ngoài như \`\`\` hay \`\`\`html.`;
+
+  const userPrompt = `Hãy viết một bài đăng mạng xã hội chi tiết cho nền tảng: "${platform}"
+
+Ý tưởng:
+- Tiêu đề ý tưởng: ${ideaTitle}
+- Mô tả ý tưởng: ${ideaDescription}
+
+Thông tin thương hiệu để cá nhân hóa nội dung:
+- Điểm khác biệt độc nhất (USP): ${usp}
+- Giọng điệu thương hiệu (Brand Voice): ${brandVoice}
+- Tài nguyên hiện có: ${resources}
+- Bối cảnh/Lý do chiến dịch: ${reason}
+
+Yêu cầu viết bằng tiếng Việt, giọng điệu tự nhiên phù hợp với phong cách mạng xã hội ở Việt Nam và bám sát brand voice "${brandVoice}".`;
+
+  try {
+    const result = await geminiTextModel.generateContent({
+      contents: [{ role: 'user', parts: [{ text: userPrompt }] }],
+      systemInstruction: { parts: [{ text: DETAILED_POST_SYSTEM_PROMPT }] },
+    });
+
+    return result.response.text();
+  } catch (err) {
+    console.error('[Gemini Detailed Post Error]', err.message || err);
+    return `🔥 [Ý tưởng: ${ideaTitle}] 🔥\n\n📌 ${ideaDescription}\n\n✨ Điểm đặc biệt của chúng tôi:\n- ${usp}\n\n👉 Nhắn tin cho chúng tôi ngay hôm nay để nhận tư vấn chi tiết!\n\n#${platform.replace(/\s+/g, '')} #creative #brandvoice`;
+  }
+}
+
 module.exports = {
   generatePlan,
   getPlans,
@@ -472,4 +537,5 @@ module.exports = {
   savePlan,
   reviewPlan,
   deletePlan,
+  generateDetailedPost,
 };

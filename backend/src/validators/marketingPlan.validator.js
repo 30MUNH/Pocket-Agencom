@@ -21,6 +21,15 @@ const reviewPlanSchema = z.object({
   note: z.string().optional(),
 });
 
+const generatePostSchema = z.object({
+  ideaTitle: z.string().min(1, 'Idea title is required'),
+  ideaDescription: z.string().min(1, 'Idea description is required'),
+  platform: z.string().min(1, 'Platform is required'),
+  businessProfileId: z.number().int().positive('Business profile ID is required'),
+  existingResources: z.string().optional(),
+  campaignReason: z.string().optional(),
+});
+
 const VALID_PLAN_TRANSITIONS = {
   draft: ['saved'],
   saved: ['reviewed', 'need_revision'],
@@ -33,4 +42,10 @@ function isValidPlanTransition(from, to) {
   return VALID_PLAN_TRANSITIONS[from]?.includes(to) ?? false;
 }
 
-module.exports = { generatePlanSchema, savePlanSchema, reviewPlanSchema, isValidPlanTransition };
+module.exports = {
+  generatePlanSchema,
+  savePlanSchema,
+  reviewPlanSchema,
+  isValidPlanTransition,
+  generatePostSchema,
+};
