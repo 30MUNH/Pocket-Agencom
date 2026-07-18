@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Store, Users, Target, Wand2, ArrowRight, ChevronDown, Check, Loader2, Sparkles } from 'lucide-react';
+import { Store, Users, Target, Wand2, ArrowRight, ChevronDown, Check, Loader2, Sparkles, Layers } from 'lucide-react';
 import { useGeneratePlan } from '../../hooks/useMarketingPlans';
 import { toast } from '../../store/toastStore';
 import { authApi } from '../../api/authApi';
@@ -27,6 +27,9 @@ export default function GenerateMarketingKit() {
   );
   const [primaryGoal, setPrimaryGoal] = useState(trendData?.primaryGoal || "500 lượt đăng ký mới và tỷ lệ chuyển đổi 10%");
   const [budget, setBudget] = useState(1500);
+  const [channels, setChannels] = useState('');
+  const [resources, setResources] = useState('');
+  const [campaignReason, setCampaignReason] = useState('');
 
   const [isLoading, setIsLoading] = useState(false);
 
@@ -105,6 +108,9 @@ export default function GenerateMarketingKit() {
         targetCustomer: customerProfile,
         goal: primaryGoal,
         budget,
+        deploymentChannels: channels,
+        existingResources: resources,
+        campaignReason,
       });
       toast.success('Kế hoạch marketing đã được tạo!');
       navigate(`/marketing-kit/result?planId=${plan.id}`);
@@ -266,6 +272,53 @@ export default function GenerateMarketingKit() {
                 value={customerProfile}
                 onChange={(e) => setCustomerProfile(e.target.value)}
                 placeholder="Ví dụ: Chủ doanh nghiệp nhỏ từ 30-50 tuổi muốn tự động hóa quy trình làm việc"
+                className="w-full bg-surface-container dark:bg-surface-variant/20 border-none rounded-xl px-4 py-3.5 text-body-md text-primary dark:text-inverse-primary focus:ring-2 focus:ring-secondary focus:bg-surface-container-lowest dark:focus:bg-surface-container-lowest transition-all"
+              />
+            </div>
+          </div>
+
+          {/* Deployment Details Card */}
+          <div className="bg-surface-container-lowest dark:bg-tertiary-container rounded-[2rem] p-8 shadow-[4px_24px_40px_rgba(255,143,163,0.08)] border border-surface-variant/50 space-y-6">
+            <h3 className="text-headline-md text-primary dark:text-inverse-primary font-bold flex items-center gap-3">
+              <Layers className="text-secondary dark:text-secondary-fixed-dim" size={24} />
+              Chi tiết Triển khai
+            </h3>
+
+            <div className="space-y-2">
+              <label className="block text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">
+                Kênh triển khai
+              </label>
+              <input
+                type="text"
+                value={channels}
+                onChange={(e) => setChannels(e.target.value)}
+                placeholder="Chiến dịch diễn ra chủ yếu ở đâu ? ( Tiktok, Facebook,...)"
+                className="w-full bg-surface-container dark:bg-surface-variant/20 border-none rounded-xl px-4 py-3.5 text-body-md text-primary dark:text-inverse-primary focus:ring-2 focus:ring-secondary focus:bg-surface-container-lowest dark:focus:bg-surface-container-lowest transition-all"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="block text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">
+                Tài nguyên hiện có
+              </label>
+              <input
+                type="text"
+                value={resources}
+                onChange={(e) => setResources(e.target.value)}
+                placeholder="Có ảnh chụp sản phẩm thật, có video feedback của khách,..."
+                className="w-full bg-surface-container dark:bg-surface-variant/20 border-none rounded-xl px-4 py-3.5 text-body-md text-primary dark:text-inverse-primary focus:ring-2 focus:ring-secondary focus:bg-surface-container-lowest dark:focus:bg-surface-container-lowest transition-all"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="block text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">
+                Lý do triển khai chiến dịch
+              </label>
+              <input
+                type="text"
+                value={campaignReason}
+                onChange={(e) => setCampaignReason(e.target.value)}
+                placeholder="Cần xả kho, Nhân dịp Trung thu,..."
                 className="w-full bg-surface-container dark:bg-surface-variant/20 border-none rounded-xl px-4 py-3.5 text-body-md text-primary dark:text-inverse-primary focus:ring-2 focus:ring-secondary focus:bg-surface-container-lowest dark:focus:bg-surface-container-lowest transition-all"
               />
             </div>

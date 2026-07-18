@@ -7,6 +7,9 @@ const generatePlanSchema = z.object({
   targetCustomer: z.string().min(5, 'Target customer profile is required'),
   goal: z.string().min(5, 'Marketing goal is required'),
   budget: z.number().positive().optional(),
+  deploymentChannels: z.string().optional(),
+  existingResources: z.string().optional(),
+  campaignReason: z.string().optional(),
 });
 
 const savePlanSchema = z.object({

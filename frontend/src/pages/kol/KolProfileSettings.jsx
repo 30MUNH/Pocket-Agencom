@@ -274,7 +274,7 @@ export default function KolProfileSettings() {
                 </div>
                 <div className="sm:col-span-2">
                   <label className="block text-[11px] font-bold text-on-surface-variant mb-1.5 ml-1">
-                    Giá Booking (VNĐ)
+                    Giá Booking (VND)
                   </label>
                   <div className="relative">
                     <DollarSign size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant" />
@@ -418,7 +418,7 @@ export default function KolProfileSettings() {
                   <div className="flex items-center gap-1 text-[#ff758f]">
                     <DollarSign size={12} />
                     <span className="text-[10px] font-bold">
-                      {form.bookingPrice ? `${Number(form.bookingPrice).toLocaleString('vi-VN')}₫` : 'Liên hệ'}
+                      {form.bookingPrice ? `${Number(form.bookingPrice).toLocaleString('vi-VN')} VND` : 'Liên hệ'}
                     </span>
                   </div>
                 </div>

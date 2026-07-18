@@ -23,7 +23,7 @@ const CREATORS = [
     platform: 'TikTok & Instagram',
     followers: '125K',
     engRate: '5.2%',
-    price: 'Từ 1.2M VND',
+    price: 'Từ 1.200.000 VND',
     avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuB2AXLHUYI6lGAhgl98vSsR0b3qBrhWeQ_AoX1rcOinmyRQFYG-WqKaSGkn_SzDLT7NUBnaKeKkEQQucy9I5skRgCrWXLLtrFq6r79FgiyiHI_D1qAxZawffb8Wi6p_s86oCciR6mqFypn3Ud9W2NaiQ56AOirvc06PJauhY_fNznnDF_3NlU7qSJSOn7OEFLN_ARa0OSwfaTGy6OBafVFMHV3DTBQLgMdNgHHWsSSERrS5bU0g497vcc0whUvCvv4gTtZ2sUMy4q8',
   },
   {
@@ -33,7 +33,7 @@ const CREATORS = [
     platform: 'Instagram & Lemon8',
     followers: '48K',
     engRate: '7.8%',
-    price: 'Từ 800k VND',
+    price: 'Từ 800.000 VND',
     avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCu-SeW1r71ZPolsvXxxI6_5n11xzfCG-C3oB6lPwzxY2mNfcNSQHyGs-_MOSR7r6uVR2ROJbC6oOzkTWDMwA8oHQYEYSZ9BOxBgR-6_JzDIkwVU0KSk3iVYjCvXkzfFP-Hzoh4M5FjGWx9gyf0u7StgxMAy66ixm4KtwfZSMQkIxGSNCkxPWcT2D6fwViDGM-9x-WFEy2TqaKXJ80ZMj9g77twqevEyZSrLJwupQDXwQBAk5z0ea6YDdLvil96QjV62ZmBJAbeE3s',
   },
   {
@@ -43,7 +43,7 @@ const CREATORS = [
     platform: 'Facebook & Reels',
     followers: '82K',
     engRate: '4.5%',
-    price: 'Từ 1.5M VND',
+    price: 'Từ 1.500.000 VND',
     avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuD6KMU4Q0ILqv5ZhmUYKaiRS1HtruthNRjdkxlkii0YNDyUk7OYHKIxa9m8QryoaYQojl6nsPGJoIVpRYAM-Gk4KeaD--X6JkEwPRY1fP7jLI7EJ_HHvlascLB1t7dkMOm_HynEi6kSuLoKiPr9zQvTh_v59_qvHxza2BqZtVloDc3j1FNBKcYuSpbjGmdGGAOIgybRdC-0jrdTYGinLfXEGg2KXCqjXwik64xBRHbxrMbRBl7TjKUbB1R-mHydGmnGueniAlmfQZY',
   },
 ];
@@ -51,7 +51,7 @@ const CREATORS = [
 const PRICING_PLANS = [
   {
     name: 'Cơ bản (Starter)',
-    price: '199k',
+    price: '199.000 VND',
     period: '/tháng',
     features: ['3 Bộ công cụ Marketing', 'Ý tưởng Nội dung', 'Hỗ trợ qua Email'],
     isPopular: false,
@@ -59,7 +59,7 @@ const PRICING_PLANS = [
   },
   {
     name: 'Chuyên nghiệp (Pro)',
-    price: '499k',
+    price: '499.000 VND',
     period: '/tháng',
     features: ['Không giới hạn Bộ công cụ', 'Kịch bản Video AI', '5 buổi Tư vấn KOL/KOC', 'Hỗ trợ Ưu tiên'],
     isPopular: true,
@@ -67,7 +67,7 @@ const PRICING_PLANS = [
   },
   {
     name: 'Nâng cao (Advanced)',
-    price: '890k',
+    price: '890.000 VND',
     period: '/tháng',
     features: ['Tất cả tính năng gói Pro', 'Lộ trình tiếp thị riêng', '15 lượt đặt Creator'],
     isPopular: false,
@@ -75,7 +75,7 @@ const PRICING_PLANS = [
   },
   {
     name: 'Doanh nghiệp (Premium)',
-    price: '3.5M+',
+    price: '3.500.000+ VND',
     period: '/tháng',
     features: ['Giải pháp Tùy chỉnh', 'Quản lý Chiến dịch Toàn diện', 'Cam kết chỉ số ROI'],
     isPopular: false,

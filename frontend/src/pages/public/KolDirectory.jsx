@@ -24,7 +24,7 @@ function formatFollowers(count) {
 
 function formatPrice(price) {
   if (!price) return 'Liên hệ';
-  return `${Number(price).toLocaleString('vi-VN')}₫`;
+  return `${Number(price).toLocaleString('vi-VN')} VND`;
 }
 
 function KolCard({ profile }) {

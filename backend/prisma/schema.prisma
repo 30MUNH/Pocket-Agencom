@@ -172,6 +172,9 @@ model MarketingPlan {
   checklist         String?
   playbook          String?
   seoKeywords       String?    @map("seo_keywords")
+  deploymentChannels String?   @map("deployment_channels")
+  existingResources String?    @map("existing_resources")
+  campaignReason    String?    @map("campaign_reason")
   status            PlanStatus @default(saved)
   reviewedById      Int?       @map("reviewed_by")
   createdAt         DateTime   @default(now()) @map("created_at")

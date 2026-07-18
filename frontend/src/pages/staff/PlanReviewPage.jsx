@@ -1,6 +1,18 @@
 import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, XCircle, Edit, CheckCircle2, Lightbulb, Loader2 } from 'lucide-react';
+import {
+  ArrowLeft,
+  XCircle,
+  Edit,
+  CheckCircle2,
+  Lightbulb,
+  Loader2,
+  Video,
+  Play,
+  ChevronDown,
+  Calendar,
+  MessageSquare,
+} from 'lucide-react';
 import { useMarketingPlan, useReviewPlan } from '../../hooks/useMarketingPlans';
 import { PLAN_STATUS_LABELS } from '../../utils/statusLabels';
 import { toast } from '../../store/toastStore';
@@ -12,6 +24,37 @@ export default function PlanReviewPage() {
   const { data: plan, isLoading } = useMarketingPlan(id);
   const reviewPlan = useReviewPlan();
   const [newNoteText, setNewNoteText] = useState('');
+  const [isScriptOpen, setIsScriptOpen] = useState(false);
+  const [notes, setNotes] = useState([
+    {
+      id: 1,
+      type: 'log',
+      text: 'Hệ thống đã nhận yêu cầu từ User',
+    },
+    {
+      id: 2,
+      avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Staff',
+      author: 'Staff Member',
+      time: '1 ngày trước',
+      text: 'Yêu cầu kế hoạch tiếp thị đầy đủ thông tin. Đang tiến hành tạo cẩm nang chi tiết.',
+      isHighlight: false,
+    },
+  ]);
+
+  const handlePostNote = (e) => {
+    e.preventDefault();
+    if (!newNoteText.trim()) return;
+    const newNote = {
+      id: Date.now(),
+      avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Staff',
+      author: user?.name || 'Staff Member',
+      time: 'Vừa xong',
+      text: newNoteText,
+      isHighlight: true,
+    };
+    setNotes([...notes, newNote]);
+    setNewNoteText('');
+  };
 
   const statusLabel = plan ? (PLAN_STATUS_LABELS[plan.status]?.label || plan.status) : '';
 

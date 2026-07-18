@@ -118,7 +118,7 @@ export default function MarketingResult() {
             {plan.goal}
           </h2>
           <p className="text-body-lg text-on-surface-variant max-w-3xl">
-            {plan.playbook || plan.campaignType}
+            {typeof plan.playbook === 'string' ? plan.playbook : plan.campaignType}
           </p>
         </div>
 
@@ -438,7 +438,7 @@ export default function MarketingResult() {
                   ) : (
                     /* Legacy string / markdown rendering */
                     <div className="prose prose-sm max-w-none text-on-surface-variant dark:text-inverse-on-surface/80 leading-relaxed whitespace-pre-wrap">
-                      {plan.playbook.split('\n').map((line, i) => {
+                      {(typeof plan.playbook === 'string' ? plan.playbook : '').split('\n').map((line, i) => {
                         const trimmed = line.trim();
                         if (!trimmed) return <br key={i} />;
                         if (trimmed.startsWith('##')) {

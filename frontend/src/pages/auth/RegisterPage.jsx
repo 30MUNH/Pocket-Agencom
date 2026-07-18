@@ -285,10 +285,10 @@ export default function RegisterPage() {
                   <Briefcase size={36} className="text-primary" />
                 </div>
                 <h2 className="text-headline-md font-headline-md text-primary mb-3">
-                  Tiếp cận KOL/KOC phù hợp
+                  The Marketing Agency <br /> in Your Pocket
                 </h2>
                 <p className="text-body-md font-body-md text-on-surface-variant max-w-xs leading-relaxed">
-                  Tạo chiến dịch marketing hiệu quả với hệ thống gợi ý KOL thông minh, được thiết kế riêng cho SME Việt Nam.
+                  Nơi tạo chiến dịch marketing hiệu quả được <br /> thiết kế riêng cho SME Việt Nam.
                 </p>
                 <div className="mt-8 flex gap-3">
                   <div className="px-4 py-2 bg-secondary-container/30 rounded-full text-[11px] font-bold text-on-secondary-container">AI Marketing Kit</div>

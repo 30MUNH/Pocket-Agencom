@@ -409,7 +409,7 @@ export default function BusinessProfile() {
                     value={form.monthlyMarketingBudget}
                     onChange={(e) => setForm({ ...form, monthlyMarketingBudget: e.target.value })}
                     className="w-full bg-surface-container-lowest text-primary border border-surface-variant rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-secondary-container"
-                    placeholder="Ví dụ: 10,000,000 - 20,000,000 VND..."
+                    placeholder="Ví dụ: 10.000.000 - 20.000.000 VND..."
                   />
                 </div>
               </div>

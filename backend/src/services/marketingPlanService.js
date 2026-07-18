@@ -70,9 +70,17 @@ THÔNG TIN THƯƠNG HIỆU DOANH NGHIỆP (BẮT BUỘC TUÂN THỦ CHẶT CHẼ
 - Sản phẩm bán chạy nhất: ${bestSellingProduct}
 - Khu vực hoạt động/Địa điểm: ${location}
 
+BỐI CẢNH TRIỂN KHAI THỰC TẾ (BẮT BUỘC BÁM SÁT):
+- Kênh triển khai chính: ${data.deploymentChannels || 'Chưa xác định'}
+- Tài nguyên hiện có: ${data.existingResources || 'Chưa xác định'}
+- Lý do triển khai chiến dịch: ${data.campaignReason || 'Chưa xác định'}
+
 YÊU CẦU ĐẶC BIỆT:
 1. Giọng điệu (tone of voice) trong toàn bộ kịch bản hội thoại (videoScripts) và mô tả ý tưởng nội dung (contentIdeas) PHẢI thể hiện rõ ràng nét tính cách thương hiệu "${brandVoice}" đã được định hình.
-2. Các gợi ý tiếp thị và playbook hành động phải làm nổi bật điểm khác biệt thương hiệu (USP) "${usp}" và định vị sản phẩm bán chạy nhất "${bestSellingProduct}" của doanh nghiệp.`;
+2. Các gợi ý tiếp thị và playbook hành động phải làm nổi bật điểm khác biệt thương hiệu (USP) "${usp}" và định vị sản phẩm bán chạy nhất "${bestSellingProduct}" của doanh nghiệp.
+3. Nếu có "Lý do triển khai chiến dịch", thông điệp cốt lõi (core message) và mức độ khẩn cấp (urgency) của TOÀN BỘ kế hoạch PHẢI được xây dựng xoay quanh lý do đó (ví dụ: xả kho → nhấn mạnh ưu đãi giới hạn thời gian; dịp lễ → khai thác cảm xúc và không khí mùa lễ). Lý do này phải xuất hiện xuyên suốt trong contentIdeas, videoScripts và playbook.
+4. Nếu có "Tài nguyên hiện có", các ý tưởng nội dung (contentIdeas) và kịch bản video (videoScripts) PHẢI được thiết kế để tận dụng tối đa chính các tài nguyên đó. TUYỆT ĐỐI KHÔNG đề xuất nội dung đòi hỏi tài nguyên mà doanh nghiệp không có (ví dụ: không gợi ý thuê studio quay chuyên nghiệp nếu họ chỉ có ảnh chụp sản phẩm thật).
+5. Nếu có "Kênh triển khai chính", toàn bộ các bước trong playbook, focusChannels, định dạng nội dung (format) và kênh (channel) trong contentIdeas PHẢI tập trung tối đa vào đúng các kênh đó, thay vì dàn trải sang các nền tảng khác.`;
 
   let userPrompt = `Hãy tạo kế hoạch marketing cho chiến dịch sau:
 
@@ -82,6 +90,9 @@ YÊU CẦU ĐẶC BIỆT:
 - Khách hàng mục tiêu: ${data.targetCustomer}
 - Mục tiêu chiến dịch: ${data.goal}
 - Ngân sách dự kiến: ${data.budget ? Number(data.budget).toLocaleString('vi-VN') + ' VNĐ' : 'Chưa xác định'}
+- Kênh triển khai chủ yếu: ${data.deploymentChannels || 'Chưa xác định'}
+- Tài nguyên hiện có: ${data.existingResources || 'Chưa xác định'}
+- Lý do triển khai chiến dịch: ${data.campaignReason || 'Chưa xác định'}
 
 Yêu cầu:
 - Tạo ít nhất 3 ý tưởng nội dung (contentIdeas) phù hợp với ngành ${data.businessType} và loại chiến dịch ${data.campaignType}.
@@ -262,6 +273,9 @@ async function generatePlan(userId, data) {
         goal: data.goal,
         campaignType: data.campaignType,
         budget: data.budget,
+        deploymentChannels: data.deploymentChannels || null,
+        existingResources: data.existingResources || null,
+        campaignReason: data.campaignReason || null,
         contentIdeas: JSON.stringify(aiContent.contentIdeas),
         videoScripts: JSON.stringify(aiContent.videoScripts),
         checklist: JSON.stringify(aiContent.checklist),

@@ -235,7 +235,7 @@ export default function UserDashboard() {
                       {getStatusLabel(plan.status)}
                     </span>
                     <Link
-                      to={`/plans/result/${plan.id}`}
+                      to={`/marketing-kit/result?planId=${plan.id}`}
                       className="w-8 h-8 rounded-full hover:bg-surface-container flex items-center justify-center text-on-surface-variant"
                     >
                       <Eye size={18} />

@@ -94,7 +94,7 @@ export default function KolDashboard() {
             <span className="text-[11px] font-bold text-on-surface-variant uppercase tracking-widest">Giá Booking</span>
           </div>
           <p className="text-lg font-bold text-primary">
-            {profile?.bookingPrice ? `${Number(profile.bookingPrice).toLocaleString('vi-VN')}₫` : 'Chưa thiết lập'}
+            {profile?.bookingPrice ? `${Number(profile.bookingPrice).toLocaleString('vi-VN')} VND` : 'Chưa thiết lập'}
           </p>
           <p className="text-[11px] text-on-surface-variant mt-1">Giá mỗi lượt booking</p>
         </div>

@@ -119,7 +119,7 @@ export default function BookCampaignPage() {
                 <label className="block font-label-sm text-xs text-on-surface mb-2 font-semibold">Gói dịch vụ *</label>
                 <select className="w-full bg-surface-container border-none rounded-xl px-4 py-3" value={packageId || ''} onChange={(e) => { const pid = Number(e.target.value); setPackageId(pid); const pkg = creator.servicePackages.find((p) => p.id === pid); if (pkg) setBudget(Number(pkg.price)); }}>
                   {creator.servicePackages.map((pkg) => (
-                    <option key={pkg.id} value={pkg.id}>{pkg.packageName} — {Number(pkg.price).toLocaleString()} VNĐ</option>
+                    <option key={pkg.id} value={pkg.id}>{pkg.packageName} — {Number(pkg.price).toLocaleString('vi-VN')} VND</option>
                   ))}
                 </select>
               </div>

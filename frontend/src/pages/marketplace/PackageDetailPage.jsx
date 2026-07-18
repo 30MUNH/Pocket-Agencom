@@ -114,11 +114,11 @@ export default function PackageDetailPage() {
         <div className="col-span-12 lg:col-span-4 flex flex-col gap-gutter">
           <div className="bg-surface-container-lowest dark:bg-tertiary-container rounded-[2rem] p-8 shadow-[4px_24px_40px_rgba(255,143,163,0.08)] border border-surface-container/20 text-center flex flex-col items-center justify-center flex-1">
             <p className="text-[11px] font-bold text-outline uppercase tracking-wider mb-4">Chi phí Đầu tư</p>
-            <div className="flex items-baseline gap-1 mb-8">
+            <div className="flex items-baseline gap-1.5 mb-8">
               <span className="text-display-lg font-bold text-primary dark:text-inverse-primary">
                 {Number(pkg.price).toLocaleString('vi-VN')}
               </span>
-              <span className="text-on-surface-variant text-sm font-semibold">đ</span>
+              <span className="text-on-surface-variant text-sm font-semibold">VND</span>
             </div>
             
             <div className="w-full space-y-4">
