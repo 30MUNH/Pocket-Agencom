@@ -42,3 +42,7 @@ Thumbs.db
 # Prisma / Database specific
 /backend/prisma/dev.db
 /backend/prisma/dev.db-journal
+
+# Temporary build/cache directories
+%TEMP%/
+**/%TEMP%/
