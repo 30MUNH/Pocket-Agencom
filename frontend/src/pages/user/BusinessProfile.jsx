@@ -1,22 +1,17 @@
 import { useState, useEffect } from 'react';
-import { 
-  Building2, 
-  Users, 
-  Activity, 
-  TrendingUp, 
-  Globe, 
-  Coins, 
-  Target, 
-  Sparkles, 
-  Edit3, 
-  Save, 
-  X, 
+import {
+  Building2,
+  Users,
+  Activity,
+  Globe,
+  Coins,
+  Target,
+  Sparkles,
+  Edit3,
+  Save,
   Loader2,
   ExternalLink,
-  MessageSquare,
   Share2,
-  Briefcase,
-  Layers,
   Volume2,
   Award
 } from 'lucide-react';
@@ -67,6 +62,12 @@ function TikTokIcon({ className }) {
   );
 }
 
+const SOCIAL_PLATFORMS = [
+  { key: 'tiktok', label: 'TikTok', placeholder: 'https://www.tiktok.com/@thuong_hieu' },
+  { key: 'facebook', label: 'Facebook', placeholder: 'https://www.facebook.com/thuong.hieu' },
+  { key: 'instagram', label: 'Instagram', placeholder: 'https://www.instagram.com/thuong.hieu' },
+];
+
 export default function BusinessProfile() {
   const [profile, setProfile] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -79,7 +80,6 @@ export default function BusinessProfile() {
     businessType: 'General',
     productDescription: '',
     targetCustomer: '',
-    marketingGoal: '',
     budgetRange: '',
     location: '',
     usp: '',
@@ -88,6 +88,20 @@ export default function BusinessProfile() {
     bestSellingProduct: '',
     monthlyMarketingBudget: ''
   });
+
+  // One URL input per major platform: { tiktok: '', facebook: '', instagram: '' }
+  const [socialForm, setSocialForm] = useState(
+    Object.fromEntries(SOCIAL_PLATFORMS.map((p) => [p.key, '']))
+  );
+
+  const buildSocialForm = (platforms = []) => {
+    const next = Object.fromEntries(SOCIAL_PLATFORMS.map((p) => [p.key, '']));
+    platforms.forEach((item) => {
+      const key = (item.platform || '').toLowerCase();
+      if (key in next) next[key] = item.url || '';
+    });
+    return next;
+  };
 
   const fetchProfile = async () => {
     try {
@@ -99,7 +113,6 @@ export default function BusinessProfile() {
           businessType: user.businessProfile.businessType || 'General',
           productDescription: user.businessProfile.productDescription || '',
           targetCustomer: user.businessProfile.targetCustomer || '',
-          marketingGoal: user.businessProfile.marketingGoal || '',
           budgetRange: user.businessProfile.budgetRange || '',
           location: user.businessProfile.location || '',
           usp: user.businessProfile.usp || '',
@@ -108,6 +121,7 @@ export default function BusinessProfile() {
           bestSellingProduct: user.businessProfile.bestSellingProduct || '',
           monthlyMarketingBudget: user.businessProfile.monthlyMarketingBudget || ''
         });
+        setSocialForm(buildSocialForm(user.businessProfile.socialPlatforms));
       }
     } catch (err) {
       console.error('Failed to fetch profile:', err);
@@ -124,7 +138,11 @@ export default function BusinessProfile() {
     e.preventDefault();
     setIsSaving(true);
     try {
-      const updatedProfile = await authApi.updateBusinessProfile(form);
+      const socialLinks = SOCIAL_PLATFORMS
+        .map(({ key }) => ({ platform: key, url: socialForm[key].trim() }))
+        .filter((item) => item.url !== '');
+
+      const updatedProfile = await authApi.updateBusinessProfile({ ...form, socialLinks });
       setProfile(updatedProfile);
       setIsEditing(false);
       await fetchProfile();
@@ -387,20 +405,6 @@ export default function BusinessProfile() {
 
                 <div className="space-y-1">
                   <label className="block text-label-xs font-bold text-on-surface-variant uppercase tracking-wider">
-                    Mục tiêu Tiếp thị <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={form.marketingGoal}
-                    onChange={(e) => setForm({ ...form, marketingGoal: e.target.value })}
-                    className="w-full bg-surface-container-lowest text-primary border border-surface-variant rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-secondary-container"
-                    placeholder="Ví dụ: Tăng nhận diện thương hiệu, Thúc đẩy doanh thu..."
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="block text-label-xs font-bold text-on-surface-variant uppercase tracking-wider">
                     Ngân sách tiếp thị hàng tháng <span className="text-red-500">*</span>
                   </label>
                   <input
@@ -413,6 +417,41 @@ export default function BusinessProfile() {
                   />
                 </div>
               </div>
+            </div>
+          </div>
+
+          {/* Bento Card 4: Liên kết Mạng xã hội */}
+          <div className="bg-surface-container-lowest rounded-3xl p-6 md:p-8 shadow-ambient border border-surface-container/20 space-y-6">
+            <div className="flex items-center gap-2 border-b border-surface-container pb-3">
+              <div className="p-2 bg-primary-container text-primary rounded-xl">
+                <Share2 size={20} />
+              </div>
+              <div>
+                <h3 className="text-headline-sm font-bold text-primary">Liên kết Mạng xã hội</h3>
+                <p className="text-body-xs text-on-surface-variant">
+                  Dán đường dẫn kênh của thương hiệu. Để trống nếu chưa có kênh trên nền tảng đó.
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {SOCIAL_PLATFORMS.map(({ key, label, placeholder }) => (
+                <div key={key} className="space-y-1">
+                  <label className="flex items-center gap-2 text-label-xs font-bold text-on-surface-variant uppercase tracking-wider">
+                    <span className={`p-1 rounded-md ${getPlatformColor(key)}`}>
+                      {getPlatformIcon(key, 'w-3.5 h-3.5')}
+                    </span>
+                    {label}
+                  </label>
+                  <input
+                    type="url"
+                    value={socialForm[key]}
+                    onChange={(e) => setSocialForm({ ...socialForm, [key]: e.target.value })}
+                    className="w-full bg-surface-container-lowest text-primary border border-surface-variant rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-secondary-container"
+                    placeholder={placeholder}
+                  />
+                </div>
+              ))}
             </div>
           </div>
 
@@ -544,24 +583,46 @@ export default function BusinessProfile() {
               </div>
             </div>
 
-            {/* Bento Card for Social Link Call To Action */}
-            <div className="bg-gradient-to-r from-secondary-container/40 to-primary-container/20 rounded-[2rem] p-6 md:p-8 shadow-ambient border border-surface-container/20 flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden">
+            {/* Bento Card for Social Links */}
+            <div className="bg-gradient-to-r from-secondary-container/40 to-primary-container/20 rounded-[2rem] p-6 md:p-8 shadow-ambient border border-surface-container/20 space-y-5 relative overflow-hidden">
               <div className="absolute right-0 bottom-0 w-36 h-36 bg-primary-container/20 rounded-full blur-2xl pointer-events-none" />
-              <div className="space-y-2 max-w-xl">
-                <div className="flex items-center gap-3">
-                  <Share2 className="w-5 h-5 text-secondary shrink-0" />
-                  <h4 className="text-label-lg font-bold text-primary">Liên kết Mạng xã hội</h4>
+              <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                <div className="space-y-2 max-w-xl">
+                  <div className="flex items-center gap-3">
+                    <Share2 className="w-5 h-5 text-secondary shrink-0" />
+                    <h4 className="text-label-lg font-bold text-primary">Liên kết Mạng xã hội</h4>
+                  </div>
+                  <p className="text-body-md text-on-surface-variant leading-relaxed">
+                    Kết nối tài khoản TikTok, Facebook hoặc Instagram của thương hiệu. AI của Agencom sẽ tự động tải số liệu phân tích và đưa ra phản hồi, giúp xây dựng kịch bản và kế hoạch tối ưu hơn.
+                  </p>
                 </div>
-                <p className="text-body-md text-on-surface-variant leading-relaxed">
-                  Kết nối tài khoản TikTok, Facebook hoặc Instagram của thương hiệu. AI của Agencom sẽ tự động tải số liệu phân tích và đưa ra phản hồi, giúp xây dựng kịch bản và kế hoạch tối ưu hơn.
-                </p>
+                <button
+                  onClick={() => setIsEditing(true)}
+                  className="bg-secondary text-on-secondary hover:opacity-90 px-6 py-3 rounded-full text-label-sm font-bold shadow-md transition-all whitespace-nowrap flex items-center gap-2 shrink-0"
+                >
+                  {socialLinks.length === 0 ? 'Thêm liên kết' : 'Cập nhật liên kết'} <Edit3 size={14} />
+                </button>
               </div>
-              <a
-                href="/settings"
-                className="bg-secondary text-on-secondary hover:opacity-90 px-6 py-3 rounded-full text-label-sm font-bold shadow-md transition-all whitespace-nowrap flex items-center gap-2"
-              >
-                Quản lý liên kết <ExternalLink size={14} />
-              </a>
+
+              {socialLinks.length > 0 && (
+                <div className="flex flex-wrap gap-3 relative z-10">
+                  {socialLinks.map((link) => (
+                    <a
+                      key={link.id}
+                      href={link.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 bg-surface-container-lowest/80 hover:bg-surface-container-lowest border border-surface-container/40 rounded-full pl-1.5 pr-4 py-1.5 transition-colors group"
+                    >
+                      <span className={`p-1.5 rounded-full ${getPlatformColor(link.platform)}`}>
+                        {getPlatformIcon(link.platform, 'w-3.5 h-3.5')}
+                      </span>
+                      <span className="text-sm font-bold text-primary capitalize">{link.platform}</span>
+                      <ExternalLink size={12} className="text-on-surface-variant group-hover:text-primary transition-colors" />
+                    </a>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
@@ -574,16 +635,6 @@ export default function BusinessProfile() {
               </h3>
 
               <div className="space-y-5">
-                <div className="flex items-start gap-3">
-                  <div className="p-2 bg-secondary-container text-primary rounded-xl shrink-0 mt-0.5">
-                    <Target size={16} />
-                  </div>
-                  <div>
-                    <span className="text-body-xs text-on-surface-variant block">Mục tiêu chiến dịch</span>
-                    <p className="text-sm font-bold text-primary">{profile?.marketingGoal || 'Chưa thiết lập'}</p>
-                  </div>
-                </div>
-
                 <div className="flex items-start gap-3">
                   <div className="p-2 bg-secondary-container text-primary rounded-xl shrink-0 mt-0.5">
                     <Coins size={16} />
@@ -616,7 +667,12 @@ export default function BusinessProfile() {
               {socialLinks.length === 0 ? (
                 <div className="text-center py-6 space-y-2">
                   <p className="text-body-md text-on-surface-variant text-sm">Chưa có kênh liên kết nào hoạt động.</p>
-                  <a href="/settings" className="text-xs font-bold text-secondary hover:underline">Liên kết ngay</a>
+                  <button
+                    onClick={() => setIsEditing(true)}
+                    className="text-xs font-bold text-secondary hover:underline"
+                  >
+                    Liên kết ngay
+                  </button>
                 </div>
               ) : (
                 <div className="space-y-4">

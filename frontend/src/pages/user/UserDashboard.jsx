@@ -23,7 +23,7 @@ const QUICK_ACTIONS = [
     title: 'Tạo Hồ sơ',
     desc: 'Thiết lập bản sắc thương hiệu.',
     icon: UserPlus,
-    path: '/settings',
+    path: '/business-profile',
   },
   {
     title: 'Tạo Bộ công cụ Marketing',

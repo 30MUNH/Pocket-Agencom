@@ -109,6 +109,8 @@ async function getMe(userId) {
   return user;
 }
 
+const MANAGED_SOCIAL_PLATFORMS = ['tiktok', 'facebook', 'instagram'];
+
 async function updateBusinessProfile(userId, data) {
   const profile = await prisma.businessProfile.upsert({
     where: { userId },
@@ -142,7 +144,54 @@ async function updateBusinessProfile(userId, data) {
       monthlyMarketingBudget: data.monthlyMarketingBudget,
     },
   });
-  return profile;
+
+  // Sync social links only when the client sends them, so partial updates
+  // (e.g. company name from settings) never touch linked platforms.
+  if (Array.isArray(data.socialLinks)) {
+    const links = data.socialLinks
+      .map((item) => ({
+        platform: String(item.platform || '').toLowerCase(),
+        url: String(item.url || '').trim(),
+      }))
+      .filter((item) => MANAGED_SOCIAL_PLATFORMS.includes(item.platform) && item.url);
+
+    const existing = await prisma.socialPlatform.findMany({
+      where: { userId, platform: { in: MANAGED_SOCIAL_PLATFORMS } },
+    });
+
+    const sentPlatforms = links.map((l) => l.platform);
+    const toDelete = existing.filter((p) => !sentPlatforms.includes(p.platform));
+
+    await prisma.$transaction([
+      ...toDelete.map((p) =>
+        prisma.socialPlatform.delete({ where: { id: p.id } })
+      ),
+      ...links.map((link) => {
+        const current = existing.find((p) => p.platform === link.platform);
+        if (current) {
+          return prisma.socialPlatform.update({
+            where: { id: current.id },
+            data: { url: link.url },
+          });
+        }
+        return prisma.socialPlatform.create({
+          data: {
+            userId,
+            platform: link.platform,
+            url: link.url,
+            followersCount: 0,
+            engagementRate: 0,
+            businessProfileId: profile.id,
+          },
+        });
+      }),
+    ]);
+  }
+
+  return prisma.businessProfile.findUnique({
+    where: { userId },
+    include: { socialPlatforms: true },
+  });
 }
 
 async function updateProfile(userId, data) {
