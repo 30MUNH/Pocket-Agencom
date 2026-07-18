@@ -287,7 +287,7 @@ export default function RegisterPage() {
                 <h2 className="text-headline-md font-headline-md text-primary mb-3">
                   The Marketing Agency <br /> in Your Pocket
                 </h2>
-                <p className="text-body-md font-body-md text-on-surface-variant max-w-xs leading-relaxed">
+                <p className="text-body-md font-body-md text-on-surface-variant max-w-sm leading-relaxed">
                   Nơi tạo chiến dịch marketing hiệu quả được <br /> thiết kế riêng cho SME Việt Nam.
                 </p>
                 <div className="mt-8 flex gap-3">
@@ -303,7 +303,7 @@ export default function RegisterPage() {
                 <h2 className="text-headline-md font-headline-md text-primary mb-3">
                   Mở rộng cơ hội hợp tác
                 </h2>
-                <p className="text-body-md font-body-md text-on-surface-variant max-w-xs leading-relaxed">
+                <p className="text-body-md font-body-md text-on-surface-variant max-w-sm leading-relaxed">
                   Tạo hồ sơ chuyên nghiệp, xuất hiện trước hàng nghìn thương hiệu và nhận đặt lịch trực tiếp.
                 </p>
                 <div className="mt-8 flex gap-3">
