@@ -23,6 +23,16 @@ const upload = multer({
   },
 });
 
+// Campaign images are sent to Gemini Vision as inline base64, so keep the cap at 4MB
+const uploadCampaign = multer({
+  storage,
+  fileFilter,
+  limits: {
+    fileSize: 4 * 1024 * 1024, // 4MB
+  },
+});
+
 module.exports = {
   uploadAvatar: upload.single('avatar'),
+  uploadCampaignImage: uploadCampaign.single('image'),
 };

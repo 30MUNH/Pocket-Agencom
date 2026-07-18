@@ -1,4 +1,7 @@
 const marketingPlanService = require('../services/marketingPlanService');
+const { uploadCampaignAsset } = require('../services/storageService');
+const { AppError } = require('../middleware/errorHandler');
+const { generatePostWithImageSchema } = require('../validators/marketingPlan.validator');
 const { success } = require('../utils/response');
 
 async function generate(req, res, next) {
@@ -64,4 +67,37 @@ async function generatePost(req, res, next) {
   }
 }
 
-module.exports = { generate, list, getById, save, review, remove, generatePost };
+async function generatePostWithImage(req, res, next) {
+  try {
+    if (!req.file) {
+      throw new AppError('Vui lòng đính kèm ảnh sản phẩm hoặc ảnh feedback', 400);
+    }
+
+    // multipart bodies bypass the JSON validate() middleware, so validate here
+    const parsed = generatePostWithImageSchema.safeParse(req.body);
+    if (!parsed.success) {
+      const details = parsed.error.issues.map((i) => ({
+        field: i.path.join('.'),
+        message: i.message,
+      }));
+      throw new AppError('Validation failed', 422, details);
+    }
+
+    // 1) Persist the raw image to Supabase Storage (bucket: campaign-assets)
+    const { publicUrl } = await uploadCampaignAsset(req.file, `user-${req.user.id}`);
+
+    // 2) Send the image buffer + brand context to Gemini Vision
+    const post = await marketingPlanService.generateDetailedPostWithImage(
+      req.user,
+      parsed.data,
+      req.file,
+      publicUrl
+    );
+
+    return success(res, post, 200);
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = { generate, list, getById, save, review, remove, generatePost, generatePostWithImage };

@@ -2,6 +2,7 @@ const express = require('express');
 const marketingPlanController = require('../controllers/marketingPlanController');
 const { authMiddleware, requireRole } = require('../middleware/authMiddleware');
 const { validate } = require('../middleware/validate');
+const { uploadCampaignImage } = require('../middleware/uploadMiddleware');
 const {
   generatePlanSchema,
   reviewPlanSchema,
@@ -25,6 +26,12 @@ router.post(
   requireRole('user', 'admin'),
   validate(generatePostSchema),
   marketingPlanController.generatePost
+);
+router.post(
+  '/generate-post-with-image',
+  requireRole('user', 'admin'),
+  uploadCampaignImage,
+  marketingPlanController.generatePostWithImage
 );
 router.post('/:id/save', requireRole('user', 'admin'), marketingPlanController.save);
 router.patch(

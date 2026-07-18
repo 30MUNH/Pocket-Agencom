@@ -25,7 +25,17 @@ const generatePostSchema = z.object({
   ideaTitle: z.string().min(1, 'Idea title is required'),
   ideaDescription: z.string().min(1, 'Idea description is required'),
   platform: z.string().min(1, 'Platform is required'),
-  businessProfileId: z.number().int().positive('Business profile ID is required'),
+  businessProfileId: z.preprocess((val) => Number(val), z.number().int().positive('Business profile ID is required')),
+  existingResources: z.string().optional(),
+  campaignReason: z.string().optional(),
+});
+
+// multipart/form-data variant: every field arrives as a string, so coerce the ID
+const generatePostWithImageSchema = z.object({
+  ideaTitle: z.string().min(1, 'Idea title is required'),
+  ideaDescription: z.string().min(1, 'Idea description is required'),
+  platform: z.string().min(1, 'Platform is required'),
+  businessProfileId: z.coerce.number().int().positive('Business profile ID is required'),
   existingResources: z.string().optional(),
   campaignReason: z.string().optional(),
 });
@@ -48,4 +58,5 @@ module.exports = {
   reviewPlanSchema,
   isValidPlanTransition,
   generatePostSchema,
+  generatePostWithImageSchema,
 };

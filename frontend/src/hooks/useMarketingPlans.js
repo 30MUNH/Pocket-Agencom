@@ -53,3 +53,9 @@ export function useGeneratePost() {
     mutationFn: marketingPlanApi.generatePost,
   });
 }
+
+export function useGeneratePostWithImage() {
+  return useMutation({
+    mutationFn: marketingPlanApi.generatePostWithImage,
+  });
+}

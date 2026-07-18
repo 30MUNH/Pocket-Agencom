@@ -1,4 +1,6 @@
 const prisma = require('../config/prisma');
+const supabase = require('../config/supabase');
+const path = require('path');
 const { AppError } = require('../middleware/errorHandler');
 const { isValidPlanTransition } = require('../validators/marketingPlan.validator');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
@@ -530,6 +532,116 @@ Yêu cầu viết bằng tiếng Việt, giọng điệu tự nhiên phù hợp 
   }
 }
 
+// ── Gemini Vision: generate post + design advice from an uploaded image ────────
+
+/**
+ * Converts a multer memory-storage file into a Gemini SDK inlineData part.
+ */
+function fileToGenerativePart(file) {
+  return {
+    inlineData: {
+      data: file.buffer.toString('base64'),
+      mimeType: file.mimetype,
+    },
+  };
+}
+
+function generatePostWithImagePrompt({ ideaTitle, ideaDescription, platform, usp, brandVoice, resources, reason }) {
+  const systemPrompt = `Bạn là Giám đốc Sáng tạo (Creative Director) của một Marketing Agency hàng đầu Việt Nam, có chuyên môn sâu về cả viết nội dung (copywriting) lẫn thiết kế hình ảnh (visual design).
+
+Người dùng là chủ doanh nghiệp nhỏ, KHÔNG chuyên về thiết kế. Họ gửi cho bạn một tấm ảnh THÔ (ảnh sản phẩm tự chụp, ảnh feedback khách hàng...) và cần bạn:
+1. Viết bài đăng mạng xã hội hoàn chỉnh dựa trên NHỮNG GÌ BẠN THẤY TRONG ẢNH kết hợp với ý tưởng và thương hiệu.
+2. Đưa ra hướng dẫn chỉnh sửa ảnh THỰC TẾ, DỄ LÀM để tấm ảnh thô đó trở nên chuyên nghiệp hơn khi đăng.
+
+QUY TẮC BẮT BUỘC VỀ ĐỊNH DẠNG ĐẦU RA:
+Trả về CHÍNH XÁC hai phần với hai tiêu đề như sau (giữ nguyên cả dấu ngoặc vuông), không thêm bất kỳ văn bản nào trước, giữa hay sau hai phần này:
+
+[NỘI DUNG BÀI ĐĂNG]
+(Bài đăng hoàn chỉnh sẵn sàng đăng tải: Hook thu hút -> Nội dung chính mô tả/khai thác chi tiết NHÌN THẤY trong ảnh -> Call-to-Action -> Hashtags. Dùng emoji phù hợp. Giọng điệu phải đúng brand voice.)
+
+[GỢI Ý THIẾT KẾ]
+(4-6 gạch đầu dòng hướng dẫn chỉnh sửa CHÍNH TẤM ẢNH NÀY, cụ thể và dễ hiểu cho người không biết thiết kế. Mỗi gợi ý phải nhắc đến chi tiết thật trong ảnh. Ví dụ phong cách: "Dùng Canva, cắt bớt phần nền lộn xộn phía sau kệ hàng", "Thêm khung viền màu be nhạt đồng bộ với tông sản phẩm", "Chèn text 'Ưu đãi 20%' ở góc trên bên phải, font đậm dễ đọc". Ưu tiên công cụ miễn phí như Canva, CapCut.)
+
+QUY TẮC NỘI DUNG:
+- Toàn bộ bằng tiếng Việt tự nhiên.
+- Bài đăng PHẢI khai thác chi tiết cụ thể nhìn thấy trong ảnh (màu sắc, bối cảnh, con người, sản phẩm, chữ trong ảnh nếu có) — tuyệt đối không viết chung chung như thể chưa xem ảnh.
+- Nếu ảnh là feedback/tin nhắn khách hàng: khai thác nó làm social proof trong bài đăng.
+- KHÔNG dùng markdown bao ngoài như \`\`\`.`;
+
+  const userPrompt = `Hãy xem kỹ tấm ảnh đính kèm và tạo nội dung cho nền tảng: "${platform}"
+
+Ý tưởng cần triển khai:
+- Tiêu đề ý tưởng: ${ideaTitle}
+- Mô tả ý tưởng: ${ideaDescription}
+
+Thông tin thương hiệu (bắt buộc bám sát):
+- Điểm khác biệt độc nhất (USP): ${usp}
+- Giọng điệu thương hiệu (Brand Voice): ${brandVoice}
+- Tài nguyên hiện có: ${resources}
+- Bối cảnh/Lý do chiến dịch: ${reason}`;
+
+  return { systemPrompt, userPrompt };
+}
+
+async function generateDetailedPostWithImage(user, { ideaTitle, ideaDescription, platform, businessProfileId, existingResources, campaignReason }, file, imageUrl) {
+  const profile = await prisma.businessProfile.findUnique({
+    where: { id: Number(businessProfileId) },
+  });
+
+  if (!profile) {
+    throw new AppError('Business profile not found', 404);
+  }
+
+  if (user.role === 'user' && profile.userId !== user.id) {
+    throw new AppError('Access denied', 403);
+  }
+
+  const brandVoice = profile.brandVoice || 'Chuyên nghiệp, tin cậy';
+  const usp = profile.usp || 'Chưa xác định';
+  const resources = existingResources || 'Chưa xác định';
+  const reason = campaignReason || 'Chưa xác định';
+
+  const { systemPrompt, userPrompt } = generatePostWithImagePrompt({
+    ideaTitle,
+    ideaDescription,
+    platform,
+    usp,
+    brandVoice,
+    resources,
+    reason,
+  });
+
+  const imagePart = fileToGenerativePart(file);
+
+  try {
+    const result = await geminiTextModel.generateContent({
+      contents: [{ role: 'user', parts: [{ text: userPrompt }, imagePart] }],
+      systemInstruction: { parts: [{ text: systemPrompt }] },
+    });
+
+    return { content: result.response.text(), imageUrl };
+  } catch (err) {
+    console.error('[Gemini Vision Post Error]', err.message || err);
+    const fallback = `[NỘI DUNG BÀI ĐĂNG]
+🔥 ${ideaTitle} 🔥
+
+📌 ${ideaDescription}
+
+✨ Điểm đặc biệt của chúng tôi: ${usp}
+
+👉 Nhắn tin ngay hôm nay để nhận tư vấn chi tiết!
+
+#${platform.replace(/\s+/g, '')} #creative
+
+[GỢI Ý THIẾT KẾ]
+- Dùng Canva (miễn phí) để cắt gọn bố cục, đưa sản phẩm vào chính giữa khung hình.
+- Tăng nhẹ độ sáng và độ tương phản để ảnh trông rõ ràng, chuyên nghiệp hơn.
+- Chèn logo thương hiệu ở góc dưới bên phải với kích thước nhỏ.
+- Thêm dòng chữ ưu đãi/CTA ngắn gọn ở phần trên của ảnh, dùng font đậm dễ đọc.`;
+    return { content: fallback, imageUrl };
+  }
+}
+
 module.exports = {
   generatePlan,
   getPlans,
@@ -538,4 +650,5 @@ module.exports = {
   reviewPlan,
   deletePlan,
   generateDetailedPost,
+  generateDetailedPostWithImage,
 };

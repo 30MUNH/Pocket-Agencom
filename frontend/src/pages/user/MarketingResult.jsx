@@ -1,8 +1,39 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
-import { Lightbulb, Heart, Mail, FileText, ClipboardCheck, Check, PlayCircle, Play, Video, Copy, BookOpen, RefreshCw, Download, Clock, Loader2, Target, Sparkles, Image as ImageIcon } from 'lucide-react';
-import { useMarketingPlan, useSavePlan, useGeneratePost } from '../../hooks/useMarketingPlans';
+import { Lightbulb, Heart, Mail, FileText, ClipboardCheck, Check, PlayCircle, Play, Video, Copy, BookOpen, RefreshCw, Download, Clock, Loader2, Target, Sparkles, Image as ImageIcon, Upload, X, Wand2 } from 'lucide-react';
+import { useMarketingPlan, useSavePlan, useGeneratePost, useGeneratePostWithImage } from '../../hooks/useMarketingPlans';
+import { useAuthStore } from '../../store/authStore';
 import { toast } from '../../store/toastStore';
+import BudgetBreakdownCard from '../../components/marketing/BudgetBreakdownCard';
+import RevisionChatPanel from '../../components/marketing/RevisionChatPanel';
+
+/**
+ * Splits AI Advisor output into { postContent, designTips }.
+ * Expected markers: [NỘI DUNG BÀI ĐĂNG] and [GỢI Ý THIẾT KẾ].
+ * Falls back to treating the whole text as post content.
+ */
+function parseAdvisorContent(text) {
+  if (!text) return { postContent: '', designTips: '' };
+
+  const postMarker = /\[NỘI DUNG BÀI ĐĂNG\]/i;
+  const designMarker = /\[GỢI Ý THIẾT KẾ\]/i;
+
+  const designIdx = text.search(designMarker);
+  if (designIdx === -1) {
+    return { postContent: text.replace(postMarker, '').trim(), designTips: '' };
+  }
+
+  const postContent = text
+    .slice(0, designIdx)
+    .replace(postMarker, '')
+    .trim();
+  const designTips = text
+    .slice(designIdx)
+    .replace(designMarker, '')
+    .trim();
+
+  return { postContent, designTips };
+}
 
 function renderBoldText(text) {
   if (!text) return '';
@@ -25,29 +56,95 @@ function renderBoldText(text) {
 function IdeaCard({ idea, index, totalLength, businessProfileId, existingResources, campaignReason }) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [detailedContent, setDetailedContent] = useState('');
+  const [designTips, setDesignTips] = useState('');
+  const [uploadedImageUrl, setUploadedImageUrl] = useState('');
   const [copied, setCopied] = useState(false);
-  
+
+  // AI Advisor image upload state
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState('');
+  const [isDragging, setIsDragging] = useState(false);
+  const fileInputRef = useRef(null);
+
   const generatePostMutation = useGeneratePost();
+  const generatePostWithImageMutation = useGeneratePostWithImage();
+
+  useEffect(() => {
+    // Revoke the object URL when the preview changes/unmounts to avoid leaks
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+    };
+  }, [previewUrl]);
+
+  const handleSelectFile = (file) => {
+    if (!file) return;
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      toast.error('Chỉ hỗ trợ ảnh JPEG, PNG hoặc WebP.');
+      return;
+    }
+    if (file.size > 4 * 1024 * 1024) {
+      toast.error('Ảnh vượt quá 4MB. Vui lòng chọn ảnh nhỏ hơn.');
+      return;
+    }
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setSelectedFile(file);
+    setPreviewUrl(URL.createObjectURL(file));
+  };
+
+  const handleRemoveFile = (e) => {
+    e.stopPropagation();
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setSelectedFile(null);
+    setPreviewUrl('');
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+    handleSelectFile(e.dataTransfer.files?.[0]);
+  };
 
   const handleGeneratePost = async () => {
-    try {
-      const response = await generatePostMutation.mutateAsync({
-        ideaTitle: idea.title,
-        ideaDescription: idea.description,
-        platform: idea.channel || 'Đa kênh',
-        businessProfileId: Number(businessProfileId),
-        existingResources: existingResources || undefined,
-        campaignReason: campaignReason || undefined,
-      });
+    const basePayload = {
+      ideaTitle: idea.title,
+      ideaDescription: idea.description,
+      platform: idea.channel || 'Đa kênh',
+      businessProfileId: Number(businessProfileId),
+      existingResources: existingResources || undefined,
+      campaignReason: campaignReason || undefined,
+    };
 
-      if (response && response.content) {
-        setDetailedContent(response.content);
-        setIsExpanded(true);
+    try {
+      if (selectedFile) {
+        // Multi-modal: image + context → post content + design advice
+        const response = await generatePostWithImageMutation.mutateAsync({
+          ...basePayload,
+          file: selectedFile,
+        });
+
+        if (response && response.content) {
+          const { postContent, designTips: tips } = parseAdvisorContent(response.content);
+          setDetailedContent(postContent);
+          setDesignTips(tips);
+          setUploadedImageUrl(response.imageUrl || '');
+          setIsExpanded(true);
+        } else {
+          toast.error('Không nhận được nội dung từ AI.');
+        }
       } else {
-        toast.error('Không nhận được nội dung từ AI.');
+        const response = await generatePostMutation.mutateAsync(basePayload);
+
+        if (response && response.content) {
+          setDetailedContent(response.content);
+          setDesignTips('');
+          setIsExpanded(true);
+        } else {
+          toast.error('Không nhận được nội dung từ AI.');
+        }
       }
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Có lỗi xảy ra khi tạo nội dung.');
+      toast.error(err.message || err.response?.data?.message || 'Có lỗi xảy ra khi tạo nội dung.');
     }
   };
 
@@ -58,7 +155,7 @@ function IdeaCard({ idea, index, totalLength, businessProfileId, existingResourc
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const isGeneratingPost = generatePostMutation.isPending;
+  const isGeneratingPost = generatePostMutation.isPending || generatePostWithImageMutation.isPending;
 
   if (isGeneratingPost) {
     return (
@@ -75,7 +172,9 @@ function IdeaCard({ idea, index, totalLength, businessProfileId, existingResourc
         </div>
         <div className="mt-6 flex items-center justify-center gap-2 py-3 bg-secondary-container/20 rounded-xl">
           <Loader2 className="animate-spin text-secondary" size={16} />
-          <span className="text-xs font-bold text-secondary">Đang biên soạn bài đăng...</span>
+          <span className="text-xs font-bold text-secondary">
+            {selectedFile ? 'AI đang phân tích ảnh & biên soạn bài đăng...' : 'Đang biên soạn bài đăng...'}
+          </span>
         </div>
       </div>
     );
@@ -104,19 +203,55 @@ function IdeaCard({ idea, index, totalLength, businessProfileId, existingResourc
         <div className="transition-all duration-500 ease-in-out">
           {isExpanded ? (
             <div className="animate-fade-in space-y-4">
+              {/* [NỘI DUNG BÀI ĐĂNG] — ready-to-publish caption */}
               <p className="text-body-md text-on-surface-variant whitespace-pre-wrap leading-relaxed">
                 {detailedContent}
               </p>
 
-              {/* Placeholder Image Gallery Grid */}
+              {/* [GỢI Ý THIẾT KẾ] — AI Advisor design suggestions */}
+              {designTips && (
+                <div className="rounded-2xl bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-500/10 dark:to-orange-500/5 border border-amber-200/70 dark:border-amber-500/20 p-5 space-y-3">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-full bg-amber-400/90 flex items-center justify-center shadow-sm shrink-0">
+                      <Lightbulb size={15} className="text-white" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-amber-800 dark:text-amber-300 leading-tight">
+                        Gợi ý Thiết kế từ AI Advisor
+                      </p>
+                      <p className="text-[11px] text-amber-700/70 dark:text-amber-400/60">
+                        Cách chỉnh sửa chính tấm ảnh của bạn để đăng bài chuyên nghiệp hơn
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-sm text-amber-900/90 dark:text-amber-100/80 whitespace-pre-wrap leading-relaxed pl-1">
+                    {designTips}
+                  </div>
+                </div>
+              )}
+
+              {/* Image Gallery Grid — user's uploaded image takes the first slot */}
               <div className="grid grid-cols-3 gap-2 mt-6">
                 <div className="aspect-square rounded-xl bg-gradient-to-tr from-pink-500/20 to-purple-500/20 dark:from-pink-500/10 dark:to-purple-500/10 border border-secondary-container/20 overflow-hidden relative group">
-                  <img 
-                    src="https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?auto=format&fit=crop&w=200&q=80" 
-                    alt="Mockup 1" 
-                    className="w-full h-full object-cover opacity-85 group-hover:scale-105 transition-transform duration-300"
-                  />
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
+                  {previewUrl || uploadedImageUrl ? (
+                    <>
+                      <img
+                        src={previewUrl || uploadedImageUrl}
+                        alt="Ảnh của bạn"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                      <span className="absolute bottom-1.5 left-1.5 bg-black/60 text-white text-[10px] font-bold px-2 py-0.5 rounded-full backdrop-blur-sm">
+                        Ảnh của bạn
+                      </span>
+                    </>
+                  ) : (
+                    <img
+                      src="https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?auto=format&fit=crop&w=200&q=80"
+                      alt="Mockup 1"
+                      className="w-full h-full object-cover opacity-85 group-hover:scale-105 transition-transform duration-300"
+                    />
+                  )}
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors pointer-events-none" />
                 </div>
                 <div className="aspect-square rounded-xl bg-gradient-to-tr from-pink-500/20 to-purple-500/20 dark:from-pink-500/10 dark:to-purple-500/10 border border-secondary-container/20 overflow-hidden relative group">
                   <img 
@@ -175,13 +310,76 @@ function IdeaCard({ idea, index, totalLength, businessProfileId, existingResourc
               </button>
             </div>
           ) : (
-            <button
-              onClick={handleGeneratePost}
-              className="w-full mt-6 py-3 rounded-xl bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 active:scale-[0.97] text-white text-xs font-bold shadow-md hover:shadow-lg transition-all duration-300 flex items-center justify-center gap-2 group"
-            >
-              <Sparkles size={14} className="group-hover:rotate-12 transition-transform" />
-              Tạo Nội dung
-            </button>
+            <div className="mt-6 space-y-3">
+              {/* AI Advisor image dropzone */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                className="hidden"
+                onChange={(e) => handleSelectFile(e.target.files?.[0])}
+              />
+              <div
+                onClick={() => fileInputRef.current?.click()}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setIsDragging(true);
+                }}
+                onDragLeave={() => setIsDragging(false)}
+                onDrop={handleDrop}
+                className={`relative rounded-xl border-2 border-dashed transition-all cursor-pointer overflow-hidden ${
+                  isDragging
+                    ? 'border-secondary bg-secondary-container/30 scale-[1.01]'
+                    : selectedFile
+                      ? 'border-secondary/50 bg-secondary-container/10'
+                      : 'border-outline-variant/50 hover:border-secondary/60 hover:bg-surface-container/50'
+                }`}
+              >
+                {selectedFile ? (
+                  <div className="flex items-center gap-3 p-3">
+                    <img
+                      src={previewUrl}
+                      alt="Ảnh đã chọn"
+                      className="w-14 h-14 rounded-lg object-cover shrink-0 border border-secondary-container/40"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-bold text-primary dark:text-inverse-primary truncate">
+                        {selectedFile.name}
+                      </p>
+                      <p className="text-[11px] text-secondary dark:text-secondary-fixed font-medium flex items-center gap-1 mt-0.5">
+                        <Wand2 size={11} />
+                        AI sẽ phân tích ảnh & tư vấn thiết kế
+                      </p>
+                    </div>
+                    <button
+                      onClick={handleRemoveFile}
+                      aria-label="Xóa ảnh"
+                      className="w-7 h-7 rounded-full bg-surface-container hover:bg-error/10 hover:text-error text-on-surface-variant flex items-center justify-center shrink-0 transition-colors"
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center gap-1.5 py-4 px-3 text-center">
+                    <div className="w-8 h-8 rounded-full bg-surface-container dark:bg-surface-variant/30 flex items-center justify-center">
+                      <Upload size={14} className="text-on-surface-variant" />
+                    </div>
+                    <p className="text-[11px] text-on-surface-variant leading-snug">
+                      Tải lên ảnh sản phẩm thực tế hoặc feedback{' '}
+                      <span className="text-outline">(Không bắt buộc)</span>
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              <button
+                onClick={handleGeneratePost}
+                className="w-full py-3 rounded-xl bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 active:scale-[0.97] text-white text-xs font-bold shadow-md hover:shadow-lg transition-all duration-300 flex items-center justify-center gap-2 group"
+              >
+                <Sparkles size={14} className="group-hover:rotate-12 transition-transform" />
+                {selectedFile ? 'Tạo Nội dung + Tư vấn ảnh' : 'Tạo Nội dung'}
+              </button>
+            </div>
           )}
         </div>
       </div>
@@ -195,6 +393,8 @@ export default function MarketingResult() {
   const planId = searchParams.get('planId');
   const { data: plan, isLoading } = useMarketingPlan(planId);
   const savePlan = useSavePlan();
+  const user = useAuthStore((s) => s.user);
+  const monthlyMarketingBudget = user?.businessProfile?.monthlyMarketingBudget;
 
   const contentIdeas = plan?.contentIdeas || [];
   const videoScripts = plan?.videoScripts || [];
@@ -396,6 +596,9 @@ export default function MarketingResult() {
               ))}
             </ul>
           </section>
+
+          {/* Bento Card: Budget Breakdown */}
+          <BudgetBreakdownCard rawBudget={monthlyMarketingBudget} />
         </div>
 
         {/* Right Column Scripts & Playbook (8 span) */}
@@ -508,7 +711,7 @@ export default function MarketingResult() {
                     <BookOpen size={18} />
                   </div>
                   <div>
-                    <h3 className="text-headline-md font-bold text-primary dark:text-inverse-primary">Cẩm nang Tiếp thị</h3>
+                    <h3 className="text-headline-md font-bold text-primary dark:text-inverse-primary">Đề xuất Chiến dịch</h3>
                     <p className="text-sm text-on-surface-variant mt-1">Quy trình thực thi chi tiết từng bước do AI thiết kế.</p>
                   </div>
                 </div>
@@ -620,6 +823,9 @@ export default function MarketingResult() {
           </div>
         </div>
       </div>
+
+      {/* Revision Chat & Execute Campaign — sticky at the bottom of the proposal */}
+      <RevisionChatPanel />
     </div>
   );
 }

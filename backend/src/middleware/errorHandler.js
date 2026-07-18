@@ -18,6 +18,14 @@ function errorHandler(err, req, res, next) {
     return fail(res, err.message, err.statusCode, err.details);
   }
 
+  if (err.name === 'MulterError') {
+    const message =
+      err.code === 'LIMIT_FILE_SIZE'
+        ? 'Ảnh vượt quá dung lượng cho phép (tối đa 4MB). Vui lòng chọn ảnh nhỏ hơn.'
+        : `Lỗi tải file: ${err.message}`;
+    return fail(res, message, 400);
+  }
+
   if (err.code === 'P2002') {
     return fail(res, 'A record with this value already exists', 409);
   }
