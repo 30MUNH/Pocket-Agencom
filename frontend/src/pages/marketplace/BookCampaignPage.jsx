@@ -60,7 +60,7 @@ export default function BookCampaignPage() {
         targetCustomer,
         campaignPlatform: platform,
         campaignDate: targetDate || undefined,
-        budget,
+        budget: budget === '' || budget === 0 ? undefined : Number(budget),
         doAndDontNotes: dosDonts,
         deliveryAddress,
         referenceLink: referenceLinks || undefined,

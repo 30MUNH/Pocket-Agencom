@@ -1,4 +1,5 @@
 import { Check, ArrowRight } from 'lucide-react';
+import MoneyInput from '../ui/MoneyInput';
 
 export default function CampaignBookingCard({
   creator,
@@ -72,17 +73,14 @@ export default function CampaignBookingCard({
           >
             Ngân sách Đề xuất (VND)
           </label>
-          <div className="relative">
-            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant font-bold text-xs">VND</span>
-            <input
-              className="w-full bg-surface-container dark:bg-surface-variant/20 border-none rounded-xl pl-14 pr-4 py-3 text-body-md focus:ring-2 focus:ring-secondary-fixed focus:bg-surface-container-lowest transition-all font-bold text-lg text-primary dark:text-inverse-primary"
-              id="budget-input"
-              type="number"
-              placeholder="0"
-              value={budget}
-              onChange={(e) => onBudgetChange(e.target.value)}
-            />
-          </div>
+          <MoneyInput
+            id="budget-input"
+            value={budget}
+            onChange={onBudgetChange}
+            placeholder="0"
+            prefix="VND"
+            inputClassName="w-full bg-surface-container dark:bg-surface-variant/20 border-none rounded-xl pl-14 pr-20 py-3 text-body-md focus:ring-2 focus:ring-secondary-fixed focus:bg-surface-container-lowest transition-all font-bold text-lg text-primary dark:text-inverse-primary"
+          />
           <p className="text-[11px] text-on-surface-variant mt-2 leading-relaxed">
             Mức giá thông thường của nhà sáng tạo bắt đầu từ khoảng{' '}
             <span className="font-semibold text-primary dark:text-inverse-primary">

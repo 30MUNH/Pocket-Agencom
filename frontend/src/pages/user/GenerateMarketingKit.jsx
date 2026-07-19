@@ -5,6 +5,7 @@ import { useGeneratePlan } from '../../hooks/useMarketingPlans';
 import { toast } from '../../store/toastStore';
 import { authApi } from '../../api/authApi';
 import AILoadingScreen from '../../components/ai/AILoadingScreen';
+import MoneyInput from '../../components/ui/MoneyInput';
 
 export default function GenerateMarketingKit() {
   const navigate = useNavigate();
@@ -26,7 +27,7 @@ export default function GenerateMarketingKit() {
     trendData?.customerProfile || "Khách hàng Gen-Z có ý thức bảo vệ môi trường và quan tâm đến các thành phần thuần chay."
   );
   const [primaryGoal, setPrimaryGoal] = useState(trendData?.primaryGoal || "500 lượt đăng ký mới và tỷ lệ chuyển đổi 10%");
-  const [budget, setBudget] = useState(1500);
+  const [budget, setBudget] = useState(1500000);
   const [channels, setChannels] = useState('');
   const [resources, setResources] = useState('');
   const [campaignReason, setCampaignReason] = useState('');
@@ -107,7 +108,7 @@ export default function GenerateMarketingKit() {
         productDescription: description,
         targetCustomer: customerProfile,
         goal: primaryGoal,
-        budget,
+        budget: budget === '' ? undefined : budget,
         deploymentChannels: channels,
         existingResources: resources,
         campaignReason,
@@ -350,12 +351,11 @@ export default function GenerateMarketingKit() {
               <label className="block text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">
                 Ngân sách Ước tính (VND)
               </label>
-              <input
-                type="number"
+              <MoneyInput
                 value={budget}
-                onChange={(e) => setBudget(Number(e.target.value))}
-                placeholder="1000000"
-                className="w-full bg-surface-container dark:bg-surface-variant/20 border-none rounded-xl px-4 py-3.5 text-body-md text-primary dark:text-inverse-primary focus:ring-2 focus:ring-secondary focus:bg-surface-container-lowest dark:focus:bg-surface-container-lowest transition-all"
+                onChange={setBudget}
+                placeholder="1.000.000"
+                inputClassName="w-full bg-surface-container dark:bg-surface-variant/20 border-none rounded-xl pl-4 pr-20 py-3.5 text-body-md text-primary dark:text-inverse-primary focus:ring-2 focus:ring-secondary focus:bg-surface-container-lowest dark:focus:bg-surface-container-lowest transition-all"
               />
             </div>
           </div>

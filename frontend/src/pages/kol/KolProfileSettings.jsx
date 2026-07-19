@@ -21,6 +21,7 @@ import { useMyKolProfile, useUpdateKolProfile } from '../../hooks/useKols';
 import { useUpdateProfile } from '../../hooks/useAuth';
 import { uploadApi } from '../../api/uploadApi';
 import { toast } from '../../store/toastStore';
+import MoneyInput from '../../components/ui/MoneyInput';
 
 const CATEGORY_OPTIONS = [
   'Beauty', 'Tech', 'Fashion', 'Food', 'Travel', 'Education', 'Fitness', 'Lifestyle',
@@ -277,13 +278,12 @@ export default function KolProfileSettings() {
                     Giá Booking (VND)
                   </label>
                   <div className="relative">
-                    <DollarSign size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant" />
-                    <input
-                      type="number"
+                    <DollarSign size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant z-10" />
+                    <MoneyInput
                       value={form.bookingPrice}
-                      onChange={(e) => setForm((prev) => ({ ...prev, bookingPrice: e.target.value }))}
-                      placeholder="500000"
-                      className="w-full pl-10 pr-4 py-3 rounded-full bg-surface-container-low border-transparent focus:border-secondary-container focus:bg-surface-container-lowest focus:ring-2 focus:ring-secondary-container transition-all outline-none text-body-md font-body-md"
+                      onChange={(v) => setForm((prev) => ({ ...prev, bookingPrice: v }))}
+                      placeholder="500.000"
+                      inputClassName="w-full pl-10 pr-20 py-3 rounded-full bg-surface-container-low border-transparent focus:border-secondary-container focus:bg-surface-container-lowest focus:ring-2 focus:ring-secondary-container transition-all outline-none text-body-md font-body-md"
                     />
                   </div>
                 </div>

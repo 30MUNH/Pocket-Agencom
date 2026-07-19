@@ -597,8 +597,8 @@ export default function MarketingResult() {
             </ul>
           </section>
 
-          {/* Bento Card: Budget Breakdown */}
-          <BudgetBreakdownCard rawBudget={monthlyMarketingBudget} />
+          {/* Bento Card: Budget Breakdown — ưu tiên kinh phí người dùng nhập khi tạo chiến dịch */}
+          <BudgetBreakdownCard rawBudget={plan.budget ?? monthlyMarketingBudget} />
         </div>
 
         {/* Right Column Scripts & Playbook (8 span) */}
