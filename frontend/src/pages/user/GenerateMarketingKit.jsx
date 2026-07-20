@@ -100,6 +100,10 @@ export default function GenerateMarketingKit() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (budget !== '' && Number(budget) === 0) {
+      toast.error('Ngân sách ước tính không thể bằng 0. Vui lòng nhập ngân sách lớn hơn 0 hoặc để trống.');
+      return;
+    }
     setIsLoading(true);
     try {
       const plan = await generatePlan.mutateAsync({

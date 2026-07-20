@@ -6,7 +6,7 @@ const generatePlanSchema = z.object({
   productDescription: z.string().min(10, 'Product description must be at least 10 characters'),
   targetCustomer: z.string().min(5, 'Target customer profile is required'),
   goal: z.string().min(5, 'Marketing goal is required'),
-  budget: z.number().positive().optional(),
+  budget: z.number().positive('Ngân sách phải lớn hơn 0').optional(),
   deploymentChannels: z.string().optional(),
   existingResources: z.string().optional(),
   campaignReason: z.string().optional(),

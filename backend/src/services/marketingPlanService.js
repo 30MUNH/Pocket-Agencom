@@ -525,10 +525,12 @@ Yêu cầu viết bằng tiếng Việt, giọng điệu tự nhiên phù hợp 
       systemInstruction: { parts: [{ text: DETAILED_POST_SYSTEM_PROMPT }] },
     });
 
-    return result.response.text();
+    return { content: result.response.text() };
   } catch (err) {
     console.error('[Gemini Detailed Post Error]', err.message || err);
-    return `🔥 [Ý tưởng: ${ideaTitle}] 🔥\n\n📌 ${ideaDescription}\n\n✨ Điểm đặc biệt của chúng tôi:\n- ${usp}\n\n👉 Nhắn tin cho chúng tôi ngay hôm nay để nhận tư vấn chi tiết!\n\n#${platform.replace(/\s+/g, '')} #creative #brandvoice`;
+    return {
+      content: `🔥 [Ý tưởng: ${ideaTitle}] 🔥\n\n📌 ${ideaDescription}\n\n✨ Điểm đặc biệt của chúng tôi:\n- ${usp}\n\n👉 Nhắn tin cho chúng tôi ngay hôm nay để nhận tư vấn chi tiết!\n\n#${platform.replace(/\s+/g, '')} #creative #brandvoice`
+    };
   }
 }
 
