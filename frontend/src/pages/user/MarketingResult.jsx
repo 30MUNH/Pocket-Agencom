@@ -1,7 +1,9 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
-import { Lightbulb, Heart, Mail, FileText, ClipboardCheck, Check, PlayCircle, Play, Video, Copy, BookOpen, RefreshCw, Download, Clock, Loader2, Target, Sparkles, Image as ImageIcon, Upload, X, Wand2 } from 'lucide-react';
+import { Lightbulb, Heart, Mail, FileText, ClipboardCheck, Check, PlayCircle, Play, Video, Copy, BookOpen, RefreshCw, Download, Clock, Loader2, Target, Sparkles, Image as ImageIcon, Upload, X, Wand2, Users, Search } from 'lucide-react';
 import { useMarketingPlan, useSavePlan, useGeneratePost, useGeneratePostWithImage } from '../../hooks/useMarketingPlans';
+import { useQuery } from '@tanstack/react-query';
+import { kolApi } from '../../api/kolApi';
 import { useAuthStore } from '../../store/authStore';
 import { toast } from '../../store/toastStore';
 import BudgetBreakdownCard from '../../components/marketing/BudgetBreakdownCard';
@@ -400,6 +402,63 @@ export default function MarketingResult() {
   const videoScripts = plan?.videoScripts || [];
   const seoKeywords = plan?.seoKeywords || [];
 
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedKols, setSelectedKols] = useState([]);
+  const [specialReq, setSpecialReq] = useState('');
+  const [isSubmittingBooking, setIsSubmittingBooking] = useState(false);
+  const [bookingSuccess, setBookingSuccess] = useState(false);
+  const [hoveredKolId, setHoveredKolId] = useState(null);
+  const [selectedKolDetail, setSelectedKolDetail] = useState(null);
+
+  const targetNiche = useMemo(() => {
+    if (!plan?.businessProfile?.businessType) return '';
+    const typeLower = plan.businessProfile.businessType.toLowerCase();
+    if (typeLower.includes('trang') || typeLower.includes('phụ kiện')) return 'Thời trang & Lối sống';
+    if (typeLower.includes('nghệ') || typeLower.includes('thiết bị')) return 'Công nghệ & Đồ chơi số';
+    if (typeLower.includes('mỹ phẩm') || typeLower.includes('đẹp')) return 'Mỹ phẩm & Làm đẹp';
+    if (typeLower.includes('ẩm thực') || typeLower.includes('uống') || typeLower.includes('f&b')) return 'Ẩm thực & Du lịch';
+    if (typeLower.includes('sức khỏe') || typeLower.includes('gym')) return 'Sức khỏe & Thể thao';
+    if (typeLower.includes('giáo dục') || typeLower.includes('khóa học')) return 'Giáo dục & Phát triển bản thân';
+    return '';
+  }, [plan]);
+
+  const { data: kols = [], isLoading: isKolsLoading } = useQuery({
+    queryKey: ['suggested-kols', targetNiche, searchQuery],
+    queryFn: async () => {
+      const params = { limit: 6 };
+      if (searchQuery.trim()) {
+        params.search = searchQuery;
+      } else if (targetNiche) {
+        params.niche = targetNiche;
+        params.limit = 3;
+      }
+      let res = await kolApi.list(params);
+      if (!res?.data?.length && !searchQuery.trim() && targetNiche) {
+        res = await kolApi.list({ limit: 3 });
+      }
+      return res?.data || [];
+    },
+    enabled: !!plan,
+  });
+
+  const toggleSelectKol = (kolId) => {
+    setSelectedKols((prev) =>
+      prev.includes(kolId) ? prev.filter((id) => id !== kolId) : [...prev, kolId]
+    );
+  };
+
+  const handleSendBooking = async () => {
+    if (selectedKols.length === 0 && !specialReq.trim()) {
+      toast.error('Vui lòng chọn ít nhất một KOL hoặc nhập yêu cầu đặc biệt.');
+      return;
+    }
+    setIsSubmittingBooking(true);
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+    setIsSubmittingBooking(false);
+    setBookingSuccess(true);
+    toast.success('Gửi yêu cầu đặt lịch thành công!');
+  };
+
   const handleCopyAllKeywords = () => {
     if (seoKeywords.length === 0) return;
     const textToCopy = seoKeywords.join(', ');
@@ -599,6 +658,44 @@ export default function MarketingResult() {
 
           {/* Bento Card: Budget Breakdown — ưu tiên kinh phí người dùng nhập khi tạo chiến dịch */}
           <BudgetBreakdownCard rawBudget={plan.budget ?? monthlyMarketingBudget} />
+
+          {/* Gợi ý từ khóa chuẩn SEO */}
+          <div className="bg-surface-container-lowest dark:bg-tertiary-container rounded-[2.5rem] p-6 md:p-8 shadow-[0_4px_24px_rgba(255,143,163,0.08)] border border-surface-variant/40 space-y-6">
+            <div className="flex items-center gap-3 border-b border-surface-variant/30 pb-4">
+              <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                <Target size={18} />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-primary dark:text-inverse-primary leading-tight">Gợi ý từ khóa chuẩn SEO</h3>
+                <p className="text-xs text-on-surface-variant mt-0.5">Từ khóa giúp tăng khả năng hiển thị trên Google</p>
+              </div>
+            </div>
+
+            {seoKeywords.length > 0 ? (
+              <>
+                <div className="flex flex-wrap gap-2">
+                  {seoKeywords.map((keyword, i) => (
+                    <span 
+                      key={i} 
+                      className="px-3 py-1.5 rounded-xl bg-surface-container-high dark:bg-surface-variant/40 text-primary dark:text-inverse-on-surface text-xs font-medium border border-outline-variant/20 hover:border-primary/50 transition-colors cursor-default"
+                    >
+                      {keyword}
+                    </span>
+                  ))}
+                </div>
+                
+                <button
+                  onClick={handleCopyAllKeywords}
+                  className="w-full py-3 rounded-full text-label-sm font-label-sm text-on-primary bg-primary hover:bg-primary/95 transition-all shadow-sm hover:shadow flex items-center justify-center gap-2 mt-4"
+                >
+                  <Copy size={14} />
+                  Sao chép tất cả
+                </button>
+              </>
+            ) : (
+              <p className="text-on-surface-variant text-body-md">Chưa có từ khóa SEO gợi ý.</p>
+            )}
+          </div>
         </div>
 
         {/* Right Column Scripts & Playbook (8 span) */}
@@ -661,171 +758,502 @@ export default function MarketingResult() {
             </div>
           </section>
 
-          {/* Two-column layout: SEO Keywords + Playbook */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-            {/* Left Column: SEO Keyword Suggestions (4 spans) */}
-            <div className="lg:col-span-4 lg:sticky lg:top-24 space-y-6">
-              <div className="bg-surface-container-lowest dark:bg-tertiary-container rounded-[2.5rem] p-6 md:p-8 shadow-[0_4px_24px_rgba(255,143,163,0.08)] border border-surface-variant/40 space-y-6">
-                <div className="flex items-center gap-3 border-b border-surface-variant/30 pb-4">
-                  <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
-                    <Target size={18} />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-bold text-primary dark:text-inverse-primary leading-tight">Gợi ý từ khóa chuẩn SEO</h3>
-                    <p className="text-xs text-on-surface-variant mt-0.5">Từ khóa đấu thầu & SEO tối ưu</p>
-                  </div>
-                </div>
+          {/* Playbook / Campaign Proposal */}
+          <section className="bg-surface-container-lowest dark:bg-tertiary-container rounded-[2.5rem] p-8 md:p-12 shadow-[0_4px_24px_rgba(255,143,163,0.08)] space-y-8">
+            <div className="flex items-center gap-4 border-b border-surface-variant/50 pb-6">
+              <div className="w-10 h-10 rounded-xl bg-primary text-on-primary flex items-center justify-center shadow-md">
+                <BookOpen size={18} />
+              </div>
+              <div>
+                <h3 className="text-headline-md font-bold text-primary dark:text-inverse-primary font-display-md">Đề xuất Chiến dịch</h3>
+                <p className="text-sm text-on-surface-variant mt-1">Quy trình thực thi chi tiết từng bước do AI thiết kế.</p>
+              </div>
+            </div>
 
-                {seoKeywords.length > 0 ? (
-                  <>
-                    <div className="flex flex-wrap gap-2">
-                      {seoKeywords.map((keyword, i) => (
-                        <span 
-                          key={i} 
-                          className="px-3 py-1.5 rounded-xl bg-surface-container-high dark:bg-surface-variant/40 text-primary dark:text-inverse-on-surface text-xs font-medium border border-outline-variant/20 hover:border-primary/50 transition-colors cursor-default"
-                        >
-                          {keyword}
-                        </span>
-                      ))}
+            {plan.playbook ? (
+              Array.isArray(plan.playbook) ? (
+                /* Timeline / Card layout for structured playbook */
+                <div className="relative border-l-2 border-dashed border-outline-variant/60 ml-4 pl-6 md:pl-8 space-y-12">
+                  {plan.playbook.map((phase, idx) => (
+                    <div key={idx} className="relative group">
+                      {/* Timeline dot */}
+                      <span className="absolute -left-[41px] md:-left-[49px] top-1.5 flex items-center justify-center w-8 h-8 rounded-full bg-secondary-container text-primary font-bold border-4 border-surface-container-lowest dark:border-tertiary-container text-xs shadow-sm z-10 transition-transform group-hover:scale-110 duration-200">
+                        {idx + 1}
+                      </span>
+
+                      {/* Phase Card */}
+                      <div className="bg-surface-container-lowest dark:bg-surface-variant/20 rounded-3xl p-6 md:p-8 border border-surface-variant/40 shadow-sm hover:shadow-md transition-all duration-300 space-y-6">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-surface-variant/20 pb-4">
+                          <h4 className="text-xl font-bold text-primary dark:text-inverse-primary">
+                            {phase.phaseName}
+                          </h4>
+                          {phase.duration && (
+                            <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800 text-xs font-bold shrink-0 self-start sm:self-auto">
+                              <Clock size={12} />
+                              {phase.duration}
+                            </span>
+                          )}
+                        </div>
+
+                        {phase.objective && (
+                          <div className="bg-surface-container dark:bg-surface-variant/40 rounded-2xl p-4 flex items-start gap-3">
+                            <Target className="w-5 h-5 text-secondary shrink-0 mt-0.5" />
+                            <div>
+                              <span className="text-[11px] font-bold text-on-surface-variant uppercase tracking-wider block">Mục tiêu cốt lõi</span>
+                              <p className="text-sm text-primary dark:text-inverse-primary font-medium mt-0.5">{phase.objective}</p>
+                            </div>
+                          </div>
+                        )}
+
+                        {Array.isArray(phase.keyActions) && phase.keyActions.length > 0 && (
+                          <div className="space-y-3">
+                            <span className="text-[11px] font-bold text-on-surface-variant uppercase tracking-wider block">Hành động cụ thể</span>
+                            <ul className="space-y-3">
+                              {phase.keyActions.map((action, i) => (
+                                <li key={i} className="flex items-start gap-3 text-sm text-on-surface-variant">
+                                  <span className="w-5 h-5 rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400 flex items-center justify-center shrink-0 mt-0.5 font-bold text-xs">
+                                    ✓
+                                  </span>
+                                  <span className="leading-relaxed">
+                                    {renderBoldText(action)}
+                                  </span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+
+                        {Array.isArray(phase.focusChannels) && phase.focusChannels.length > 0 && (
+                          <div className="flex flex-wrap items-center gap-2 pt-2">
+                            <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mr-2">Kênh tập trung:</span>
+                            {phase.focusChannels.map((channel, i) => (
+                              <span key={i} className="px-2.5 py-1 rounded-full bg-surface-container dark:bg-surface-variant/40 border border-outline-variant/20 text-xs text-on-surface-variant dark:text-inverse-on-surface">
+                                {channel}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </div>
-                    
-                    <button
-                      onClick={handleCopyAllKeywords}
-                      className="w-full py-3 rounded-full text-label-sm font-label-sm text-on-primary bg-primary hover:bg-primary/95 transition-all shadow-sm hover:shadow flex items-center justify-center gap-2 mt-4"
-                    >
-                      <Copy size={14} />
-                      Sao chép tất cả
-                    </button>
-                  </>
-                ) : (
-                  <p className="text-on-surface-variant text-body-md">Chưa có từ khóa SEO gợi ý.</p>
+                  ))}
+                </div>
+              ) : (
+                /* Legacy string / markdown rendering */
+                <div className="prose prose-sm max-w-none text-on-surface-variant dark:text-inverse-on-surface/80 leading-relaxed whitespace-pre-wrap">
+                  {(typeof plan.playbook === 'string' ? plan.playbook : '').split('\n').map((line, i) => {
+                    const trimmed = line.trim();
+                    if (!trimmed) return <br key={i} />;
+                    if (trimmed.startsWith('##')) {
+                      return (
+                        <h4 key={i} className="font-bold text-primary dark:text-inverse-primary text-lg mt-6 mb-2">
+                          {trimmed.replace(/^#+\s*/, '')}
+                        </h4>
+                      );
+                    }
+                    if (/^(\d+\.|[-•])/.test(trimmed)) {
+                      return (
+                        <div key={i} className="flex gap-3 py-1">
+                          <span className="text-secondary dark:text-secondary-fixed font-bold shrink-0">•</span>
+                          <span>{trimmed.replace(/^(\d+\.\s*|[-•]\s*)/, '')}</span>
+                        </div>
+                      );
+                    }
+                    if (trimmed.startsWith('**') && trimmed.endsWith('**')) {
+                      return (
+                        <p key={i} className="font-bold text-primary dark:text-inverse-primary mt-4 mb-1">
+                          {trimmed.replace(/\*\*/g, '')}
+                        </p>
+                      );
+                    }
+                    return <p key={i} className="mb-2">{line}</p>;
+                  })}
+                </div>
+              )
+            ) : (
+              <p className="text-on-surface-variant text-body-md">Chưa có nội dung playbook.</p>
+            )}
+          </section>
+        </div>
+      </div>
+
+      {/* Proposed KOL, KOC Section */}
+          <section className="bg-surface-container-lowest dark:bg-tertiary-container rounded-[2.5rem] p-8 md:p-12 shadow-[0_4px_24px_rgba(255,143,163,0.08)] border border-surface-variant/40 mt-12 space-y-8 relative overflow-hidden">
+            {/* Glow decoration */}
+            <div className="absolute -top-12 -right-12 w-48 h-48 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
+
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-surface-variant/30 pb-6 relative z-10">
+              <div>
+                <h3 className="text-2xl font-bold text-primary dark:text-inverse-primary flex items-center gap-3">
+                  <Sparkles className="text-secondary" size={24} />
+                  Đề xuất KOL, KOC phù hợp
+                </h3>
+                <p className="text-sm text-on-surface-variant mt-1">
+                  Danh sách KOL/KOC được đề xuất tối ưu theo ngành hàng và mục tiêu chiến dịch của bạn.
+                </p>
+              </div>
+
+              {/* Search Bar */}
+              <div className="relative w-full md:w-80 shrink-0">
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Tìm kiếm tên hoặc lĩnh vực (niche)..."
+                  className="w-full pl-10 pr-10 py-2 text-sm rounded-full border border-outline-variant/60 bg-surface-container-low text-primary dark:text-inverse-primary focus:border-secondary focus:ring-1 focus:ring-secondary focus:outline-none transition-all placeholder:text-on-surface-variant/50"
+                />
+                <Search className="absolute left-3 top-2.5 text-on-surface-variant/60" size={16} />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    className="absolute right-3 top-2.5 text-on-surface-variant/60 hover:text-primary transition-colors"
+                  >
+                    <X size={16} />
+                  </button>
                 )}
               </div>
             </div>
 
-            {/* Right Column: Playbook (8 spans) */}
-            <div className="lg:col-span-8">
-              <section className="bg-surface-container-lowest dark:bg-tertiary-container rounded-[2.5rem] p-8 md:p-12 shadow-[0_4px_24px_rgba(255,143,163,0.08)] space-y-8">
-                <div className="flex items-center gap-4 border-b border-surface-variant/50 pb-6">
-                  <div className="w-10 h-10 rounded-xl bg-primary text-on-primary flex items-center justify-center shadow-md">
-                    <BookOpen size={18} />
-                  </div>
-                  <div>
-                    <h3 className="text-headline-md font-bold text-primary dark:text-inverse-primary">Đề xuất Chiến dịch</h3>
-                    <p className="text-sm text-on-surface-variant mt-1">Quy trình thực thi chi tiết từng bước do AI thiết kế.</p>
+            {/* KOL Grid */}
+            <div className="relative z-10">
+              {isKolsLoading ? (
+                <div className="flex items-center justify-center py-12 gap-2 text-on-surface-variant">
+                  <Loader2 className="animate-spin" size={20} />
+                  Đang tải đề xuất KOL...
+                </div>
+              ) : kols.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {kols.map((kol) => {
+                    const isSelected = selectedKols.includes(kol.id);
+                    return (
+                      <div
+                        key={kol.id}
+                        onClick={() => toggleSelectKol(kol.id)}
+                        onMouseEnter={() => setHoveredKolId(kol.id)}
+                        onMouseLeave={() => setHoveredKolId(null)}
+                        className={`relative rounded-3xl p-6 border transition-all duration-300 cursor-pointer flex flex-col justify-between h-full group ${
+                          isSelected
+                            ? 'border-secondary bg-secondary-container/10 shadow-md ring-1 ring-secondary'
+                            : 'border-surface-variant/50 hover:border-secondary/40 hover:bg-surface-container/30 shadow-sm'
+                        }`}
+                      >
+                        {/* Hover detail popover summary */}
+                        {hoveredKolId === kol.id && (
+                          <div className="absolute z-20 left-6 bottom-full mb-3 w-64 bg-surface-container-highest dark:bg-tertiary-container text-xs rounded-2xl p-4 shadow-xl border border-surface-variant/50 animate-fade-in pointer-events-none">
+                            <h5 className="font-bold text-primary dark:text-inverse-primary text-sm mb-1">{kol.name}</h5>
+                            <p className="text-on-surface-variant leading-relaxed line-clamp-3 mb-2">{kol.bio || 'Chưa cập nhật giới thiệu.'}</p>
+                            <div className="flex items-center gap-3 text-secondary font-bold">
+                              <span>⭐ {kol.rating || '4.8'}</span>
+                              <span>•</span>
+                              <span>{new Intl.NumberFormat('en-US', { notation: 'compact' }).format(kol.followerCount)} Followers</span>
+                            </div>
+                            <p className="text-[10px] text-on-surface-variant/75 mt-1.5 italic">Click để xem chi tiết Profile</p>
+                          </div>
+                        )}
+
+                        {/* Checkbox badge */}
+                        <div 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleSelectKol(kol.id);
+                          }}
+                          className={`absolute top-4 right-4 w-6 h-6 rounded-full border flex items-center justify-center transition-all ${
+                            isSelected
+                              ? 'bg-secondary border-secondary text-on-secondary'
+                              : 'border-outline-variant/60 bg-surface-container-low group-hover:border-secondary/50'
+                          }`}
+                        >
+                          {isSelected && <Check size={14} strokeWidth={3} />}
+                        </div>
+
+                        <div className="space-y-4">
+                          {/* Avatar & Niche */}
+                          <div className="flex items-center gap-4">
+                            <img
+                              src={kol.avatarUrl || 'https://api.dicebear.com/7.x/avataaars/svg'}
+                              alt={kol.name}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedKolDetail(kol);
+                              }}
+                              className="w-14 h-14 rounded-2xl object-cover border border-outline-variant/30 hover:scale-105 transition-transform bg-surface-container-low"
+                            />
+                            <div className="min-w-0 flex-1">
+                              <h4 
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedKolDetail(kol);
+                                }}
+                                className="font-bold text-primary dark:text-inverse-primary text-base group-hover:text-secondary transition-colors line-clamp-1 hover:underline"
+                              >
+                                {kol.name}
+                              </h4>
+                              <span className="inline-block mt-1 px-2.5 py-0.5 rounded-full bg-secondary-container/40 text-secondary text-[11px] font-bold">
+                                {kol.niche}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Bio */}
+                          <p className="text-xs text-on-surface-variant line-clamp-2 leading-relaxed">
+                            {kol.bio || 'Chưa cập nhật giới thiệu.'}
+                          </p>
+
+                          {/* Stats */}
+                          <div className="grid grid-cols-2 gap-2 pt-2 border-t border-surface-variant/20 text-xs">
+                            <div>
+                              <span className="text-[10px] text-on-surface-variant font-bold uppercase block">Followers</span>
+                              <span className="font-bold text-primary dark:text-inverse-primary">
+                                {new Intl.NumberFormat('en-US', { notation: 'compact' }).format(kol.followerCount)}
+                              </span>
+                            </div>
+                            <div>
+                              <span className="text-[10px] text-on-surface-variant font-bold uppercase block">Tương tác</span>
+                              <span className="font-bold text-primary dark:text-inverse-primary">
+                                {kol.engagementRate ? `${kol.engagementRate}%` : 'N/A'}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Bottom Link & Price */}
+                        <div className="flex items-center justify-between mt-6 pt-3 border-t border-surface-variant/10">
+                          <div>
+                            <span className="text-[9px] text-on-surface-variant uppercase block">Giá thuê từ</span>
+                            <span className="text-sm font-bold text-secondary font-display">
+                              {kol.priceFrom ? new Intl.NumberFormat('vi-VN').format(kol.priceFrom) + 'đ' : 'Liên hệ'}
+                            </span>
+                          </div>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedKolDetail(kol);
+                            }}
+                            className="text-xs font-bold text-primary hover:text-secondary transition-colors underline"
+                          >
+                            Chi tiết
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <p className="text-on-surface-variant text-sm">
+                    {searchQuery.trim()
+                      ? `Không tìm thấy KOL/KOC nào phù hợp với từ khóa "${searchQuery}". Bạn có thể thử tìm kiếm từ khóa khác.`
+                      : 'Không tìm thấy KOL phù hợp cho ngành hàng này.'}
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Special Requirements Input */}
+            <div className="space-y-4 pt-4 border-t border-surface-variant/30 relative z-10">
+              <label className="block text-sm font-bold text-primary dark:text-inverse-primary uppercase tracking-wider">
+                Yêu cầu đặc biệt về KOL, KOC (Không bắt buộc)
+              </label>
+              <textarea
+                value={specialReq}
+                onChange={(e) => setSpecialReq(e.target.value)}
+                rows={3}
+                placeholder="Ví dụ: Cần KOC nữ tại TP.HCM, độ tuổi từ 20-25, có phong cách quay video review năng động và tự nhiên..."
+                className="w-full rounded-2xl border border-outline-variant/60 bg-surface-container-low px-4 py-3 text-sm text-primary dark:text-inverse-primary placeholder-on-surface-variant/60 focus:border-secondary focus:ring-1 focus:ring-secondary focus:outline-none transition-all resize-none"
+              />
+            </div>
+
+            {/* Submission State */}
+            <div className="flex justify-end pt-2 relative z-10">
+              {bookingSuccess ? (
+                <div className="bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800 rounded-2xl p-4 w-full text-center">
+                  <p className="text-emerald-700 dark:text-emerald-400 font-bold text-sm flex items-center justify-center gap-2">
+                    <Check size={18} strokeWidth={3} />
+                    Đã gửi yêu cầu đặt lịch tư vấn KOL thành công! Đội ngũ Pocket Agencom sẽ liên hệ tư vấn trong vòng 24 giờ.
+                  </p>
+                </div>
+              ) : (
+                <button
+                  onClick={handleSendBooking}
+                  disabled={isSubmittingBooking}
+                  className="py-3 px-8 rounded-full text-label-sm font-label-sm text-on-primary bg-secondary hover:bg-secondary/95 active:scale-[0.98] disabled:opacity-50 transition-all font-bold shadow-md hover:shadow flex items-center gap-2"
+                >
+                  {isSubmittingBooking && <Loader2 className="animate-spin" size={14} />}
+                  Xác nhận đặt lịch tư vấn KOL
+                </button>
+              )}
+            </div>
+          </section>
+
+          {/* KOL/KOC Detail Modal */}
+          {selectedKolDetail && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
+              <div className="bg-surface-container-lowest dark:bg-tertiary-container rounded-[2.5rem] w-full max-w-2xl overflow-hidden shadow-2xl border border-surface-variant/30 flex flex-col max-h-[90vh] animate-scale-up">
+                {/* Modal Header — Banner + Avatar (non-scrollable) */}
+                <div className="relative bg-gradient-to-r from-secondary-container/50 to-primary-container/30 px-8 pt-5 pb-6 shrink-0">
+                  <button
+                    onClick={() => setSelectedKolDetail(null)}
+                    className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/80 dark:bg-surface/80 flex items-center justify-center text-on-surface hover:text-primary transition-colors shadow-sm z-10"
+                  >
+                    <X size={18} />
+                  </button>
+
+                  <div className="flex items-end gap-5 mt-4">
+                    <img
+                      src={selectedKolDetail.avatarUrl || 'https://api.dicebear.com/7.x/avataaars/svg'}
+                      alt={selectedKolDetail.name}
+                      className="w-20 h-20 rounded-2xl object-cover border-[3px] border-white/80 dark:border-tertiary-container shadow-lg bg-surface-container-low"
+                    />
+                    <div className="space-y-1.5 pb-0.5">
+                      <h3 className="text-2xl font-bold text-primary dark:text-inverse-primary leading-tight">
+                        {selectedKolDetail.name}
+                      </h3>
+                      <div className="flex flex-wrap gap-2">
+                        <span className="px-2.5 py-0.5 rounded-full bg-secondary-container text-secondary text-xs font-bold">
+                          {selectedKolDetail.niche}
+                        </span>
+                        <span className="px-2.5 py-0.5 rounded-full bg-white/60 dark:bg-surface-container-high text-on-surface-variant text-xs font-medium">
+                          ⭐ {selectedKolDetail.rating || '4.8'}
+                        </span>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
-                {plan.playbook ? (
-                  Array.isArray(plan.playbook) ? (
-                    /* Timeline / Card layout for structured playbook */
-                    <div className="relative border-l-2 border-dashed border-outline-variant/60 ml-4 pl-6 md:pl-8 space-y-12">
-                      {plan.playbook.map((phase, idx) => (
-                        <div key={idx} className="relative group">
-                          {/* Timeline dot */}
-                          <span className="absolute -left-[41px] md:-left-[49px] top-1.5 flex items-center justify-center w-8 h-8 rounded-full bg-secondary-container text-primary font-bold border-4 border-surface-container-lowest dark:border-tertiary-container text-xs shadow-sm z-10 transition-transform group-hover:scale-110 duration-200">
-                            {idx + 1}
-                          </span>
+                {/* Modal Content (Scrollable) */}
+                <div className="flex-1 overflow-y-auto px-8 pb-8 pt-6 space-y-6">
 
-                          {/* Phase Card */}
-                          <div className="bg-surface-container-lowest dark:bg-surface-variant/20 rounded-3xl p-6 md:p-8 border border-surface-variant/40 shadow-sm hover:shadow-md transition-all duration-300 space-y-6">
-                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-surface-variant/20 pb-4">
-                              <h4 className="text-xl font-bold text-primary dark:text-inverse-primary">
-                                {phase.phaseName}
-                              </h4>
-                              {phase.duration && (
-                                <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800 text-xs font-bold shrink-0 self-start sm:self-auto">
-                                  <Clock size={12} />
-                                  {phase.duration}
-                                </span>
-                              )}
+                  {/* Bio Section */}
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-bold text-primary dark:text-inverse-primary uppercase tracking-wider">
+                      Giới thiệu
+                    </h4>
+                    <p className="text-sm text-on-surface-variant leading-relaxed">
+                      {selectedKolDetail.bio || 'Chưa cập nhật giới thiệu chi tiết cho KOL này.'}
+                    </p>
+                  </div>
+
+                  {/* Platform stats */}
+                  <div className="space-y-3">
+                    <h4 className="text-sm font-bold text-primary dark:text-inverse-primary uppercase tracking-wider">
+                      Kênh truyền thông & Tương tác
+                    </h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {selectedKolDetail.platformAccounts && selectedKolDetail.platformAccounts.length > 0 ? (
+                        selectedKolDetail.platformAccounts.map((acc, i) => (
+                          <div key={i} className="bg-surface-container dark:bg-surface-variant/20 rounded-2xl p-4 border border-surface-variant/30 flex items-center justify-between">
+                            <div>
+                              <span className="text-xs font-bold text-primary dark:text-inverse-primary capitalize block">
+                                {acc.platform}
+                              </span>
+                              <span className="text-[11px] text-on-surface-variant">
+                                {acc.handle || '@username'}
+                              </span>
                             </div>
-
-                            {phase.objective && (
-                              <div className="bg-surface-container dark:bg-surface-variant/40 rounded-2xl p-4 flex items-start gap-3">
-                                <Target className="w-5 h-5 text-secondary shrink-0 mt-0.5" />
-                                <div>
-                                  <span className="text-[11px] font-bold text-on-surface-variant uppercase tracking-wider block">Mục tiêu cốt lõi</span>
-                                  <p className="text-sm text-primary dark:text-inverse-primary font-medium mt-0.5">{phase.objective}</p>
-                                </div>
-                              </div>
-                            )}
-
-                            {Array.isArray(phase.keyActions) && phase.keyActions.length > 0 && (
-                              <div className="space-y-3">
-                                <span className="text-[11px] font-bold text-on-surface-variant uppercase tracking-wider block">Hành động cụ thể</span>
-                                <ul className="space-y-3">
-                                  {phase.keyActions.map((action, i) => (
-                                    <li key={i} className="flex items-start gap-3 text-sm text-on-surface-variant">
-                                      <span className="w-5 h-5 rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400 flex items-center justify-center shrink-0 mt-0.5 font-bold text-xs">
-                                        ✓
-                                      </span>
-                                      <span className="leading-relaxed">
-                                        {renderBoldText(action)}
-                                      </span>
-                                    </li>
-                                  ))}
-                                </ul>
-                              </div>
-                            )}
-
-                            {Array.isArray(phase.focusChannels) && phase.focusChannels.length > 0 && (
-                              <div className="flex flex-wrap items-center gap-2 pt-2">
-                                <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mr-2">Kênh tập trung:</span>
-                                {phase.focusChannels.map((channel, i) => (
-                                  <span key={i} className="px-2.5 py-1 rounded-full bg-surface-container dark:bg-surface-variant/40 border border-outline-variant/20 text-xs text-on-surface-variant dark:text-inverse-on-surface">
-                                    {channel}
-                                  </span>
-                                ))}
-                              </div>
-                            )}
+                            <div className="text-right">
+                              <span className="text-xs font-bold text-secondary block">
+                                {new Intl.NumberFormat('en-US', { notation: 'compact' }).format(acc.followerCount || 0)}
+                              </span>
+                              <span className="text-[10px] text-on-surface-variant">
+                                ER: {acc.engagementRate ? `${acc.engagementRate}%` : 'N/A'}
+                              </span>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="col-span-2 bg-surface-container dark:bg-surface-variant/20 rounded-2xl p-4 border border-surface-variant/30 flex items-center justify-between">
+                          <div>
+                            <span className="text-xs font-bold text-primary dark:text-inverse-primary block">
+                              TikTok Account
+                            </span>
+                            <span className="text-[11px] text-on-surface-variant">
+                              Kênh đề xuất chính
+                            </span>
+                          </div>
+                          <div className="text-right">
+                            <span className="text-xs font-bold text-secondary block">
+                              {new Intl.NumberFormat('en-US', { notation: 'compact' }).format(selectedKolDetail.followerCount)}
+                            </span>
+                            <span className="text-[10px] text-on-surface-variant">
+                              ER: {selectedKolDetail.engagementRate ? `${selectedKolDetail.engagementRate}%` : '10.5%'}
+                            </span>
                           </div>
                         </div>
-                      ))}
+                      )}
                     </div>
-                  ) : (
-                    /* Legacy string / markdown rendering */
-                    <div className="prose prose-sm max-w-none text-on-surface-variant dark:text-inverse-on-surface/80 leading-relaxed whitespace-pre-wrap">
-                      {(typeof plan.playbook === 'string' ? plan.playbook : '').split('\n').map((line, i) => {
-                        const trimmed = line.trim();
-                        if (!trimmed) return <br key={i} />;
-                        if (trimmed.startsWith('##')) {
-                          return (
-                            <h4 key={i} className="font-bold text-primary dark:text-inverse-primary text-lg mt-6 mb-2">
-                              {trimmed.replace(/^#+\s*/, '')}
-                            </h4>
-                          );
-                        }
-                        if (/^(\d+\.|[-•])/.test(trimmed)) {
-                          return (
-                            <div key={i} className="flex gap-3 py-1">
-                              <span className="text-secondary dark:text-secondary-fixed font-bold shrink-0">•</span>
-                              <span>{trimmed.replace(/^(\d+\.\s*|[-•]\s*)/, '')}</span>
-                            </div>
-                          );
-                        }
-                        if (trimmed.startsWith('**') && trimmed.endsWith('**')) {
-                          return (
-                            <p key={i} className="font-bold text-primary dark:text-inverse-primary mt-4 mb-1">
-                              {trimmed.replace(/\*\*/g, '')}
-                            </p>
-                          );
-                        }
-                        return <p key={i} className="mb-2">{line}</p>;
-                      })}
-                    </div>
-                  )
-                ) : (
-                  <p className="text-on-surface-variant text-body-md">Chưa có nội dung playbook.</p>
-                )}
-              </section>
-            </div>
-          </div>
-        </div>
-      </div>
+                  </div>
 
-      {/* Revision Chat & Execute Campaign — sticky at the bottom of the proposal */}
-      <RevisionChatPanel />
+                  {/* Pricing & Packages */}
+                  <div className="space-y-3">
+                    <h4 className="text-sm font-bold text-primary dark:text-inverse-primary uppercase tracking-wider">
+                      Báo giá dịch vụ đề xuất
+                    </h4>
+                    <div className="space-y-3">
+                      {selectedKolDetail.servicePackages && selectedKolDetail.servicePackages.length > 0 ? (
+                        selectedKolDetail.servicePackages.map((pkg, i) => (
+                          <div key={i} className="bg-surface-container-low dark:bg-surface-variant/10 rounded-2xl p-4 border border-surface-variant/40 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                            <div>
+                              <h5 className="font-bold text-sm text-primary dark:text-inverse-primary">
+                                {pkg.name}
+                              </h5>
+                              <p className="text-xs text-on-surface-variant mt-0.5">
+                                {pkg.description || 'Chi tiết gói dịch vụ review sản phẩm.'}
+                              </p>
+                            </div>
+                            <span className="text-base font-bold text-secondary font-display shrink-0">
+                              {new Intl.NumberFormat('vi-VN').format(pkg.price)}đ
+                            </span>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="bg-surface-container-low dark:bg-surface-variant/10 rounded-2xl p-4 border border-surface-variant/40 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                          <div>
+                            <h5 className="font-bold text-sm text-primary dark:text-inverse-primary">
+                              Video Review Sản Phẩm (TikTok 60s)
+                            </h5>
+                            <p className="text-xs text-on-surface-variant mt-0.5">
+                              Đã bao gồm kịch bản, quay dựng, chỉnh sửa video 1 lần và đăng tải.
+                            </p>
+                          </div>
+                          <span className="text-base font-bold text-secondary font-display shrink-0">
+                            {selectedKolDetail.priceFrom ? new Intl.NumberFormat('vi-VN').format(selectedKolDetail.priceFrom) + 'đ' : 'Liên hệ'}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Modal Footer */}
+                <div className="bg-surface-container dark:bg-surface-variant/30 px-8 py-4 border-t border-surface-variant/30 flex items-center justify-between gap-4 shrink-0">
+                  <div className="text-xs text-on-surface-variant">
+                    Giá thương lượng dựa trên lượng sản phẩm & cam kết doanh số.
+                  </div>
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => setSelectedKolDetail(null)}
+                      className="px-5 py-2.5 rounded-full text-xs font-bold border border-outline hover:bg-surface-container-high transition-colors"
+                    >
+                      Đóng
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (!selectedKols.includes(selectedKolDetail.id)) {
+                          toggleSelectKol(selectedKolDetail.id);
+                        }
+                        setSelectedKolDetail(null);
+                      }}
+                      className="px-5 py-2.5 rounded-full text-xs font-bold text-on-primary bg-secondary hover:bg-secondary/95 transition-colors shadow-sm"
+                    >
+                      {selectedKols.includes(selectedKolDetail.id) ? 'Đã Chọn KOL' : 'Chọn KOL này'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Revision Chat & Execute Campaign — sticky at the bottom of the proposal */}
+          <RevisionChatPanel />
     </div>
   );
 }
