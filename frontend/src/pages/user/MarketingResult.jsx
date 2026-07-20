@@ -657,7 +657,7 @@ export default function MarketingResult() {
           </section>
 
           {/* Bento Card: Budget Breakdown — ưu tiên kinh phí người dùng nhập khi tạo chiến dịch */}
-          <BudgetBreakdownCard rawBudget={plan.budget ?? monthlyMarketingBudget} />
+          <BudgetBreakdownCard rawBudget={plan.budget ?? monthlyMarketingBudget} budgetBreakdown={plan.budgetBreakdown} />
 
           {/* Gợi ý từ khóa chuẩn SEO */}
           <div className="bg-surface-container-lowest dark:bg-tertiary-container rounded-[2.5rem] p-6 md:p-8 shadow-[0_4px_24px_rgba(255,143,163,0.08)] border border-surface-variant/40 space-y-6">

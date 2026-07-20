@@ -172,6 +172,7 @@ model MarketingPlan {
   checklist         String?
   playbook          String?
   seoKeywords       String?    @map("seo_keywords")
+  budgetBreakdown   String?    @map("budget_breakdown")
   deploymentChannels String?   @map("deployment_channels")
   existingResources String?    @map("existing_resources")
   campaignReason    String?    @map("campaign_reason")

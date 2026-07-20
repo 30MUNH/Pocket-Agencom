@@ -36,6 +36,7 @@ QUY TẮC BẮT BUỘC:
 4. Checklist phải có tối thiểu 5 mục, mỗi mục là một hành động cụ thể và khả thi.
 5. Playbook phải là một mảng chứa các giai đoạn chiến dịch cụ thể, được tổ chức tuần tự từ lúc bắt đầu chuẩn bị đến khi đo lường kết quả. Mỗi hành động quan trọng trong keyActions bắt buộc phải dùng định dạng markdown **bold** cho các keywords quan trọng.
 6. seoKeywords phải là một danh sách chứa từ 8-12 từ khóa chuẩn SEO và từ khóa đấu thầu quảng cáo (ad-bidding keywords) tiềm năng và có tỷ lệ chuyển đổi cao nhất cho chiến dịch này tại Việt Nam.
+7. budgetBreakdown PHẢI phản ánh đúng các kênh triển khai (deploymentChannels) mà người dùng đã nhập. Nếu người dùng chỉ triển khai trên Facebook thì CHỈ phân bổ cho Facebook và các hạng mục liên quan. Nếu triển khai trên nhiều kênh, hãy chia tỷ lệ hợp lý giữa các kênh đó. KHÔNG được thêm kênh nào mà người dùng không yêu cầu. Tổng percentOfTotal của tất cả channels PHẢI bằng 100. Tổng percent của tất cả items trong mỗi channel PHẢI bằng 100. Mỗi channel phải có ít nhất 3 items chi tiết.
 
 Trả về DUY NHẤT một JSON object hợp lệ theo đúng cấu trúc sau (KHÔNG kèm markdown, backtick, hay văn bản hội thoại):
 {
@@ -59,7 +60,19 @@ Trả về DUY NHẤT một JSON object hợp lệ theo đúng cấu trúc sau (
       "focusChannels": [ "string", "string", "..." ]
     }
   ],
-  "seoKeywords": [ "string", "string", "..." ]
+  "seoKeywords": [ "string", "string", "..." ],
+  "budgetBreakdown": {
+    "channels": [
+      {
+        "channelName": "string (Tên kênh, ví dụ: TikTok Shop, Facebook Ads, Shopee, Instagram...)",
+        "percentOfTotal": "number (Phần trăm ngân sách dành cho kênh này, tổng tất cả channels = 100)",
+        "description": "string (Mô tả ngắn lý do phân bổ cho kênh này, 1-2 câu)",
+        "items": [
+          { "name": "string (Tên hạng mục chi phí)", "percent": "number (Phần trăm trong kênh, tổng = 100)" }
+        ]
+      }
+    ]
+  }
 }`;
 
 // ── Gemini-powered AI Content Generator ────────────────────────────────────────
@@ -132,6 +145,11 @@ ${similar.map((s, i) => `--- Case study ${i + 1} ---\n${s.content}`).join('\n\n'
     // Validate required fields exist
     if (!parsed.contentIdeas || !parsed.videoScripts || !parsed.checklist || !parsed.playbook || !parsed.seoKeywords) {
       throw new Error('Gemini response missing required fields');
+    }
+
+    // Ensure budgetBreakdown has valid structure
+    if (!parsed.budgetBreakdown || !Array.isArray(parsed.budgetBreakdown?.channels)) {
+      parsed.budgetBreakdown = null;
     }
 
     return parsed;
@@ -218,6 +236,7 @@ ${similar.map((s, i) => `--- Case study ${i + 1} ---\n${s.content}`).join('\n\n'
         'chạy quảng cáo chuyên nghiệp',
         'tối ưu chi phí marketing'
       ],
+      budgetBreakdown: null,
     };
   }
 }
@@ -240,6 +259,7 @@ function formatPlan(plan) {
     checklist: parse(plan.checklist),
     playbook: parse(plan.playbook),
     seoKeywords: parse(plan.seoKeywords),
+    budgetBreakdown: parse(plan.budgetBreakdown),
   };
 }
 
@@ -290,6 +310,7 @@ async function generatePlan(userId, data) {
         checklist: JSON.stringify(aiContent.checklist),
         playbook: JSON.stringify(aiContent.playbook),
         seoKeywords: JSON.stringify(aiContent.seoKeywords),
+        budgetBreakdown: aiContent.budgetBreakdown ? JSON.stringify(aiContent.budgetBreakdown) : null,
         status: 'draft',
       },
       include: {
