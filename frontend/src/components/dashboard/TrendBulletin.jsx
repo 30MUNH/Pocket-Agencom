@@ -62,7 +62,15 @@ export default function TrendBulletin() {
 
   const handleCreateScript = (trend) => {
     if (trend.trendScope === 'SIMPLE_POST') {
-      navigate('/user/quick-editor', { state: { trend } });
+      const serializableTrend = {
+        id: trend.id,
+        title: trend.title,
+        tags: trend.tags,
+        trendScope: trend.trendScope,
+        image: trend.image,
+        teaser: trend.teaser,
+      };
+      navigate('/user/quick-editor', { state: { trend: serializableTrend } });
     } else {
       navigate('/marketing-kit', { state: { trend: trend.prefill } });
     }
