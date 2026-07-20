@@ -7,6 +7,8 @@ const TRENDS = [
     id: 1,
     title: "Trend 'Thông báo mất tích': Biến sự cố thành Content triệu view!",
     tags: ["#Fastvertising", "#HàiHước", "#Viral"],
+    trendScope: "SIMPLE_POST",
+    image: "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=600&q=80",
     teaser: "Lô hàng 12 tấn KitKat biến mất và cách các thương hiệu lớn 'mượn cớ' thông báo thất lạc để giật spotlight. Shop của bạn có gì để báo 'mất tích' không?",
     icon: Flame,
     iconColor: "text-amber-500 bg-amber-50 dark:bg-amber-950/30",
@@ -22,6 +24,8 @@ const TRENDS = [
     id: 2,
     title: "Trend 'Unboxing Hộp Mù (Blind Box)': Cơn sốt bóc quà kích thích tò mò!",
     tags: ["#XuHướngTiêuDùng", "#KíchThíchTòMò", "#DễÁpDụng"],
+    trendScope: "CAMPAIGN",
+    image: "https://images.unsplash.com/photo-1513151233558-d860c5398176?auto=format&fit=crop&w=600&q=80",
     teaser: "Sức hút từ cảm giác hồi hộp khi tự tay bóc hộp đồ chơi, mỹ phẩm hay phụ kiện ngẫu nhiên. Áp dụng ngay hình thức 'Blind Box' để x3 doanh số bán hàng.",
     icon: Zap,
     iconColor: "text-purple-500 bg-purple-50 dark:bg-purple-950/30",
@@ -37,6 +41,8 @@ const TRENDS = [
     id: 3,
     title: "Trend 'Thử thách 7 ngày lột xác': Kể câu chuyện hành trình đầy cảm xúc!",
     tags: ["#Storytelling", "#TrựcQuan", "#ĐángTinCậy"],
+    trendScope: "SIMPLE_POST",
+    image: "https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=600&q=80",
     teaser: "Tạo dựng lòng tin tuyệt đối bằng cách ghi lại hành trình thay đổi rõ rệt trước và sau khi sử dụng sản phẩm. Phù hợp nhất cho thời trang, mỹ phẩm và sức khỏe.",
     icon: Award,
     iconColor: "text-emerald-500 bg-emerald-50 dark:bg-emerald-950/30",
@@ -55,7 +61,11 @@ export default function TrendBulletin() {
   const [selectedTrend, setSelectedTrend] = useState(null);
 
   const handleCreateScript = (trend) => {
-    navigate('/marketing-kit', { state: { trend: trend.prefill } });
+    if (trend.trendScope === 'SIMPLE_POST') {
+      navigate('/user/quick-editor', { state: { trend } });
+    } else {
+      navigate('/marketing-kit', { state: { trend: trend.prefill } });
+    }
   };
 
   const ActiveIcon = selectedTrend ? selectedTrend.icon : null;
@@ -91,12 +101,21 @@ export default function TrendBulletin() {
               <div className="absolute top-0 right-0 w-24 h-24 bg-secondary-container/10 dark:bg-secondary-fixed/5 rounded-full blur-xl pointer-events-none group-hover:scale-150 transition-transform duration-500" />
               
               <div>
-                {/* Header card with Icon & Tags */}
+                {/* Header card with Icon & Tags & Scope Badge */}
                 <div className="flex items-start justify-between gap-4 mb-4">
                   <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${trend.iconColor}`}>
                     <IconComponent size={20} />
                   </div>
-                  <div className="flex flex-wrap gap-1.5 justify-end">
+                  <div className="flex flex-wrap gap-1.5 justify-end items-center">
+                    {trend.trendScope === 'SIMPLE_POST' ? (
+                      <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-850 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200/50 dark:border-emerald-500/20">
+                        Bài đăng nhanh
+                      </span>
+                    ) : (
+                      <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-purple-100 text-purple-850 dark:bg-purple-950/60 dark:text-purple-300 border border-purple-200/50 dark:border-purple-500/20">
+                        Chiến dịch
+                      </span>
+                    )}
                     {trend.tags.map((tag, idx) => (
                       <span
                         key={idx}
@@ -127,7 +146,7 @@ export default function TrendBulletin() {
                 }}
                 className="w-full bg-secondary text-on-secondary font-label-sm text-label-sm py-3.5 rounded-full hover:bg-secondary/95 transition-all flex items-center justify-center gap-2 group-hover:shadow-[0_4px_12px_rgba(109,89,91,0.2)]"
               >
-                <span>Tạo kịch bản</span>
+                <span>{trend.trendScope === 'SIMPLE_POST' ? 'Soạn thảo nhanh' : 'Tạo kịch bản'}</span>
                 <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform animate-bounce-horizontal" />
               </button>
             </div>
@@ -155,7 +174,16 @@ export default function TrendBulletin() {
                   <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${selectedTrend.iconColor}`}>
                     {ActiveIcon && <ActiveIcon size={24} />}
                   </div>
-                  <div className="flex flex-wrap gap-1.5">
+                  <div className="flex flex-wrap gap-1.5 items-center">
+                    {selectedTrend.trendScope === 'SIMPLE_POST' ? (
+                      <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-850 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200/50 dark:border-emerald-500/20">
+                        Bài đăng nhanh
+                      </span>
+                    ) : (
+                      <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-purple-100 text-purple-850 dark:bg-purple-950/60 dark:text-purple-300 border border-purple-200/50 dark:border-purple-500/20">
+                        Chiến dịch
+                      </span>
+                    )}
                     {selectedTrend.tags.map((tag, idx) => (
                       <span
                         key={idx}
@@ -228,7 +256,7 @@ export default function TrendBulletin() {
                   }}
                   className="flex-1 bg-secondary text-on-secondary font-label-sm text-label-sm py-3.5 rounded-full hover:bg-secondary/95 transition-all flex items-center justify-center gap-2"
                 >
-                  <span>Tạo kịch bản</span>
+                  <span>{selectedTrend.trendScope === 'SIMPLE_POST' ? 'Soạn thảo nhanh' : 'Tạo kịch bản'}</span>
                   <ArrowRight size={14} />
                 </button>
               </div>

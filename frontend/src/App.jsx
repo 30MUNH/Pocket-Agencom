@@ -16,6 +16,7 @@ import UserSettings from './pages/user/UserSettings';
 import BusinessProfile from './pages/user/BusinessProfile';
 import GenerateMarketingKit from './pages/user/GenerateMarketingKit';
 import MarketingResult from './pages/user/MarketingResult';
+import QuickEditor from './pages/user/QuickEditor';
 import PlanReviewPage from './pages/staff/PlanReviewPage';
 import BookingDetailPage from './pages/user/BookingDetailPage';
 import BookingConfirmationPage from './pages/user/BookingConfirmationPage';
@@ -86,6 +87,7 @@ function App() {
           <Route path="/dashboard" element={<DashboardRoute />} />
           <Route path="/marketing-kit" element={<GenerateMarketingKit />} />
           <Route path="/marketing-kit/result" element={<MarketingResult />} />
+          <Route path="/user/quick-editor" element={<QuickEditor />} />
           <Route path="/plans" element={<MyPlans />} />
           <Route path="/templates" element={<TemplateLibrary />} />
           <Route path="/marketplace" element={<KOLMarketplace />} />
