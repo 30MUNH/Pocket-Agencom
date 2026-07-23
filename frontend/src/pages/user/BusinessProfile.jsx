@@ -16,6 +16,7 @@ import {
   Award
 } from 'lucide-react';
 import { authApi } from '../../api/authApi';
+import SocialLinksManager from '../../components/ui/SocialLinksManager';
 
 function FacebookIcon({ className }) {
   return (
@@ -420,40 +421,14 @@ export default function BusinessProfile() {
             </div>
           </div>
 
-          {/* Bento Card 4: Liên kết Mạng xã hội */}
-          <div className="bg-surface-container-lowest rounded-3xl p-6 md:p-8 shadow-ambient border border-surface-container/20 space-y-6">
-            <div className="flex items-center gap-2 border-b border-surface-container pb-3">
-              <div className="p-2 bg-primary-container text-primary rounded-xl">
-                <Share2 size={20} />
-              </div>
-              <div>
-                <h3 className="text-headline-sm font-bold text-primary">Liên kết Mạng xã hội</h3>
-                <p className="text-body-xs text-on-surface-variant">
-                  Dán đường dẫn kênh của thương hiệu. Để trống nếu chưa có kênh trên nền tảng đó.
-                </p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {SOCIAL_PLATFORMS.map(({ key, label, placeholder }) => (
-                <div key={key} className="space-y-1">
-                  <label className="flex items-center gap-2 text-label-xs font-bold text-on-surface-variant uppercase tracking-wider">
-                    <span className={`p-1 rounded-md ${getPlatformColor(key)}`}>
-                      {getPlatformIcon(key, 'w-3.5 h-3.5')}
-                    </span>
-                    {label}
-                  </label>
-                  <input
-                    type="url"
-                    value={socialForm[key]}
-                    onChange={(e) => setSocialForm({ ...socialForm, [key]: e.target.value })}
-                    className="w-full bg-surface-container-lowest text-primary border border-surface-variant rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-secondary-container"
-                    placeholder={placeholder}
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
+          {/* Bento Card 4: Kênh Bán Hàng & Thương Mại Điện Tử (SME) */}
+          <SocialLinksManager
+            userRole="SME"
+            initialLinks={[
+              { id: '1', platform: 'shopee', platformName: 'Shopee', url: 'https://shopee.vn/official_store' },
+              { id: '2', platform: 'tiktok_shop', platformName: 'TikTok Shop', url: 'https://tiktok.com/@official_shop' }
+            ]}
+          />
 
           <div className="flex gap-4 justify-end pt-4">
             <button

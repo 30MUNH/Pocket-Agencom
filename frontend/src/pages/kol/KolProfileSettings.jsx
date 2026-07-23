@@ -22,6 +22,10 @@ import { useUpdateProfile } from '../../hooks/useAuth';
 import { uploadApi } from '../../api/uploadApi';
 import { toast } from '../../store/toastStore';
 import MoneyInput from '../../components/ui/MoneyInput';
+import MediaPortfolio from '../../components/kol/MediaPortfolio';
+import ReviewSection from '../../components/kol/ReviewSection';
+import PerformanceTracker from '../../components/kol/PerformanceTracker';
+import SocialLinksManager from '../../components/ui/SocialLinksManager';
 
 const CATEGORY_OPTIONS = [
   'Beauty', 'Tech', 'Fashion', 'Food', 'Travel', 'Education', 'Fitness', 'Lifestyle',
@@ -446,6 +450,50 @@ export default function KolProfileSettings() {
           </div>
         </div>
       </div>
+
+      {/* Embedded Portfolio & Performance Sections for KOL */}
+      {profile?.id && (
+        <div className="pt-8 border-t border-surface-variant/30 space-y-12">
+          <div>
+            <h3 className="text-xl font-extrabold text-primary mb-4">1. Bộ sưu tập Media (Portfolio)</h3>
+            <MediaPortfolio
+              kolId={profile.id}
+              media={profile.media || []}
+              completeness={profile.completeness}
+              isOwner={true}
+            />
+          </div>
+
+          <div>
+            <h3 className="text-xl font-extrabold text-primary mb-4">2. Chỉ số Hiệu suất Chiến dịch (Performance)</h3>
+            <PerformanceTracker
+              kolId={profile.id}
+              performances={profile.performances || []}
+              isOwner={true}
+            />
+          </div>
+
+          <div>
+            <h3 className="text-xl font-extrabold text-primary mb-4">3. Nhận xét & Đánh giá từ Doanh nghiệp</h3>
+            <ReviewSection
+              kolId={profile.id}
+              reviews={profile.kolReviews || []}
+              rating={profile.rating}
+            />
+          </div>
+
+          <div>
+            <h3 className="text-xl font-extrabold text-primary mb-4">4. Quản lý Liên kết Mạng Xã Hội (Social Links)</h3>
+            <SocialLinksManager
+              userRole="KOL"
+              initialLinks={[
+                { id: '1', platform: 'tiktok', platformName: 'TikTok', url: 'https://tiktok.com/@creator_official' },
+                { id: '2', platform: 'instagram', platformName: 'Instagram', url: 'https://instagram.com/creator_official' }
+              ]}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

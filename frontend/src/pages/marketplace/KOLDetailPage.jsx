@@ -1,44 +1,70 @@
+import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Check, Star, Globe, Loader2, MessageSquare, Calendar, TrendingUp, Users } from 'lucide-react';
-import { useKol, mapKolToCreator } from '../../hooks/useKols';
-import BrandElementCard from '../../components/marketplace/BrandElementCard';
+import { ArrowLeft, Check, Star, Globe, Loader2, Users, Image, MessageSquare, TrendingUp } from 'lucide-react';
+import { kolApi } from '../../api/kolApi';
+import { useAuthStore } from '../../store/authStore';
+import MediaPortfolio from '../../components/kol/MediaPortfolio';
+import ReviewSection from '../../components/kol/ReviewSection';
+import PerformanceTracker from '../../components/kol/PerformanceTracker';
 
 export default function KOLDetailPage() {
   const { id } = useParams();
-  const { data: kolData, isLoading, error } = useKol(id);
-  const creator = mapKolToCreator(kolData);
+  const { user } = useAuthStore();
+  const [profile, setProfile] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [activeTab, setActiveTab] = useState('MEDIA'); // MEDIA | REVIEWS | PERFORMANCE
 
-  const formatFollowers = (count) => {
-    if (count >= 1000000) {
-      return (count / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
+  const fetchDetails = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await kolApi.getProfileDetails(id);
+      setProfile(data);
+    } catch (err) {
+      console.error('Error loading KOL profile details:', err);
+      setError(err?.message || 'Không thể tải chi tiết hồ sơ KOL');
+    } finally {
+      setLoading(false);
     }
-    if (count >= 1000) {
-      return (count / 1000).toFixed(0) + 'K';
-    }
-    return count;
   };
 
-  if (isLoading) {
+  useEffect(() => {
+    fetchDetails();
+  }, [id]);
+
+  const isOwner = user && profile && (user.id === profile.userId || user.role === 'admin' || user.role === 'staff');
+
+  const formatFollowers = (count) => {
+    if (!count) return '0';
+    if (count >= 1000000) return `${(count / 1000000).toFixed(1)}M`;
+    if (count >= 1000) return `${(count / 1000).toFixed(0)}K`;
+    return count.toString();
+  };
+
+  if (loading) {
     return (
       <div className="flex items-center justify-center py-20 gap-2 text-on-surface-variant">
-        <Loader2 className="animate-spin" size={24} />
+        <Loader2 className="animate-spin text-primary" size={24} />
         Đang tải hồ sơ KOL...
       </div>
     );
   }
 
-  if (error || !creator) {
+  if (error || !profile) {
     return (
       <div className="text-center py-20">
-        <p className="text-on-surface-variant mb-4">Không tìm thấy KOL.</p>
-        <Link to="/marketplace" className="text-primary font-bold">Quay lại KOL/KOC</Link>
+        <p className="text-on-surface-variant mb-4">{error || 'Không tìm thấy KOL.'}</p>
+        <Link to="/marketplace" className="text-primary font-bold hover:underline">
+          Quay lại danh sách KOL/KOC
+        </Link>
       </div>
     );
   }
 
   return (
     <div className="space-y-8">
-      {/* Back button and title */}
+      {/* Back link */}
       <div>
         <Link
           to="/marketplace"
@@ -49,269 +75,162 @@ export default function KOLDetailPage() {
         </Link>
       </div>
 
-      {/* Hero Canvas Header */}
-      <div className="bg-surface-container-lowest dark:bg-tertiary-container rounded-[2rem] shadow-[4px_24px_40px_rgba(255,143,163,0.08)] overflow-hidden border border-surface-container/20">
-        {/* Cover Photo */}
-        <div className="h-64 md:h-80 bg-surface-container/40 relative">
+      {/* Hero Header */}
+      <div className="bg-surface-container-lowest dark:bg-tertiary-container rounded-[2rem] shadow-sm overflow-hidden border border-surface-variant/30">
+        <div className="h-56 md:h-72 bg-gradient-to-r from-primary/30 to-secondary/30 relative">
           <img
-            className="w-full h-full object-cover"
-            src={creator.coverImage}
-            alt={`${creator.name} cover`}
+            className="w-full h-full object-cover opacity-80"
+            src={profile.coverUrl || 'https://picsum.photos/seed/kol_cover/1200/400'}
+            alt={`${profile.name} cover`}
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
         </div>
 
-        {/* Profile Info Overlay Row */}
-        <div className="relative px-6 md:px-12 pb-8 pt-0 -mt-16 md:-mt-20 flex flex-col md:flex-row justify-between items-start md:items-end gap-6 z-10">
+        <div className="relative px-6 md:px-10 pb-8 -mt-16 md:-mt-20 flex flex-col md:flex-row justify-between items-start md:items-end gap-6 z-10">
           <div className="flex flex-col md:flex-row items-center md:items-end gap-6 text-center md:text-left w-full md:w-auto">
-            {/* Profile Avatar */}
-            <div className="w-32 h-32 md:w-40 md:h-40 rounded-full overflow-hidden border-4 border-surface-container-lowest shadow-md shrink-0 bg-surface-container">
+            <div className="w-32 h-32 md:w-36 md:h-36 rounded-full overflow-hidden border-4 border-surface-container-lowest shadow-md shrink-0 bg-surface-container">
               <img
                 className="w-full h-full object-cover"
-                src={creator.avatar}
-                alt={creator.name}
+                src={profile.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(profile.name)}`}
+                alt={profile.name}
               />
             </div>
-            
-            {/* Meta text details */}
+
             <div className="pb-2">
-              <div className="flex flex-wrap items-center justify-center md:justify-start gap-2.5">
-                <h2 className="text-display-lg-mobile md:text-headline-md font-bold text-white md:text-primary dark:md:text-inverse-primary leading-tight">
-                  {creator.name}
+              <div className="flex flex-wrap items-center justify-center md:justify-start gap-2">
+                <h2 className="text-2xl md:text-3xl font-extrabold text-white md:text-primary dark:md:text-inverse-primary leading-tight">
+                  {profile.name}
                 </h2>
-                {creator.verified && (
+                {profile.isVerified && (
                   <span className="bg-secondary-container text-on-secondary-container rounded-full p-0.5 w-5 h-5 flex items-center justify-center">
                     <Check size={12} className="stroke-[3]" />
                   </span>
                 )}
               </div>
-              <p className="text-xs text-white/95 md:text-on-surface-variant flex justify-center md:justify-start items-center gap-1 mt-1">
-                {creator.handle}
+              <p className="text-xs text-white/90 md:text-on-surface-variant flex justify-center md:justify-start items-center gap-1 mt-1">
+                {profile.kolType?.replace('_', ' ').toUpperCase()} • {profile.niche}
               </p>
-              <div className="flex flex-wrap items-center justify-center md:justify-start gap-x-2 gap-y-0.5 mt-2">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-secondary">
-                  {creator.category}
+              <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 mt-2">
+                <span className="text-xs text-white/90 md:text-on-surface-variant flex items-center gap-1">
+                  <Star size={13} className="fill-amber-400 text-amber-400" /> {profile.rating || '5.0'} ({profile.kolReviews?.length || 0} đánh giá)
                 </span>
-                <span className="text-white/60 md:text-outline text-[11px]">•</span>
-                <span className="text-xs text-white/90 md:text-on-surface-variant flex items-center gap-0.5">
-                  <Star size={12} className="fill-[#FFB400] text-[#FFB400]" /> {creator.rating} (52 đánh giá)
+                <span className="text-xs text-white/90 md:text-on-surface-variant flex items-center gap-1">
+                  <Users size={13} className="text-primary" /> {formatFollowers(profile.followerCount)} người theo dõi
                 </span>
+                {profile.location && (
+                  <span className="text-xs text-white/90 md:text-on-surface-variant flex items-center gap-1">
+                    <Globe size={13} /> {profile.location}
+                  </span>
+                )}
               </div>
             </div>
           </div>
 
-          {/* Action Callouts */}
-          <div className="flex gap-3 w-full md:w-auto justify-center md:justify-end pb-2">
-            <button
-              onClick={() => alert(`Đang mở cửa sổ nhắn tin với ${creator.name}...`)}
-              className="flex-1 md:flex-initial flex items-center justify-center gap-2 px-6 py-3 rounded-full border border-outline-variant text-primary hover:bg-surface-container transition-colors text-xs font-semibold"
-            >
-              <MessageSquare size={16} />
-              Nhắn tin
-            </button>
+          <div className="w-full md:w-auto flex flex-col sm:flex-row items-center gap-3">
             <Link
-              to={`/marketplace/book/${creator.id}`}
-              className="flex-1 md:flex-initial flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-primary text-on-primary hover:bg-inverse-surface transition-colors text-xs font-semibold shadow-sm"
+              to={`/marketplace/book/${profile.id}`}
+              className="w-full sm:w-auto px-8 py-3 rounded-full bg-primary hover:bg-primary/90 text-on-primary font-bold text-sm shadow-md transition-all text-center"
             >
-              <Calendar size={16} />
-              Đặt lịch ngay
+              Đặt lịch Hợp tác
             </Link>
           </div>
         </div>
       </div>
 
-      {/* Main split details grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-gutter">
-        {/* Left Column: Data Analysis & Showcases */}
-        <div className="lg:col-span-8 space-y-8">
-          
-          {/* Section: Overview Metrics */}
-          <section className="bg-surface-container-lowest dark:bg-tertiary-container rounded-[2rem] p-8 shadow-[4px_24px_40px_rgba(255,143,163,0.08)] border border-surface-container/20">
-            <h3 className="font-headline-md text-base text-primary dark:text-inverse-primary font-bold mb-6 flex items-center gap-2">
-              <TrendingUp size={18} className="text-secondary" />
-              Hiệu suất Kênh
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-              <div className="bg-surface-container-low dark:bg-surface-variant/10 p-5 rounded-2xl">
-                <p className="text-[11px] text-on-surface-variant font-bold uppercase tracking-wider">Tổng Người theo dõi</p>
-                <p className="text-display-lg-mobile font-bold text-primary dark:text-inverse-primary mt-2">
-                  {formatFollowers(creator.followers)}
-                </p>
-                <p className="text-[10px] text-outline mt-1">+2.4% so với tháng trước</p>
-              </div>
-              <div className="bg-surface-container-low dark:bg-surface-variant/10 p-5 rounded-2xl">
-                <p className="text-[11px] text-on-surface-variant font-bold uppercase tracking-wider">Tỷ lệ Tương tác</p>
-                <p className="text-display-lg-mobile font-bold text-primary dark:text-inverse-primary mt-2">
-                  {creator.engagement}%
-                </p>
-                <p className="text-[10px] text-outline mt-1">Trung bình ngành: 3.2%</p>
-              </div>
-              <div className="bg-surface-container-low dark:bg-surface-variant/10 p-5 rounded-2xl">
-                <p className="text-[11px] text-on-surface-variant font-bold uppercase tracking-wider">Lượt xem Trung bình</p>
-                <p className="text-display-lg-mobile font-bold text-primary dark:text-inverse-primary mt-2">
-                  {formatFollowers(creator.followers * 0.35)}
-                </p>
-                <p className="text-[10px] text-outline mt-1">Tỷ lệ giữ chân người xem video 94%</p>
-              </div>
-            </div>
-          </section>
-
-          {/* Section: Audience Demographics */}
-          <section className="bg-surface-container-lowest dark:bg-tertiary-container rounded-[2rem] p-8 shadow-[4px_24px_40px_rgba(255,143,163,0.08)] border border-surface-container/20">
-            <h3 className="font-headline-md text-base text-primary dark:text-inverse-primary font-bold mb-6 flex items-center gap-2">
-              <Users size={18} className="text-secondary" />
-              Nhân khẩu học Khán giả
-            </h3>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {/* Gender Split */}
-              <div>
-                <h4 className="text-xs font-bold text-primary dark:text-inverse-primary mb-4">Phân chia Giới tính</h4>
-                <div className="space-y-4">
-                  <div className="flex justify-between text-xs font-semibold">
-                    <span className="text-secondary font-bold">Nữ ({creator.audienceGender.female}%)</span>
-                    <span className="text-primary dark:text-inverse-primary font-bold">Nam ({creator.audienceGender.male}%)</span>
-                  </div>
-                  <div className="w-full h-3 rounded-full bg-surface-container dark:bg-surface-variant/20 overflow-hidden flex">
-                    <div
-                      className="bg-secondary-container h-full"
-                      style={{ width: `${creator.audienceGender.female}%` }}
-                    ></div>
-                    <div
-                      className="bg-primary h-full"
-                      style={{ width: `${creator.audienceGender.male}%` }}
-                    ></div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Age Groups */}
-              <div>
-                <h4 className="text-xs font-bold text-primary dark:text-inverse-primary mb-4">Nhóm Tuổi</h4>
-                <div className="space-y-3">
-                  {creator.audienceAge.map((item) => (
-                    <div key={item.range} className="flex items-center gap-3">
-                      <span className="w-12 text-xs font-semibold text-on-surface-variant">{item.range}</span>
-                      <div className="flex-1 h-2 rounded-full bg-surface-container dark:bg-surface-variant/20 overflow-hidden">
-                        <div
-                          className="bg-secondary h-full rounded-full"
-                          style={{ width: `${item.percentage}%` }}
-                        ></div>
-                      </div>
-                      <span className="w-8 text-right text-xs font-bold text-primary dark:text-inverse-primary">
-                        {item.percentage}%
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </section>
-
-          {/* Section: Past Campaigns */}
-          <section className="bg-surface-container-lowest dark:bg-tertiary-container rounded-[2rem] p-8 shadow-[4px_24px_40px_rgba(255,143,163,0.08)] border border-surface-container/20">
-            <h3 className="font-headline-md text-base text-primary dark:text-inverse-primary font-bold mb-6">
-              Chiến dịch Đã Thực hiện
-            </h3>
-            
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              {creator.pastCampaigns.map((camp) => (
-                <div
-                  key={camp.title}
-                  className="bg-surface rounded-2xl overflow-hidden border border-surface-container/30 hover:shadow-md transition-shadow"
-                >
-                  <div className="h-40 bg-surface-container relative">
-                    <img className="w-full h-full object-cover" src={camp.image} alt={camp.title} />
-                    <span className="absolute top-3 right-3 bg-black/65 backdrop-blur text-white text-[9px] font-bold px-2 py-0.5 rounded uppercase">
-                      {camp.type}
-                    </span>
-                  </div>
-                  <div className="p-4">
-                    <p className="text-[10px] text-secondary font-bold uppercase tracking-wider">{camp.brand}</p>
-                    <h4 className="font-bold text-xs text-primary dark:text-inverse-primary mt-1">{camp.title}</h4>
-                    <p className="text-[11px] text-on-surface-variant mt-2">Lượt xem/Ấn tượng: {camp.views}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          {/* Section: Brand Testimonials */}
-          <section className="bg-surface-container-lowest dark:bg-tertiary-container rounded-[2rem] p-8 shadow-[4px_24px_40px_rgba(255,143,163,0.08)] border border-surface-container/20">
-            <h3 className="font-headline-md text-base text-primary dark:text-inverse-primary font-bold mb-6">
-              Đánh giá &amp; Phản hồi từ Thương hiệu
-            </h3>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {creator.testimonials.map((test) => (
-                <BrandElementCard key={test.brandName} testimonial={test} />
-              ))}
-            </div>
-          </section>
-
-        </div>
-
-        {/* Right Column: Profile Specs & Sticky CTA */}
-        <div className="lg:col-span-4 space-y-6">
-          {/* Creator Profile Specs */}
-          <div className="bg-surface-container-lowest dark:bg-tertiary-container rounded-[2rem] p-6 shadow-[4px_24px_40px_rgba(255,143,163,0.08)] border border-surface-container/20">
-            <h3 className="text-xs font-bold text-primary dark:text-inverse-primary uppercase tracking-widest mb-4">
-              Về Nhà sáng tạo
-            </h3>
-            <p className="text-xs text-on-surface-variant leading-relaxed mb-6">
-              {creator.bio}
-            </p>
-
-            <h4 className="text-[11px] font-bold text-primary dark:text-inverse-primary uppercase tracking-widest mb-3">
-              Chi tiết &amp; Kênh liên kết
-            </h4>
-            <div className="space-y-4">
-              <div className="flex justify-between items-center py-2.5 border-b border-surface-variant/40">
-                <span className="text-xs text-on-surface-variant">Người theo dõi Instagram</span>
-                <span className="text-xs font-bold text-primary dark:text-inverse-primary">
-                  {creator.platforms.includes('IG') ? formatFollowers(creator.followers * 0.6) : 'Không có'}
-                </span>
-              </div>
-              <div className="flex justify-between items-center py-2.5 border-b border-surface-variant/40">
-                <span className="text-xs text-on-surface-variant">Người theo dõi TikTok</span>
-                <span className="text-xs font-bold text-primary dark:text-inverse-primary">
-                  {creator.platforms.includes('TT') ? formatFollowers(creator.followers * 0.8) : 'Không có'}
-                </span>
-              </div>
-              <div className="flex justify-between items-center py-2.5 border-b border-surface-variant/40">
-                <span className="text-xs text-on-surface-variant">Người đăng ký YouTube</span>
-                <span className="text-xs font-bold text-primary dark:text-inverse-primary">
-                  {creator.platforms.includes('YT') ? formatFollowers(creator.followers * 0.4) : 'Không có'}
-                </span>
-              </div>
-              <div className="flex justify-between items-center py-2.5">
-                <span className="text-xs text-on-surface-variant">Vị trí Chính</span>
-                <span className="text-xs font-bold text-primary dark:text-inverse-primary flex items-center gap-1">
-                  <Globe size={12} />
-                  {creator.location}
-                </span>
-              </div>
-            </div>
+      {/* Main Content Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        {/* Left / Center Column (Tabs & Feature Sections) */}
+        <div className="lg:col-span-8 space-y-6">
+          {/* Navigation Tabs */}
+          <div className="flex items-center gap-2 p-1.5 bg-surface-container-lowest dark:bg-tertiary-container rounded-full border border-surface-variant/30 text-xs font-bold">
+            <button
+              onClick={() => setActiveTab('MEDIA')}
+              className={`flex-1 py-3 rounded-full transition-all flex items-center justify-center gap-2 ${
+                activeTab === 'MEDIA'
+                  ? 'bg-primary text-on-primary shadow-sm'
+                  : 'text-on-surface-variant hover:text-primary'
+              }`}
+            >
+              <Image size={15} /> Bộ sưu tập Media ({profile.media?.length || 0})
+            </button>
+            <button
+              onClick={() => setActiveTab('REVIEWS')}
+              className={`flex-1 py-3 rounded-full transition-all flex items-center justify-center gap-2 ${
+                activeTab === 'REVIEWS'
+                  ? 'bg-primary text-on-primary shadow-sm'
+                  : 'text-on-surface-variant hover:text-primary'
+              }`}
+            >
+              <MessageSquare size={15} /> Đánh giá SMEs ({profile.kolReviews?.length || 0})
+            </button>
+            <button
+              onClick={() => setActiveTab('PERFORMANCE')}
+              className={`flex-1 py-3 rounded-full transition-all flex items-center justify-center gap-2 ${
+                activeTab === 'PERFORMANCE'
+                  ? 'bg-primary text-on-primary shadow-sm'
+                  : 'text-on-surface-variant hover:text-primary'
+              }`}
+            >
+              <TrendingUp size={15} /> Hiệu suất ({profile.performances?.length || 0})
+            </button>
           </div>
 
-          {/* Sticky Booking CTA */}
-          <div className="bg-surface-container-lowest dark:bg-tertiary-container rounded-[2rem] p-6 shadow-[4px_24px_40px_rgba(255,143,163,0.08)] border border-surface-container/20 sticky top-24">
-            <p className="text-[10px] text-on-surface-variant uppercase tracking-widest font-bold">Chi phí Ước tính</p>
-            <div className="flex items-baseline gap-1.5 mt-2">
-              <span className="text-display-lg-mobile font-bold text-primary dark:text-inverse-primary">
-                {creator.priceRange ? creator.priceRange : `${(creator.startingPrice || 0).toLocaleString('vi-VN')} VND`}
-              </span>
-            </div>
-            
-            <Link
-              to={`/marketplace/book/${creator.id}`}
-              className="w-full mt-6 py-4 bg-secondary-container hover:bg-secondary-fixed text-on-secondary-container dark:bg-on-secondary-fixed-variant dark:text-secondary-fixed rounded-full font-headline-md text-sm font-bold flex items-center justify-center gap-2 hover:-translate-y-0.5 active:scale-95 transition-all shadow-sm"
-            >
-              Bắt đầu Đặt lịch Hợp tác
-            </Link>
-            <p className="text-[10px] text-center text-on-surface-variant mt-4">
-              Yêu cầu xác thực ngân sách trước khi gửi đến nhà sáng tạo.
+          {/* Tab 1: Media Portfolio */}
+          {activeTab === 'MEDIA' && (
+            <MediaPortfolio
+              kolId={profile.id}
+              media={profile.media || []}
+              completeness={profile.completeness}
+              isOwner={isOwner}
+              onRefresh={fetchDetails}
+            />
+          )}
+
+          {/* Tab 2: Review Section */}
+          {activeTab === 'REVIEWS' && (
+            <ReviewSection
+              kolId={profile.id}
+              reviews={profile.kolReviews || []}
+              rating={profile.rating}
+              onRefresh={fetchDetails}
+            />
+          )}
+
+          {/* Tab 3: Performance Tracker */}
+          {activeTab === 'PERFORMANCE' && (
+            <PerformanceTracker
+              kolId={profile.id}
+              performances={profile.performances || []}
+              isOwner={isOwner}
+              onRefresh={fetchDetails}
+            />
+          )}
+        </div>
+
+        {/* Right Column: Bio & Pricing Card */}
+        <div className="lg:col-span-4 space-y-6">
+          <div className="bg-surface-container-lowest dark:bg-tertiary-container rounded-[2rem] p-6 border border-surface-variant/30 shadow-sm space-y-4">
+            <h3 className="text-xs font-bold text-primary uppercase tracking-wider">Tiểu sử & Giới thiệu</h3>
+            <p className="text-xs text-on-surface leading-relaxed whitespace-pre-line">
+              {profile.bio || 'Chưa cập nhật tiểu sử.'}
             </p>
+
+            <div className="pt-4 border-t border-surface-variant/20 space-y-2 text-xs">
+              <div className="flex justify-between">
+                <span className="text-on-surface-variant font-medium">Lĩnh vực chính:</span>
+                <span className="font-bold text-primary">{profile.niche}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-on-surface-variant font-medium">Giá tham khảo từ:</span>
+                <span className="font-extrabold text-emerald-600">
+                  {profile.priceFrom ? `${profile.priceFrom.toLocaleString('vi-VN')} VNĐ` : 'Liên hệ'}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-on-surface-variant font-medium">Tỷ lệ tương tác:</span>
+                <span className="font-bold text-primary">{profile.engagementRate}%</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>

@@ -11,6 +11,10 @@ import {
   Users,
   Building2,
   Star,
+  Briefcase,
+  Package,
+  MessageSquare,
+  Wallet,
 } from 'lucide-react';
 
 export default function Sidebar({ isOpen, onClose, userRole = 'user' }) {
@@ -34,6 +38,10 @@ export default function Sidebar({ isOpen, onClose, userRole = 'user' }) {
       case 'kol':
         return [
           { path: '/dashboard', label: 'Bảng điều khiển', icon: LayoutDashboard },
+          { path: '/marketplace/job-board', label: 'Sàn việc làm', icon: Briefcase },
+          { path: '/kol/orders', label: 'Quản lý đơn hàng', icon: Package },
+          { path: '/kol/chat', label: 'Chat & Thương lượng', icon: MessageSquare },
+          { path: '/kol/income', label: 'Quản lý thu nhập', icon: Wallet },
           { path: '/kol/profile', label: 'Hồ sơ KOL', icon: Star },
           { path: '/help', label: 'Trung tâm trợ giúp', icon: HelpCircle },
         ];
@@ -46,7 +54,9 @@ export default function Sidebar({ isOpen, onClose, userRole = 'user' }) {
           { path: '/plans', label: 'Kế hoạch của tôi', icon: ClipboardList },
           { path: '/templates', label: 'Thư viện mẫu', icon: Library },
           { path: '/marketplace', label: 'KOL/KOC', icon: Compass },
+          { path: '/marketplace/job-board', label: 'Sàn việc làm KOL', icon: Briefcase },
           { path: '/bookings', label: 'Lịch đặt KOL', icon: CalendarDays },
+          { path: '/chat', label: 'Chat & Thương lượng', icon: MessageSquare },
           { path: '/help', label: 'Trung tâm trợ giúp', icon: HelpCircle },
         ];
     }

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Calendar, ArrowRight, Edit3, Trash2, ChevronDown, Loader2 } from 'lucide-react';
+import { Calendar, ArrowRight, Edit3, Trash2, ChevronDown, Loader2, Users } from 'lucide-react';
 import { useMarketingPlans, useDeletePlan } from '../../hooks/useMarketingPlans';
 import { PLAN_STATUS_LABELS, formatDate } from '../../utils/statusLabels';
 import { toast } from '../../store/toastStore';
@@ -65,6 +65,20 @@ export default function MyPlans() {
                 <div className="flex items-center gap-2 text-xs text-on-surface-variant mb-4">
                   <Calendar size={12} />
                   {formatDate(plan.createdAt)}
+                </div>
+                <div className="flex items-center justify-between gap-2 mb-4 pt-2 border-t border-surface-variant/20">
+                  <div className="flex items-center gap-1.5 text-xs">
+                    <span className={`w-2.5 h-2.5 rounded-full ${plan.isLookingForKol ? 'bg-emerald-500 animate-pulse' : 'bg-surface-variant'}`} />
+                    <span className="text-on-surface-variant font-medium">
+                      {plan.isLookingForKol ? 'Đang mở tuyển KOL' : 'Tắt tuyển KOL'}
+                    </span>
+                  </div>
+                  <Link
+                    to={`/campaigns/${plan.id}/applications`}
+                    className="px-3 py-1 bg-primary/10 hover:bg-primary/20 text-primary text-xs font-bold rounded-full transition-colors flex items-center gap-1"
+                  >
+                    <Users size={12} /> Ứng viên
+                  </Link>
                 </div>
                 <div className="flex gap-2">
                   <button

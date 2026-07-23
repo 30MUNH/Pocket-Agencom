@@ -32,6 +32,11 @@ import StaffDashboard from './pages/staff/StaffDashboard';
 import StaffBookingManagement from './pages/staff/StaffBookingManagement';
 import KolDashboard from './pages/kol/KolDashboard';
 import KolProfileSettings from './pages/kol/KolProfileSettings';
+import CampaignJobBoard from './pages/marketplace/CampaignJobBoard';
+import ApplicationManager from './pages/marketplace/ApplicationManager';
+import OrderManagement from './pages/kol/OrderManagement';
+import SecureNegotiationChat from './pages/kol/SecureNegotiationChat';
+import IncomeDashboard from './pages/kol/IncomeDashboard';
 
 function DashboardRoute() {
   const { userRole } = useOutletContext();
@@ -91,10 +96,13 @@ function App() {
           <Route path="/plans" element={<MyPlans />} />
           <Route path="/templates" element={<TemplateLibrary />} />
           <Route path="/marketplace" element={<KOLMarketplace />} />
+          <Route path="/marketplace/job-board" element={<CampaignJobBoard />} />
           <Route path="/marketplace/explorer" element={<KOLMarketplaceExplorer />} />
           <Route path="/marketplace/kol/:id" element={<KOLDetailPage />} />
           <Route path="/marketplace/book/:id" element={<BookCampaignPage />} />
           <Route path="/marketplace/package/:id" element={<PackageDetailPage />} />
+          <Route path="/campaigns/:id/applications" element={<ApplicationManager />} />
+          <Route path="/chat" element={<SecureNegotiationChat />} />
           <Route path="/bookings" element={<MyBookings />} />
           <Route path="/help" element={<HelpCenter />} />
           <Route path="/settings" element={<UserSettings />} />
@@ -106,6 +114,30 @@ function App() {
             element={
               <ProtectedRoute roles={['kol']}>
                 <KolProfileSettings />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/kol/orders"
+            element={
+              <ProtectedRoute roles={['kol']}>
+                <OrderManagement />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/kol/chat"
+            element={
+              <ProtectedRoute roles={['kol']}>
+                <SecureNegotiationChat />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/kol/income"
+            element={
+              <ProtectedRoute roles={['kol']}>
+                <IncomeDashboard />
               </ProtectedRoute>
             }
           />

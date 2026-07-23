@@ -31,6 +31,17 @@ enum PlanStatus {
   need_revision
 }
 
+enum ApplicationStatus {
+  pending
+  accepted
+  rejected
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+}
+
 enum TemplateType {
   social_post
   banner
@@ -131,6 +142,7 @@ model User {
   assignedTickets  SupportTicket[]  @relation("StaffTickets")
   notifications    Notification[]
   socialPlatforms  SocialPlatform[]
+  smeKolReviews    KolReview[]       @relation("SmeKolReviews")
 
   @@map("users")
 }
@@ -176,14 +188,16 @@ model MarketingPlan {
   deploymentChannels String?   @map("deployment_channels")
   existingResources String?    @map("existing_resources")
   campaignReason    String?    @map("campaign_reason")
+  isLookingForKol   Boolean    @default(false) @map("is_looking_for_kol")
   status            PlanStatus @default(saved)
   reviewedById      Int?       @map("reviewed_by")
   createdAt         DateTime   @default(now()) @map("created_at")
   updatedAt         DateTime   @default(now()) @updatedAt @map("updated_at")
 
-  user            User            @relation("UserPlans", fields: [userId], references: [id])
-  businessProfile BusinessProfile @relation(fields: [businessProfileId], references: [id])
-  reviewedBy      User?           @relation("ReviewedPlans", fields: [reviewedById], references: [id])
+  user            User                  @relation("UserPlans", fields: [userId], references: [id])
+  businessProfile BusinessProfile       @relation(fields: [businessProfileId], references: [id])
+  reviewedBy      User?                 @relation("ReviewedPlans", fields: [reviewedById], references: [id])
+  applications    CampaignApplication[]
 
   @@map("marketing_plans")
 }
@@ -242,6 +256,10 @@ model KolProfile {
   availabilitySlots KolAvailabilitySlot[]
   bookings          KolBooking[]
   reviews           BookingReview[]
+  applications      CampaignApplication[]
+  media             KolMedia[]
+  kolReviews        KolReview[]
+  performances      KolPerformance[]
 
   @@map("kol_profiles")
 }
@@ -404,4 +422,64 @@ model SocialPlatform {
   businessProfile BusinessProfile @relation(fields: [businessProfileId], references: [id], onDelete: Cascade)
 
   @@map("social_platforms")
+}
+
+model CampaignApplication {
+  id           Int               @id @default(autoincrement())
+  campaignId   Int               @map("campaign_id")
+  kolProfileId Int               @map("kol_profile_id")
+  status       ApplicationStatus @default(pending)
+  coverLetter  String?           @map("cover_letter") @db.Text
+  createdAt    DateTime          @default(now()) @map("created_at")
+  updatedAt    DateTime          @default(now()) @updatedAt @map("updated_at")
+
+  campaign   MarketingPlan @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  kolProfile KolProfile    @relation(fields: [kolProfileId], references: [id], onDelete: Cascade)
+
+  @@unique([campaignId, kolProfileId])
+  @@map("campaign_applications")
+}
+
+model KolMedia {
+  id           Int       @id @default(autoincrement())
+  kolProfileId Int       @map("kol_profile_id")
+  mediaUrl     String    @map("media_url")
+  mediaType    MediaType @map("media_type")
+  isFullBody   Boolean   @default(false) @map("is_full_body")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @default(now()) @updatedAt @map("updated_at")
+
+  kolProfile KolProfile @relation(fields: [kolProfileId], references: [id], onDelete: Cascade)
+
+  @@map("kol_media")
+}
+
+model KolReview {
+  id           Int      @id @default(autoincrement())
+  kolProfileId Int      @map("kol_profile_id")
+  smeId        Int      @map("sme_id")
+  rating       Int
+  content      String   @db.Text
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @default(now()) @updatedAt @map("updated_at")
+
+  kolProfile KolProfile @relation(fields: [kolProfileId], references: [id], onDelete: Cascade)
+  sme        User       @relation("SmeKolReviews", fields: [smeId], references: [id], onDelete: Cascade)
+
+  @@map("kol_reviews")
+}
+
+model KolPerformance {
+  id             Int      @id @default(autoincrement())
+  kolProfileId   Int      @map("kol_profile_id")
+  postUrl        String   @map("post_url")
+  engagementRate Float    @map("engagement_rate")
+  conversions    Int      @default(0)
+  platform       String
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @default(now()) @updatedAt @map("updated_at")
+
+  kolProfile KolProfile @relation(fields: [kolProfileId], references: [id], onDelete: Cascade)
+
+  @@map("kol_performance")
 }

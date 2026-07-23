@@ -143,7 +143,7 @@ async function main() {
     const engagementRate = faker.number.float({ min: 0.8, max: 15.0 });
     const rating = faker.number.float({ min: 3.8, max: 5.0 });
     const completedCampaigns = faker.number.int({ min: 3, max: 180 });
-    const priceFrom = Math.round(faker.number.int({ min: 1000000, max: 50000000 }) / 500000) * 500000;
+    const priceFrom = Math.round(faker.number.int({ min: 100000, max: 480000 }) / 10000) * 10000;
 
     kolsData.push({
       name,
@@ -210,7 +210,7 @@ async function main() {
 
     // 6b. Tạo 2 gói dịch vụ: Gói Cơ Bản & Gói Combo Nâng Cao
     const serviceType1 = faker.helpers.arrayElement([ServiceType.tiktok_video, ServiceType.instagram_reels, ServiceType.facebook_post, ServiceType.product_review]);
-    const price1 = Number(kol.priceFrom) || faker.number.int({ min: 1000000, max: 10000000 });
+    const price1 = Number(kol.priceFrom) || faker.number.int({ min: 100000, max: 450000 });
     
     servicePackagesData.push({
       kolId: kol.id,
@@ -225,7 +225,7 @@ async function main() {
     });
 
     const serviceType2 = faker.helpers.arrayElement([ServiceType.combo, ServiceType.livestream, ServiceType.unboxing]);
-    const price2 = Math.round((price1 * faker.number.float({ min: 1.5, max: 2.5 })) / 500000) * 500000;
+    const price2 = Math.min(590000, Math.round((price1 * faker.number.float({ min: 1.15, max: 1.3 })) / 10000) * 10000);
     
     servicePackagesData.push({
       kolId: kol.id,
