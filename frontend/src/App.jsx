@@ -132,6 +132,14 @@ function App() {
             }
           />
           <Route
+            path="/kol/job-board"
+            element={
+              <ProtectedRoute roles={['kol', 'user']}>
+                <CampaignJobBoard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/kol/chat"
             element={
               <ProtectedRoute roles={['kol']}>

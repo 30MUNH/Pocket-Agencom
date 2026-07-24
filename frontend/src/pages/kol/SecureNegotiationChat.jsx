@@ -3,7 +3,7 @@ import { MessageSquare, Lock, Unlock, ShieldCheck, Send, Image, Video, CheckCirc
 import { toast } from '../../store/toastStore';
 import { useAuthStore } from '../../store/authStore';
 
-const MOCK_CONTACTS = [
+const MOCK_CONTACTS_FOR_KOL = [
   {
     id: 'c1',
     name: 'Cosmetics Glow Vietnam',
@@ -21,6 +21,29 @@ const MOCK_CONTACTS = [
     avatar: 'https://api.dicebear.com/7.x/identicon/svg?seed=techgear',
     campaign: 'Quảng bá Tai Nghe Bluetooth ANC',
     lastMessage: 'Đã nhận được bản video nháp, đang chuẩn bị thanh toán.',
+    time: 'Hôm qua',
+    unread: 0,
+  },
+];
+
+const MOCK_CONTACTS_FOR_SME = [
+  {
+    id: 'k1',
+    name: 'Minh Anh (KOL Beauty)',
+    role: 'KOL / Creator',
+    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=MinhAnh',
+    campaign: 'Chiến dịch Serum Dưỡng Da Căng Bóng',
+    lastMessage: 'Dạ em vừa gửi bản demo video nháp bên dưới ạ!',
+    time: '10:40 AM',
+    unread: 1,
+  },
+  {
+    id: 'k2',
+    name: 'Duy Thẩm (KOC Tech)',
+    role: 'KOL / Creator',
+    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=DuyTham',
+    campaign: 'Quảng bá Tai Nghe Bluetooth ANC',
+    lastMessage: 'Dạ anh/chị xem kịch bản review tai nghe giúp em nhé.',
     time: 'Hôm qua',
     unread: 0,
   },
@@ -62,8 +85,9 @@ export default function SecureNegotiationChat() {
 
   // Automatically lock perspective to the logged-in user role ('KOL' or 'SME')
   const perspective = isKolRole ? 'KOL' : 'SME';
+  const contactsList = isKolRole ? MOCK_CONTACTS_FOR_KOL : MOCK_CONTACTS_FOR_SME;
 
-  const [activeContact, setActiveContact] = useState(MOCK_CONTACTS[0]);
+  const [activeContact, setActiveContact] = useState(contactsList[0]);
   const [messages, setMessages] = useState(INITIAL_MESSAGES);
   const [inputText, setInputText] = useState('');
   
@@ -166,7 +190,7 @@ export default function SecureNegotiationChat() {
           </div>
 
           <div className="flex-1 overflow-y-auto divide-y divide-surface-variant/10">
-            {MOCK_CONTACTS.map((contact) => (
+            {contactsList.map((contact) => (
               <div
                 key={contact.id}
                 onClick={() => setActiveContact(contact)}

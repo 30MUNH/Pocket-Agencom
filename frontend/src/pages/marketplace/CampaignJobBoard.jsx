@@ -3,6 +3,36 @@ import { Briefcase, MapPin, DollarSign, Users, Send, CheckCircle2, Loader2, Sear
 import { getMarketCampaigns, applyToCampaign } from '../../api/marketplaceApi';
 import { toast } from '../../store/toastStore';
 
+const DEMO_JOB_CAMPAIGNS = [
+  {
+    id: 101,
+    brandName: 'Cosmetics Glow Vietnam',
+    goal: 'Review Serum Dưỡng Da Căng Bóng 30ml',
+    campaignType: 'Video Short-form (TikTok / Reels)',
+    budget: '15000000',
+    location: 'Toàn quốc (Remote)',
+    isLookingForKol: true,
+  },
+  {
+    id: 102,
+    brandName: 'TechGear Official Store',
+    goal: 'Trải nghiệm & Unboxing Tai Nghe Bluetooth ANC',
+    campaignType: 'Unboxing & Video Chi Tiết (YouTube / TikTok)',
+    budget: '8500000',
+    location: 'TP. Hồ Chí Minh / Hà Nội',
+    isLookingForKol: true,
+  },
+  {
+    id: 103,
+    brandName: 'Marrow Cookware Premium',
+    goal: 'Bộ sưu tập Chảo Gang Nguyên Khối Cao Cấp',
+    campaignType: 'Bài đăng trải nghiệm & Hình ảnh Lifestyle',
+    budget: '12000000',
+    location: 'Toàn quốc',
+    isLookingForKol: true,
+  }
+];
+
 export default function CampaignJobBoard() {
   const [campaigns, setCampaigns] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -19,10 +49,14 @@ export default function CampaignJobBoard() {
       setLoading(true);
       setError(null);
       const data = await getMarketCampaigns();
-      setCampaigns(data || []);
+      if (Array.isArray(data) && data.length > 0) {
+        setCampaigns(data);
+      } else {
+        setCampaigns(DEMO_JOB_CAMPAIGNS);
+      }
     } catch (err) {
-      console.error('Error loading campaigns:', err);
-      setError(err?.message || 'Không thể tải danh sách chiến dịch');
+      console.warn('Error loading campaigns, using demo jobs:', err);
+      setCampaigns(DEMO_JOB_CAMPAIGNS);
     } finally {
       setLoading(false);
     }

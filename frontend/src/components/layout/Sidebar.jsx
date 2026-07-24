@@ -39,7 +39,7 @@ export default function Sidebar({ isOpen, onClose, userRole = 'user' }) {
       case 'kol':
         return [
           { path: '/dashboard', label: 'Bảng điều khiển', icon: LayoutDashboard },
-          { path: '/marketplace/job-board', label: 'Sàn việc làm', icon: Briefcase },
+          { path: '/kol/job-board', label: 'Sàn việc làm', icon: Briefcase },
           { path: '/kol/orders', label: 'Quản lý đơn hàng', icon: Package },
           { path: '/kol/chat', label: 'Chat & Thương lượng', icon: MessageSquare },
           { path: '/kol/income', label: 'Quản lý thu nhập', icon: Wallet },
@@ -108,13 +108,13 @@ export default function Sidebar({ isOpen, onClose, userRole = 'user' }) {
               const Icon = item.icon;
               const isActive =
                 item.path === '/marketplace'
-                  ? location.pathname.startsWith('/marketplace')
+                  ? (location.pathname === '/marketplace' || location.pathname.startsWith('/marketplace/explorer'))
                   : item.path === '/marketing-kit'
                   ? location.pathname.startsWith('/marketing-kit')
                   : item.path === '/admin/kols'
                   ? location.pathname.startsWith('/admin/kols')
                   : item.path === '/kol/profile'
-                  ? location.pathname.startsWith('/kol/')
+                  ? (location.pathname === '/kol/profile' || location.pathname.startsWith('/kol/profile/'))
                   : location.pathname === item.path;
 
               return (
