@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { MessageSquare, Lock, Unlock, ShieldCheck, Send, Image, Video, CheckCircle2, DollarSign, Download, Eye, AlertCircle, FileText, Sparkles, Building, User } from 'lucide-react';
 import { toast } from '../../store/toastStore';
+import { useAuthStore } from '../../store/authStore';
 
 const MOCK_CONTACTS = [
   {
@@ -56,12 +57,15 @@ const INITIAL_MESSAGES = [
 ];
 
 export default function SecureNegotiationChat() {
+  const { user } = useAuthStore();
+  const isKolRole = user?.role === 'kol';
+
+  // Automatically lock perspective to the logged-in user role ('KOL' or 'SME')
+  const perspective = isKolRole ? 'KOL' : 'SME';
+
   const [activeContact, setActiveContact] = useState(MOCK_CONTACTS[0]);
   const [messages, setMessages] = useState(INITIAL_MESSAGES);
   const [inputText, setInputText] = useState('');
-  
-  // Perspective toggle for demo/testing: 'SME' or 'KOL'
-  const [perspective, setPerspective] = useState('SME'); 
   
   // Modal for payment
   const [payingMediaId, setPayingMediaId] = useState(null);
@@ -121,7 +125,7 @@ export default function SecureNegotiationChat() {
 
   return (
     <div className="space-y-6">
-      {/* Top Banner & Perspective Selector */}
+      {/* Top Banner & Logged-In Role Display */}
       <div className="bg-surface-container-lowest dark:bg-tertiary-container rounded-[2rem] p-6 border border-surface-variant/30 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-bold mb-2">
@@ -135,29 +139,20 @@ export default function SecureNegotiationChat() {
           </p>
         </div>
 
-        {/* Mode Switcher for Testing */}
-        <div className="flex items-center gap-2 bg-surface-variant/20 p-1.5 rounded-full text-xs font-bold">
-          <span className="text-on-surface-variant px-2">Đang xem giao diện:</span>
-          <button
-            onClick={() => setPerspective('SME')}
-            className={`px-4 py-2 rounded-full transition-all flex items-center gap-1.5 ${
-              perspective === 'SME'
-                ? 'bg-primary text-on-primary shadow-sm'
-                : 'text-on-surface-variant hover:text-primary'
-            }`}
-          >
-            <Building size={13} /> Doanh nghiệp (SME)
-          </button>
-          <button
-            onClick={() => setPerspective('KOL')}
-            className={`px-4 py-2 rounded-full transition-all flex items-center gap-1.5 ${
-              perspective === 'KOL'
-                ? 'bg-primary text-on-primary shadow-sm'
-                : 'text-on-surface-variant hover:text-primary'
-            }`}
-          >
-            <User size={13} /> KOL / Creator
-          </button>
+        {/* Logged in Role Indicator Badge */}
+        <div className="flex items-center gap-2.5 bg-secondary-container/80 dark:bg-secondary-container/40 p-2 px-4 rounded-full text-xs font-bold border border-secondary-container">
+          <span className="text-on-surface-variant font-medium">Giao diện tài khoản:</span>
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary text-on-primary font-bold shadow-sm">
+            {isKolRole ? (
+              <>
+                <User size={13} /> KOL / Creator
+              </>
+            ) : (
+              <>
+                <Building size={13} /> Doanh nghiệp (SME)
+              </>
+            )}
+          </span>
         </div>
       </div>
 
