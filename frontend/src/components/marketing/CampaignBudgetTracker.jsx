@@ -9,7 +9,7 @@ export default function CampaignBudgetTracker({ campaignId = 1, initialData = nu
   const [isSyncingAds, setIsSyncingAds] = useState(false);
 
   // Form states for new expense logging
-  const [expenseType, setExpenseType] = useState('KOL');
+  const [expenseType, setExpenseType] = useState('');
   const [amountInput, setAmountInput] = useState('');
   const [noteInput, setNoteInput] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -34,6 +34,10 @@ export default function CampaignBudgetTracker({ campaignId = 1, initialData = nu
 
   const handleAddExpense = async (e) => {
     e.preventDefault();
+    if (!expenseType.trim()) {
+      toast.error('Vui lòng nhập loại chi phí.');
+      return;
+    }
     const numericAmount = Number(amountInput);
     if (isNaN(numericAmount) || numericAmount <= 0) {
       toast.error('Vui lòng nhập số tiền chi tiêu hợp lệ.');
@@ -44,12 +48,13 @@ export default function CampaignBudgetTracker({ campaignId = 1, initialData = nu
       setIsSubmitting(true);
       await budgetApi.addExpense({
         marketingPlanId: campaignId,
-        expenseType,
+        expenseType: expenseType.trim(),
         amount: numericAmount,
-        note: noteInput || `Chi phí ${expenseType}`
+        note: noteInput || `Chi phí ${expenseType.trim()}`
       });
 
-      toast.success(`Đã ghi nhận chi phí ${expenseType} (${numericAmount.toLocaleString('vi-VN')} ₫)!`);
+      toast.success(`Đã ghi nhận chi phí "${expenseType.trim()}" (${numericAmount.toLocaleString('vi-VN')} ₫)!`);
+      setExpenseType('');
       setAmountInput('');
       setNoteInput('');
       fetchBudget();
@@ -188,15 +193,13 @@ export default function CampaignBudgetTracker({ campaignId = 1, initialData = nu
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div>
             <label className="block text-xs font-medium text-on-surface-variant mb-1">Loại chi phí</label>
-            <select
+            <input
+              type="text"
+              placeholder="Nhập loại chi phí (Ví dụ: Booking KOL, Ads, Thiết kế...)"
               value={expenseType}
               onChange={(e) => setExpenseType(e.target.value)}
               className="w-full rounded-2xl border border-surface-variant/40 bg-surface-container-lowest dark:bg-tertiary-container p-3 text-xs text-primary dark:text-inverse-primary focus:outline-none focus:ring-2 focus:ring-secondary/40"
-            >
-              <option value="KOL">Booking KOL / KOC</option>
-              <option value="Ads">Quảng cáo (Ads)</option>
-              <option value="Custom">Chi phí khác (Custom)</option>
-            </select>
+            />
           </div>
 
           <div>

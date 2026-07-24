@@ -546,16 +546,10 @@ model MediaAsset {
   @@map("media_assets")
 }
 
-enum ExpenseType {
-  KOL
-  Ads
-  Custom
-}
-
 model Expense {
   id              Int          @id @default(autoincrement())
   marketingPlanId Int          @map("marketing_plan_id")
-  expenseType     ExpenseType  @map("expense_type")
+  expenseType     String       @map("expense_type")
   amount          Decimal
   note            String?
   date            DateTime     @default(now())
