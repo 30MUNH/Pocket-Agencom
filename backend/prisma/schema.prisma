@@ -143,6 +143,8 @@ model User {
   notifications    Notification[]
   socialPlatforms  SocialPlatform[]
   smeKolReviews    KolReview[]       @relation("SmeKolReviews")
+  scheduledPosts   ScheduledPost[]
+  mediaAssets      MediaAsset[]
 
   @@map("users")
 }
@@ -198,6 +200,7 @@ model MarketingPlan {
   businessProfile BusinessProfile       @relation(fields: [businessProfileId], references: [id])
   reviewedBy      User?                 @relation("ReviewedPlans", fields: [reviewedById], references: [id])
   applications    CampaignApplication[]
+  expenses        Expense[]
 
   @@map("marketing_plans")
 }
@@ -316,34 +319,51 @@ model KolAvailabilitySlot {
   @@map("kol_availability_slots")
 }
 
-model KolBooking {
-  id                  Int           @id @default(autoincrement())
-  userId              Int           @map("user_id")
-  kolId               Int           @map("kol_id")
-  packageId           Int           @map("package_id")
-  assignedStaffId     Int?          @map("assigned_staff_id")
-  campaignName        String        @map("campaign_name")
-  campaignGoal        String?       @map("campaign_goal")
-  productName         String        @map("product_name")
-  productDescription  String?       @map("product_description")
-  productCategory     String?       @map("product_category")
-  targetCustomer      String?       @map("target_customer")
-  campaignPlatform    String?       @map("campaign_platform")
-  campaignDate        DateTime?     @map("campaign_date") @db.Date
-  budget              Decimal?
-  contentRequirements String?       @map("content_requirements")
-  doAndDontNotes      String?       @map("do_and_dont_notes")
-  deliveryAddress     String?       @map("delivery_address")
-  referenceLink       String?       @map("reference_link")
-  productImages       String?       @map("product_images")
-  status              BookingStatus @default(pending)
-  createdAt           DateTime      @default(now()) @map("created_at")
-  updatedAt           DateTime      @default(now()) @updatedAt @map("updated_at")
+enum KolBookingStatus {
+  INVITATION_SENT
+  NEGOTIATING
+  ACCEPTED
+  COMPLETED
+  CANCELLED
+}
 
-  user          User              @relation("UserBookings", fields: [userId], references: [id])
-  kol           KolProfile        @relation(fields: [kolId], references: [id])
-  package       KolServicePackage @relation(fields: [packageId], references: [id])
-  assignedStaff User?             @relation("StaffBookings", fields: [assignedStaffId], references: [id])
+model KolBooking {
+  id                  Int               @id @default(autoincrement())
+  userId              Int               @map("user_id")
+  kolId               Int?              @map("kol_id")
+  packageId           Int?              @map("package_id")
+  assignedStaffId     Int?              @map("assigned_staff_id")
+  campaignName        String            @default("Chiến dịch tiếp thị") @map("campaign_name")
+  campaignGoal        String?           @map("campaign_goal")
+  productName         String?           @map("product_name")
+  productDescription  String?           @map("product_description")
+  productCategory     String?           @map("product_category")
+  targetCustomer      String?           @map("target_customer")
+  campaignPlatform    String?           @map("campaign_platform")
+  campaignDate        DateTime?         @map("campaign_date") @db.Date
+  budget              Decimal?
+  contentRequirements String?           @map("content_requirements")
+  doAndDontNotes      String?           @map("do_and_dont_notes")
+  deliveryAddress     String?           @map("delivery_address")
+  referenceLink       String?           @map("reference_link")
+  productImages       String?           @map("product_images")
+  status              BookingStatus     @default(pending)
+  
+  // Custom KOL Invite & Booking Tracking Fields
+  kolName             String?           @map("kol_name")
+  kolPlatform         String?           @map("kol_platform")
+  kolContactLink      String?           @map("kol_contact_link")
+  scheduledDate       DateTime?         @map("scheduled_date")
+  note                String?
+  kolStatus           KolBookingStatus  @default(INVITATION_SENT) @map("kol_status")
+
+  createdAt           DateTime          @default(now()) @map("created_at")
+  updatedAt           DateTime          @default(now()) @updatedAt @map("updated_at")
+
+  user          User               @relation("UserBookings", fields: [userId], references: [id])
+  kol           KolProfile?        @relation(fields: [kolId], references: [id])
+  package       KolServicePackage? @relation(fields: [packageId], references: [id])
+  assignedStaff User?              @relation("StaffBookings", fields: [assignedStaffId], references: [id])
   reviews       BookingReview[]
 
   @@map("kol_bookings")
@@ -409,10 +429,12 @@ model Notification {
 model SocialPlatform {
   id                String          @id @default(uuid()) @db.Uuid
   userId            Int             @map("user_id")
-  platform          String          // 'tiktok', 'facebook', 'instagram'
+  platform          String          // 'tiktok', 'facebook', 'shopee', etc.
+  platformType      String?         @default("social") @map("platform_type") // 'social', 'ecommerce', 'custom'
   url               String
   followersCount    Int             @map("followers_count")
   engagementRate    Float           @map("engagement_rate")
+  metrics           Json?           @default("[]")
   aiInsight         String?         @map("ai_insight") @db.Text
   businessProfileId Int             @map("business_profile_id")
   createdAt         DateTime        @default(now()) @map("created_at")
@@ -482,4 +504,64 @@ model KolPerformance {
   kolProfile KolProfile @relation(fields: [kolProfileId], references: [id], onDelete: Cascade)
 
   @@map("kol_performance")
+}
+
+enum PostStatus {
+  draft
+  pending_approval
+  approved
+  published
+}
+
+model ScheduledPost {
+  id                Int        @id @default(autoincrement())
+  userId            Int        @map("user_id")
+  businessProfileId Int?       @map("business_profile_id")
+  title             String
+  content           String     @db.Text
+  platform          String     // 'Facebook', 'TikTok', 'Instagram', 'Zalo', etc.
+  scheduledTime     DateTime?  @map("scheduled_time")
+  status            PostStatus @default(pending_approval)
+  isGoldenTime      Boolean    @default(false) @map("is_golden_time")
+  createdAt         DateTime   @default(now()) @map("created_at")
+  updatedAt         DateTime   @default(now()) @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("scheduled_posts")
+}
+
+model MediaAsset {
+  id                Int      @id @default(autoincrement())
+  userId            Int      @map("user_id")
+  businessProfileId Int?     @map("business_profile_id")
+  name              String
+  url               String
+  fileType          String   @map("file_type") // 'image', 'video', 'document'
+  sizeBytes         Int?     @map("size_bytes")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("media_assets")
+}
+
+enum ExpenseType {
+  KOL
+  Ads
+  Custom
+}
+
+model Expense {
+  id              Int          @id @default(autoincrement())
+  marketingPlanId Int          @map("marketing_plan_id")
+  expenseType     ExpenseType  @map("expense_type")
+  amount          Decimal
+  note            String?
+  date            DateTime     @default(now())
+  createdAt       DateTime     @default(now()) @map("created_at")
+
+  marketingPlan MarketingPlan @relation(fields: [marketingPlanId], references: [id], onDelete: Cascade)
+
+  @@map("expenses")
 }

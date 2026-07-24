@@ -15,6 +15,7 @@ import {
   Package,
   MessageSquare,
   Wallet,
+  FolderKanban,
 } from 'lucide-react';
 
 export default function Sidebar({ isOpen, onClose, userRole = 'user' }) {
@@ -52,10 +53,12 @@ export default function Sidebar({ isOpen, onClose, userRole = 'user' }) {
           { path: '/business-profile', label: 'Hồ sơ Doanh nghiệp', icon: Building2 },
           { path: '/marketing-kit', label: 'Bộ công cụ Marketing', icon: Sparkles },
           { path: '/plans', label: 'Kế hoạch của tôi', icon: ClipboardList },
+          { path: '/calendar', label: 'Lịch đăng bài tự động', icon: CalendarDays },
+          { path: '/media-library', label: 'Kho dữ liệu Media', icon: FolderKanban },
           { path: '/templates', label: 'Thư viện mẫu', icon: Library },
           { path: '/marketplace', label: 'KOL/KOC', icon: Compass },
           { path: '/marketplace/job-board', label: 'Sàn việc làm KOL', icon: Briefcase },
-          { path: '/bookings', label: 'Lịch đặt KOL', icon: CalendarDays },
+          { path: '/kol-bookings', label: 'Quản lý Lịch đặt KOL', icon: CalendarDays },
           { path: '/chat', label: 'Chat & Thương lượng', icon: MessageSquare },
           { path: '/help', label: 'Trung tâm trợ giúp', icon: HelpCircle },
         ];

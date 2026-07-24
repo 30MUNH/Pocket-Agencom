@@ -111,14 +111,21 @@ async function addPlatform(userId, { platform, url }) {
     }
   });
 
+  // Infer platform type (social, ecommerce, custom) and generate initial dynamic metrics
+  const { inferPlatformType, generateDemoMetrics } = require('./analyticsService');
+  const platformType = inferPlatformType(platform, url);
+  const metrics = generateDemoMetrics(platform, platformType, analysis.followers, analysis.engagementRate);
+
   let record;
   if (existing) {
     record = await prisma.socialPlatform.update({
       where: { id: existing.id },
       data: {
         url,
+        platformType,
         followersCount: analysis.followers,
         engagementRate: analysis.engagementRate,
+        metrics,
         aiInsight,
         businessProfileId: businessProfile.id
       }
@@ -128,9 +135,11 @@ async function addPlatform(userId, { platform, url }) {
       data: {
         userId,
         platform,
+        platformType,
         url,
         followersCount: analysis.followers,
         engagementRate: analysis.engagementRate,
+        metrics,
         aiInsight,
         businessProfileId: businessProfile.id
       }

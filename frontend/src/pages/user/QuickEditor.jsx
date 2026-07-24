@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, Sparkles, Wand2, Copy, Check, Save, Loader2, Landmark, HelpCircle, Layers, Image as ImageIcon, Megaphone } from 'lucide-react';
+import { ArrowLeft, Sparkles, Wand2, Copy, Check, Save, Loader2, Landmark, HelpCircle, Layers, Image as ImageIcon, Megaphone, Share2, CalendarDays } from 'lucide-react';
 import { useGeneratePost } from '../../hooks/useMarketingPlans';
 import { authApi } from '../../api/authApi';
+import { scheduledPostApi } from '../../api/scheduledPostApi';
 import { toast } from '../../store/toastStore';
+import PostSuccessModal from '../../components/social/PostSuccessModal';
 
 export default function QuickEditor() {
   const location = useLocation();
@@ -17,6 +19,47 @@ export default function QuickEditor() {
   const [platform, setPlatform] = useState('Facebook');
   const [generatedContent, setGeneratedContent] = useState('');
   const [copied, setCopied] = useState(false);
+  const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
+
+  const handlePublishAndShare = () => {
+    if (!generatedContent) {
+      toast.error('Vui lòng tạo hoặc nhập nội dung bài viết trước khi đăng.');
+      return;
+    }
+    setIsSuccessModalOpen(true);
+  };
+
+  const handleSchedulePost = async () => {
+    if (!generatedContent) {
+      toast.error('Vui lòng tạo nội dung trước khi lên lịch.');
+      return;
+    }
+
+    try {
+      const goldenTime = new Date();
+      goldenTime.setHours(19, 30, 0, 0);
+      if (new Date().getHours() >= 19) {
+        goldenTime.setDate(goldenTime.getDate() + 1);
+      }
+
+      await scheduledPostApi.createPost({
+        title: trend?.title || 'Bài viết bắt trend xu hướng',
+        content: generatedContent,
+        platform: platform,
+        scheduledTime: goldenTime.toISOString(),
+        status: 'pending_approval',
+        isGoldenTime: true,
+        businessProfileId: profileData?.id
+      });
+
+      const formattedTime = goldenTime.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+      toast.success(`✨ Đã xếp lịch Giờ Vàng AI (${formattedTime}) thành công!`);
+      setTimeout(() => navigate('/calendar'), 1000);
+    } catch (err) {
+      console.error('[Schedule Error]', err);
+      toast.error('Có lỗi xảy ra khi lên lịch đăng bài.');
+    }
+  };
 
   useEffect(() => {
     // If no trend data is passed in state, redirect back to dashboard
@@ -302,20 +345,30 @@ export default function QuickEditor() {
               </div>
             </div>
 
-            {/* Bottom Actions Row */}
-            <div className="grid grid-cols-2 gap-4 pt-2 border-t border-surface-variant/30">
+            {/* Bottom Actions Row: Dual Posting & Schedule Actions */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-3 border-t border-surface-variant/30">
               <button
-                onClick={handleCopy}
+                onClick={handlePublishAndShare}
                 disabled={!generatedContent || generatePostMutation.isPending}
-                className="py-3.5 px-4 rounded-xl bg-surface-container hover:bg-surface-container-high active:scale-[0.98] text-xs font-bold text-primary flex items-center justify-center gap-1.5 transition-all disabled:opacity-50"
+                className="py-3 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:scale-[0.98] text-xs font-bold text-white flex items-center justify-center gap-1.5 shadow-md shadow-indigo-600/30 transition-all disabled:opacity-50"
               >
-                {copied ? <Check size={16} className="text-emerald-500" /> : <Copy size={16} />}
-                <span>{copied ? 'Đã sao chép!' : 'Sao chép'}</span>
+                <Share2 size={16} />
+                <span>Đăng luôn tại {platform}</span>
               </button>
+
+              <button
+                onClick={handleSchedulePost}
+                disabled={!generatedContent || generatePostMutation.isPending}
+                className="py-3 px-4 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 active:scale-[0.98] text-xs font-bold flex items-center justify-center gap-1.5 transition-all disabled:opacity-50"
+              >
+                <CalendarDays size={16} className="text-amber-400" />
+                <span>Lên lịch Giờ Vàng AI</span>
+              </button>
+
               <button
                 onClick={handleSaveDraft}
                 disabled={!generatedContent || generatePostMutation.isPending}
-                className="py-3.5 px-4 rounded-xl bg-secondary-container/30 hover:bg-secondary-container/50 active:scale-[0.98] text-xs font-bold text-secondary flex items-center justify-center gap-1.5 transition-all disabled:opacity-50"
+                className="py-3 px-4 rounded-xl bg-surface-container-high/60 hover:bg-surface-container-high active:scale-[0.98] text-xs font-bold text-on-surface flex items-center justify-center gap-1.5 transition-all disabled:opacity-50"
               >
                 <Save size={16} />
                 <span>Lưu bản nháp</span>
@@ -326,6 +379,18 @@ export default function QuickEditor() {
         </div>
 
       </div>
+
+      {/* Post Success & Cross-Platform Sharing Modal */}
+      <PostSuccessModal
+        isOpen={isSuccessModalOpen}
+        onClose={() => setIsSuccessModalOpen(false)}
+        post={{
+          title: trend?.title || 'Bài viết bắt trend xu hướng',
+          content: generatedContent,
+          platform: platform,
+          url: window.location.href
+        }}
+      />
     </div>
   );
 }

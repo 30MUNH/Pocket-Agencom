@@ -16,6 +16,7 @@ import {
 import { useAuthStore } from '../../store/authStore';
 import { useMarketingPlans } from '../../hooks/useMarketingPlans';
 import TrendBulletin from '../../components/dashboard/TrendBulletin';
+import MonthlySpendWidget from '../../components/dashboard/MonthlySpendWidget';
 
 
 const QUICK_ACTIONS = [
@@ -247,8 +248,10 @@ export default function UserDashboard() {
           </div>
         </section>
 
-        {/* Templates Sidebar */}
+        {/* Right Column Sidebar: Monthly Spend & Templates */}
         <section className="lg:col-span-1 space-y-6">
+          <MonthlySpendWidget />
+
           <div className="flex items-center justify-between">
             <h3 className="text-headline-md font-headline-md text-primary">Mẫu thiết kế</h3>
             <Link

@@ -17,6 +17,9 @@ import BusinessProfile from './pages/user/BusinessProfile';
 import GenerateMarketingKit from './pages/user/GenerateMarketingKit';
 import MarketingResult from './pages/user/MarketingResult';
 import QuickEditor from './pages/user/QuickEditor';
+import ContentCalendar from './pages/user/ContentCalendar';
+import MediaLibrary from './pages/user/MediaLibrary';
+import KolBookingManager from './pages/business/KolBookingManager';
 import PlanReviewPage from './pages/staff/PlanReviewPage';
 import BookingDetailPage from './pages/user/BookingDetailPage';
 import BookingConfirmationPage from './pages/user/BookingConfirmationPage';
@@ -93,6 +96,8 @@ function App() {
           <Route path="/marketing-kit" element={<GenerateMarketingKit />} />
           <Route path="/marketing-kit/result" element={<MarketingResult />} />
           <Route path="/user/quick-editor" element={<QuickEditor />} />
+          <Route path="/calendar" element={<ContentCalendar />} />
+          <Route path="/media-library" element={<MediaLibrary />} />
           <Route path="/plans" element={<MyPlans />} />
           <Route path="/templates" element={<TemplateLibrary />} />
           <Route path="/marketplace" element={<KOLMarketplace />} />
@@ -103,7 +108,8 @@ function App() {
           <Route path="/marketplace/package/:id" element={<PackageDetailPage />} />
           <Route path="/campaigns/:id/applications" element={<ApplicationManager />} />
           <Route path="/chat" element={<SecureNegotiationChat />} />
-          <Route path="/bookings" element={<MyBookings />} />
+          <Route path="/bookings" element={<KolBookingManager />} />
+          <Route path="/kol-bookings" element={<KolBookingManager />} />
           <Route path="/help" element={<HelpCenter />} />
           <Route path="/settings" element={<UserSettings />} />
           <Route path="/business-profile" element={<BusinessProfile />} />

@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
-import { ShoppingBag, ShoppingCart, Store, AtSign, Video, ExternalLink, Plus, Trash2, CheckCircle2, AlertCircle, Link as LinkIcon } from 'lucide-react';
+import { ShoppingBag, ShoppingCart, Store, AtSign, Video, ExternalLink, Plus, Trash2, CheckCircle2, AlertCircle, Link as LinkIcon, Sparkles, Loader2, RefreshCw } from 'lucide-react';
 import { toast } from '../../store/toastStore';
+import { analyticsApi } from '../../api/analyticsApi';
 
 function FacebookIcon({ size = 18, className }) {
   return (
@@ -139,12 +140,45 @@ export default function SocialLinksManager({ userRole = 'SME', initialLinks = []
   const [selectedPlatform, setSelectedPlatform] = useState(availablePlatformKeys[0]);
   const [urlInput, setUrlInput] = useState('');
   const [links, setLinks] = useState(initialLinks);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [scrapedMetrics, setScrapedMetrics] = useState(null);
 
   // Real-time Validation State
   const validationResult = useMemo(() => {
     if (!urlInput.trim()) return { isValid: false, error: null };
     return validateSocialUrl(selectedPlatform, urlInput);
   }, [selectedPlatform, urlInput]);
+
+  const handleAutoFetch = async () => {
+    if (!validationResult.isValid) {
+      toast.error('Vui lòng nhập đường dẫn URL hợp lệ trước khi đồng bộ.');
+      return;
+    }
+
+    try {
+      setIsSyncing(true);
+      const res = await analyticsApi.scrapeUrl(validationResult.formattedUrl);
+      const fetchedMetrics = res?.metrics || {};
+
+      if (Object.keys(fetchedMetrics).length > 0) {
+        setScrapedMetrics(fetchedMetrics);
+        const details = [];
+        if (fetchedMetrics.followers) details.push(`${fetchedMetrics.followers.toLocaleString()} người theo dõi`);
+        if (fetchedMetrics.likes) details.push(`${fetchedMetrics.likes.toLocaleString()} lượt thích`);
+        if (fetchedMetrics.rating) details.push(`đánh giá ${fetchedMetrics.rating}/5`);
+        if (fetchedMetrics.gmv) details.push(`doanh số ${fetchedMetrics.gmv.toLocaleString()}₫`);
+
+        toast.success(`Tự động đồng bộ số liệu thành công: ${details.join(', ') || 'Thành công!'}`);
+      } else {
+        toast.info('Auto-fetch failed. Please enter metrics manually. (Không thể lấy dữ liệu tự động từ liên kết này. Vui lòng nhập thủ công.)');
+      }
+    } catch (err) {
+      console.warn('[Auto-fetch Failed]', err);
+      toast.info('Auto-fetch failed. Please enter metrics manually.');
+    } finally {
+      setIsSyncing(false);
+    }
+  };
 
   const handleAddLink = (e) => {
     e.preventDefault();
@@ -157,11 +191,13 @@ export default function SocialLinksManager({ userRole = 'SME', initialLinks = []
       platform: selectedPlatform,
       platformName: rule.name,
       url: validationResult.formattedUrl,
+      metrics: scrapedMetrics || null,
     };
 
     const updatedLinks = [...links, newLink];
     setLinks(updatedLinks);
     setUrlInput('');
+    setScrapedMetrics(null);
     toast.success(`Đã thêm liên kết ${rule.name}!`);
 
     if (onChange) onChange(updatedLinks);
@@ -259,8 +295,23 @@ export default function SocialLinksManager({ userRole = 'SME', initialLinks = []
           </div>
         )}
 
-        {/* Add Button */}
-        <div className="flex justify-end">
+        {/* Action Buttons: Auto-Fetch & Add Link */}
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+          <button
+            type="button"
+            onClick={handleAutoFetch}
+            disabled={!validationResult.isValid || isSyncing}
+            className="px-4 py-2.5 rounded-2xl bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 text-xs font-bold flex items-center gap-1.5 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+            title="Tự động đồng bộ các chỉ số công khai từ liên kết"
+          >
+            {isSyncing ? (
+              <Loader2 size={14} className="animate-spin text-indigo-400" />
+            ) : (
+              <Sparkles size={14} className="text-indigo-400" />
+            )}
+            <span>{isSyncing ? 'Đang trích xuất dữ liệu...' : 'Auto-fetch / Đồng bộ số liệu'}</span>
+          </button>
+
           <button
             type="submit"
             disabled={!validationResult.isValid}

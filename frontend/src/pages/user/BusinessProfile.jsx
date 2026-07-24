@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { authApi } from '../../api/authApi';
 import SocialLinksManager from '../../components/ui/SocialLinksManager';
+import CumulativeMediaAnalytics from '../../components/analytics/CumulativeMediaAnalytics';
 
 function FacebookIcon({ className }) {
   return (
@@ -453,7 +454,8 @@ export default function BusinessProfile() {
           </div>
         </form>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 animate-fade-in">
+        <div className="space-y-8 animate-fade-in">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left Column: Business Profile Bento Sections */}
           <div className="lg:col-span-2 space-y-6">
             
@@ -673,6 +675,12 @@ export default function BusinessProfile() {
             </div>
           </div>
         </div>
+
+        {/* Truyền thông tích lũy (Cumulative Media Analytics) Section */}
+        <div className="pt-6">
+          <CumulativeMediaAnalytics businessId={profile?.id} />
+        </div>
+      </div>
       )}
     </div>
   );

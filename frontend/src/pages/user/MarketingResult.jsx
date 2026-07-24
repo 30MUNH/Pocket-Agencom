@@ -8,6 +8,7 @@ import { useAuthStore } from '../../store/authStore';
 import { toast } from '../../store/toastStore';
 import BudgetBreakdownCard from '../../components/marketing/BudgetBreakdownCard';
 import RevisionChatPanel from '../../components/marketing/RevisionChatPanel';
+import CampaignBudgetTracker from '../../components/marketing/CampaignBudgetTracker';
 
 /**
  * Splits AI Advisor output into { postContent, designTips }.
@@ -875,6 +876,11 @@ export default function MarketingResult() {
           </section>
         </div>
       </div>
+
+      {/* Campaign Budget & Spend Management Tracker */}
+      <section className="mt-8">
+        <CampaignBudgetTracker campaignId={plan?.id || 1} />
+      </section>
 
       {/* Proposed KOL, KOC Section */}
           <section className="bg-surface-container-lowest dark:bg-tertiary-container rounded-[2.5rem] p-8 md:p-12 shadow-[0_4px_24px_rgba(255,143,163,0.08)] border border-surface-variant/40 mt-12 space-y-8 relative overflow-hidden">
