@@ -94,32 +94,29 @@ export default function MetricCard({ metric, className = '' }) {
   const TrendIcon = isPositiveTrend ? TrendingUp : isNegativeTrend ? TrendingDown : Minus;
 
   return (
-    <div className={`relative overflow-hidden rounded-2xl border border-slate-700/60 bg-slate-900/70 p-5 shadow-lg backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:border-indigo-500/50 hover:shadow-indigo-500/10 ${className}`}>
-      {/* Background Subtle Accent Glow */}
-      <div className="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-indigo-500/10 blur-2xl" />
-
+    <div className={`relative overflow-hidden rounded-3xl border border-surface-variant/40 bg-surface-container-lowest dark:bg-tertiary-container p-5 shadow-ambient hover:shadow-ambient-hover transition-all duration-300 hover:-translate-y-1 ${className}`}>
       {/* Card Header: Icon & Trend */}
       <div className="flex items-center justify-between gap-2 mb-3">
         <div className="flex items-center gap-2.5">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-indigo-500/20 bg-indigo-500/10 text-indigo-400 shadow-inner">
-            <IconComponent className="h-5 w-5" />
+          <div className="w-10 h-10 rounded-2xl bg-secondary-container text-primary flex items-center justify-center shrink-0">
+            <IconComponent size={20} />
           </div>
-          <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">
             {category === 'ecommerce' ? 'E-Commerce' : category === 'social' ? 'Social' : 'Analytics'}
           </span>
         </div>
 
         {trend && (
           <div
-            className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ${
+            className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold ${
               isPositiveTrend
-                ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
+                ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300'
                 : isNegativeTrend
-                ? 'bg-rose-500/15 text-rose-400 border border-rose-500/30'
-                : 'bg-slate-800 text-slate-400 border border-slate-700'
+                ? 'bg-rose-100 text-rose-800 dark:bg-rose-950/40 dark:text-rose-300'
+                : 'bg-secondary-container text-secondary'
             }`}
           >
-            <TrendIcon className="h-3.5 w-3.5" />
+            <TrendIcon size={14} />
             <span>{trend}</span>
           </div>
         )}
@@ -127,12 +124,12 @@ export default function MetricCard({ metric, className = '' }) {
 
       {/* Card Body: Metric Label & Main Value */}
       <div className="mt-2">
-        <div className="flex items-center gap-1.5 text-sm font-medium text-slate-300">
+        <div className="flex items-center gap-1.5 text-xs font-semibold text-on-surface-variant">
           <span>{label}</span>
           {description && (
-            <span className="group relative cursor-help text-slate-500 hover:text-slate-300">
-              <HelpCircle className="h-3.5 w-3.5" />
-              <span className="pointer-events-none absolute bottom-full left-1/2 mb-2 -translate-x-1/2 whitespace-nowrap rounded-lg bg-slate-950 px-2.5 py-1 text-xs text-slate-200 opacity-0 shadow-xl transition-opacity group-hover:opacity-100 border border-slate-800 z-20">
+            <span className="group relative cursor-help text-on-surface-variant/70 hover:text-primary">
+              <HelpCircle size={14} />
+              <span className="pointer-events-none absolute bottom-full left-1/2 mb-2 -translate-x-1/2 whitespace-nowrap rounded-xl bg-primary text-on-primary px-3 py-1 text-xs opacity-0 shadow-xl transition-opacity group-hover:opacity-100 z-20">
                 {description}
               </span>
             </span>
@@ -140,7 +137,7 @@ export default function MetricCard({ metric, className = '' }) {
         </div>
 
         <div className="mt-1.5 flex items-baseline gap-2">
-          <span className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
+          <span className="text-2xl font-extrabold tracking-tight text-primary dark:text-inverse-primary sm:text-3xl">
             {formattedValue}
           </span>
         </div>

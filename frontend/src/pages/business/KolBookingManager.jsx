@@ -22,11 +22,11 @@ import { kolBookingApi } from '../../api/kolBookingApi';
 import { budgetApi } from '../../api/budgetApi';
 import { toast } from '../../store/toastStore';
 
-// Platform Badge Helper
+// Platform Tag Helper
 function PlatformTag({ platform = 'TikTok' }) {
   const p = platform.toLowerCase();
   if (p.includes('tiktok')) {
-    return <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-black text-white border border-slate-700">TikTok</span>;
+    return <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-black text-white">TikTok</span>;
   }
   if (p.includes('youtube')) {
     return <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-red-600 text-white">YouTube</span>;
@@ -41,17 +41,17 @@ function PlatformTag({ platform = 'TikTok' }) {
 function getShopeeStatusConfig(status) {
   switch (status) {
     case 'INVITATION_SENT':
-      return { label: 'Đã gửi lời mời', color: 'bg-blue-500/15 text-blue-400 border-blue-500/30', icon: Send };
+      return { label: 'Đã gửi lời mời', color: 'bg-blue-100 text-blue-800 dark:bg-blue-950/40 dark:text-blue-300 border-blue-300', icon: Send };
     case 'NEGOTIATING':
-      return { label: 'Đang trao đổi', color: 'bg-amber-500/15 text-amber-400 border-amber-500/30', icon: MessageSquare };
+      return { label: 'Đang trao đổi', color: 'bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300 border-amber-300', icon: MessageSquare };
     case 'ACCEPTED':
-      return { label: 'Đã chấp nhận', color: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30', icon: CheckCircle2 };
+      return { label: 'Đã chấp nhận', color: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300 border-emerald-300', icon: CheckCircle2 };
     case 'COMPLETED':
-      return { label: 'Hoàn thành', color: 'bg-purple-500/15 text-purple-400 border-purple-500/30', icon: Sparkles };
+      return { label: 'Hoàn thành', color: 'bg-purple-100 text-purple-800 dark:bg-purple-950/40 dark:text-purple-300 border-purple-300', icon: Sparkles };
     case 'CANCELLED':
-      return { label: 'Đã hủy', color: 'bg-rose-500/15 text-rose-400 border-rose-500/30', icon: XCircle };
+      return { label: 'Đã hủy', color: 'bg-rose-100 text-rose-800 dark:bg-rose-950/40 dark:text-rose-300 border-rose-300', icon: XCircle };
     default:
-      return { label: 'Đã gửi lời mời', color: 'bg-slate-700 text-slate-300 border-slate-600', icon: Send };
+      return { label: 'Đã gửi lời mời', color: 'bg-secondary-container text-secondary border-secondary-container/60', icon: Send };
   }
 }
 
@@ -98,7 +98,6 @@ export default function KolBookingManager() {
   const handleStatusChangeClick = (booking, newStatus) => {
     if (booking.kolStatus === newStatus) return;
 
-    // Intercept when setting to ACCEPTED
     if (newStatus === 'ACCEPTED') {
       setPendingStatusUpdate({
         bookingId: booking.id,
@@ -110,7 +109,6 @@ export default function KolBookingManager() {
       return;
     }
 
-    // Direct status update for other statuses
     executeStatusUpdate(booking.id, newStatus);
   };
 
@@ -144,11 +142,9 @@ export default function KolBookingManager() {
 
     try {
       setIsSyncingBudget(true);
-      // 1. Update Booking Status to ACCEPTED
       await kolBookingApi.updateStatus(pendingStatusUpdate.bookingId, 'ACCEPTED');
       setBookings(prev => prev.map(b => b.id === pendingStatusUpdate.bookingId ? { ...b, kolStatus: 'ACCEPTED' } : b));
 
-      // 2. Automatically log expense in Budget Management system
       await budgetApi.addExpense({
         marketingPlanId: 1,
         expenseType: 'KOL',
@@ -215,32 +211,32 @@ export default function KolBookingManager() {
     <div className="space-y-6">
       
       {/* Header Banner */}
-      <div className="relative overflow-hidden rounded-3xl border border-slate-700/70 bg-gradient-to-br from-slate-900 via-indigo-950/40 to-slate-900 p-6 sm:p-8 shadow-xl backdrop-blur-xl">
+      <div className="bg-surface-container-lowest dark:bg-tertiary-container rounded-[2.5rem] p-6 sm:p-8 shadow-ambient border border-surface-variant/40 relative overflow-hidden">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <div className="inline-flex items-center gap-2 rounded-full border border-indigo-500/30 bg-indigo-500/10 px-3 py-1 text-xs font-semibold text-indigo-300 mb-1">
-              <ShoppingBag className="h-3.5 w-3.5" /> Quản lý Lịch đặt & Thương lượng KOL
-            </div>
-            <h2 className="text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
+            <span className="inline-flex items-center gap-1.5 text-xs font-bold text-secondary uppercase tracking-wider mb-1 bg-secondary-container px-3 py-1 rounded-full">
+              <ShoppingBag size={14} /> Quản lý Lịch đặt & Thương lượng KOL
+            </span>
+            <h2 className="text-2xl font-bold tracking-tight text-primary dark:text-inverse-primary sm:text-3xl">
               Quản lý Lịch đặt KOL / KOC
             </h2>
-            <p className="mt-1 text-xs sm:text-sm text-slate-400">
+            <p className="mt-1 text-xs sm:text-sm text-on-surface-variant">
               Theo dõi toàn bộ vòng đời booking KOL từ khi gửi lời mời, thương lượng đến khi chốt hợp đồng và giải ngân.
             </p>
           </div>
 
           <button
             onClick={() => setIsInviteModalOpen(true)}
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 px-5 py-3 text-xs font-bold text-white shadow-lg shadow-indigo-600/30 transition-all shrink-0"
+            className="inline-flex items-center justify-center gap-2 rounded-full bg-primary text-on-primary hover:opacity-90 px-6 py-3 text-xs font-bold shadow-sm transition-opacity shrink-0"
           >
-            <Plus className="h-4 w-4" /> Gửi lời mời KOL mới
+            <Plus size={16} /> Gửi lời mời KOL mới
           </button>
         </div>
       </div>
 
       {/* Shopee-Inspired Order Navigation Tabs */}
-      <div className="overflow-x-auto rounded-2xl border border-slate-800 bg-slate-900/80 p-1.5 backdrop-blur-md">
-        <div className="flex items-center gap-1 min-w-max">
+      <div className="overflow-x-auto rounded-[2.5rem] border border-surface-variant/40 bg-surface-container-lowest dark:bg-tertiary-container p-2 shadow-ambient">
+        <div className="flex items-center gap-1.5 min-w-max">
           {[
             { id: 'all', label: 'Tất cả' },
             { id: 'INVITATION_SENT', label: '📩 Đã gửi lời mời' },
@@ -254,15 +250,15 @@ export default function KolBookingManager() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold transition-all ${
+                className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-bold transition-all ${
                   activeTab === tab.id
-                    ? 'bg-indigo-600 text-white shadow-md'
-                    : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
+                    ? 'bg-primary text-on-primary shadow-sm'
+                    : 'text-on-surface-variant hover:bg-surface-container-low hover:text-primary'
                 }`}
               >
                 <span>{tab.label}</span>
                 <span className={`rounded-full px-2 py-0.5 text-[10px] font-black ${
-                  activeTab === tab.id ? 'bg-white/20 text-white' : 'bg-slate-800 text-slate-400'
+                  activeTab === tab.id ? 'bg-white/20 text-white' : 'bg-secondary-container text-secondary'
                 }`}>
                   {count}
                 </span>
@@ -274,24 +270,24 @@ export default function KolBookingManager() {
 
       {/* Search Filter Field */}
       <div className="relative max-w-md">
-        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-on-surface-variant/60" />
         <input
           type="text"
           placeholder="Tìm kiếm theo tên KOL hoặc ghi chú..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full rounded-xl border border-slate-800 bg-slate-900/60 pl-10 pr-4 py-2 text-xs text-white placeholder-slate-500 focus:border-indigo-500 focus:outline-none"
+          className="w-full rounded-full border border-surface-variant/40 bg-surface-container-lowest dark:bg-tertiary-container pl-10 pr-4 py-2.5 text-xs text-primary dark:text-inverse-primary placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-secondary/40 shadow-sm"
         />
       </div>
 
       {/* Booking Cards List */}
       {loading ? (
-        <div className="flex flex-col items-center justify-center py-16 text-center text-slate-400">
-          <RefreshCw className="h-7 w-7 animate-spin text-indigo-400 mb-2" />
-          <span className="text-xs">Đang tải lịch đặt KOL...</span>
+        <div className="flex flex-col items-center justify-center py-16 text-center text-on-surface-variant bg-surface-container-lowest dark:bg-tertiary-container rounded-[2.5rem] border border-surface-variant/30">
+          <RefreshCw className="h-7 w-7 animate-spin text-primary mb-2" />
+          <span className="text-xs font-medium">Đang tải lịch đặt KOL...</span>
         </div>
       ) : filteredBookings.length === 0 ? (
-        <div className="rounded-3xl border border-slate-800 bg-slate-900/40 p-12 text-center text-slate-400">
+        <div className="rounded-[2.5rem] border border-surface-variant/30 bg-surface-container-lowest dark:bg-tertiary-container p-12 text-center text-on-surface-variant shadow-ambient">
           Chưa có lịch đặt KOL nào trong mục này.
         </div>
       ) : (
@@ -304,20 +300,20 @@ export default function KolBookingManager() {
             return (
               <div
                 key={booking.id}
-                className="overflow-hidden rounded-3xl border border-slate-800 bg-slate-900/70 p-5 shadow-lg backdrop-blur-md transition-all hover:border-slate-700"
+                className="overflow-hidden rounded-3xl border border-surface-variant/40 bg-surface-container-lowest dark:bg-tertiary-container p-6 shadow-ambient hover:shadow-ambient-hover transition-all duration-300"
               >
                 {/* Header Row: Status & Actions */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800/80 pb-3 mb-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-surface-variant/20 pb-3.5 mb-4">
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold text-slate-400">Mã booking #{booking.id}</span>
-                    <span className="text-slate-600">•</span>
+                    <span className="text-xs font-bold text-on-surface-variant">Mã booking #{booking.id}</span>
+                    <span className="text-on-surface-variant/40">•</span>
                     <PlatformTag platform={booking.kolPlatform} />
                   </div>
 
                   {/* Status Badge */}
                   <div className="flex items-center gap-2 self-start sm:self-auto">
-                    <span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-bold ${statusConfig.color}`}>
-                      <StatusIcon className="h-3.5 w-3.5" />
+                    <span className={`inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1 text-xs font-bold ${statusConfig.color}`}>
+                      <StatusIcon size={14} />
                       <span>{statusConfig.label}</span>
                     </span>
                   </div>
@@ -330,30 +326,30 @@ export default function KolBookingManager() {
                     <img
                       src={dicebearAvatar}
                       alt={booking.kolName}
-                      className="h-14 w-14 shrink-0 rounded-2xl bg-slate-950 border border-slate-800 object-cover"
+                      className="h-14 w-14 shrink-0 rounded-2xl bg-surface-container-high border border-surface-variant/30 object-cover"
                     />
 
                     <div className="space-y-1">
-                      <h3 className="text-base font-bold text-white flex items-center gap-2">
+                      <h3 className="text-base font-bold text-primary dark:text-inverse-primary flex items-center gap-2">
                         {booking.kolName}
                         {booking.kolContactLink && (
                           <a
                             href={booking.kolContactLink}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-slate-400 hover:text-indigo-400 transition-colors"
+                            className="text-on-surface-variant hover:text-secondary transition-colors"
                             title="Xem liên kết cá nhân"
                           >
-                            <ExternalLink className="h-3.5 w-3.5" />
+                            <ExternalLink size={14} />
                           </a>
                         )}
                       </h3>
 
-                      <p className="text-xs text-slate-300 line-clamp-1">{booking.note || 'Chưa có ghi chú'}</p>
+                      <p className="text-xs text-on-surface-variant line-clamp-1">{booking.note || 'Chưa có ghi chú'}</p>
                       
-                      <div className="flex items-center gap-3 text-[11px] text-slate-500 pt-1">
+                      <div className="flex items-center gap-3 text-[11px] text-on-surface-variant pt-1">
                         <span className="flex items-center gap-1">
-                          <CalendarIcon className="h-3 w-3" /> Lịch đề xuất:{' '}
+                          <CalendarIcon size={12} /> Lịch đề xuất:{' '}
                           {booking.scheduledDate ? new Date(booking.scheduledDate).toLocaleDateString('vi-VN') : 'Chưa xếp ngày'}
                         </span>
                       </div>
@@ -361,12 +357,12 @@ export default function KolBookingManager() {
                   </div>
 
                   {/* Right Status Transition Action Controls */}
-                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 self-end md:self-auto pt-3 md:pt-0 border-t md:border-t-0 border-slate-800">
-                    <span className="text-[11px] font-semibold text-slate-400 self-center">Chuyển trạng thái:</span>
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 self-end md:self-auto pt-3 md:pt-0 border-t md:border-t-0 border-surface-variant/20">
+                    <span className="text-[11px] font-semibold text-on-surface-variant self-center">Chuyển trạng thái:</span>
                     <select
                       value={booking.kolStatus}
                       onChange={(e) => handleStatusChangeClick(booking, e.target.value)}
-                      className="rounded-xl border border-slate-700 bg-slate-950 px-3 py-1.5 text-xs font-bold text-white focus:border-indigo-500 focus:outline-none"
+                      className="rounded-2xl border border-surface-variant/40 bg-surface-container-low dark:bg-surface-variant/20 px-3 py-1.5 text-xs font-bold text-primary dark:text-inverse-primary focus:outline-none focus:ring-2 focus:ring-secondary/40"
                     >
                       <option value="INVITATION_SENT">📩 Đã gửi lời mời</option>
                       <option value="NEGOTIATING">💬 Đang trao đổi</option>
@@ -385,39 +381,40 @@ export default function KolBookingManager() {
 
       {/* Send Invite Modal ("Gửi lời mời KOL mới") */}
       {isInviteModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-md">
-          <div className="w-full max-w-md rounded-3xl border border-slate-700 bg-slate-900 p-6 shadow-2xl text-white">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-primary/40 backdrop-blur-sm animate-fade-in">
+          <div className="relative w-full max-w-md overflow-hidden rounded-[2.5rem] border border-surface-variant/40 bg-surface-container-lowest dark:bg-tertiary-container p-6 sm:p-8 shadow-ambient text-primary dark:text-inverse-primary">
+            
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                <Send className="h-5 w-5 text-indigo-400" /> Gửi lời mời KOL mới
+              <h3 className="text-lg font-bold text-primary dark:text-inverse-primary flex items-center gap-2">
+                <Send size={18} className="text-secondary" /> Gửi lời mời KOL mới
               </h3>
               <button
                 onClick={() => setIsInviteModalOpen(false)}
-                className="rounded-full p-1 text-slate-400 hover:bg-slate-800 hover:text-white"
+                className="rounded-full p-1 text-on-surface-variant hover:bg-surface-container-high"
               >
-                <X className="h-5 w-5" />
+                <X size={20} />
               </button>
             </div>
 
             <form onSubmit={handleCreateInviteSubmit} className="space-y-4">
               <div>
-                <label className="block text-xs font-bold uppercase text-slate-400 mb-1">Tên KOL / KOC</label>
+                <label className="block text-xs font-bold uppercase text-on-surface-variant mb-1">Tên KOL / KOC</label>
                 <input
                   type="text"
                   placeholder="Ví dụ: Linh Ngọc Đàm, Duy Thẩm..."
                   value={kolName}
                   onChange={(e) => setKolName(e.target.value)}
-                  className="w-full rounded-xl border border-slate-800 bg-slate-950 p-3 text-xs text-white focus:border-indigo-500 focus:outline-none"
+                  className="w-full rounded-2xl border border-surface-variant/40 bg-surface-container-low dark:bg-surface-variant/20 p-3 text-xs text-primary dark:text-inverse-primary focus:outline-none focus:ring-2 focus:ring-secondary/40"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold uppercase text-slate-400 mb-1">Nền tảng chính</label>
+                <label className="block text-xs font-bold uppercase text-on-surface-variant mb-1">Nền tảng chính</label>
                 <select
                   value={kolPlatform}
                   onChange={(e) => setKolPlatform(e.target.value)}
-                  className="w-full rounded-xl border border-slate-800 bg-slate-950 p-3 text-xs text-white focus:border-indigo-500 focus:outline-none"
+                  className="w-full rounded-2xl border border-surface-variant/40 bg-surface-container-low dark:bg-surface-variant/20 p-3 text-xs text-primary dark:text-inverse-primary focus:outline-none focus:ring-2 focus:ring-secondary/40"
                 >
                   <option value="TikTok">TikTok</option>
                   <option value="YouTube">YouTube</option>
@@ -427,48 +424,48 @@ export default function KolBookingManager() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold uppercase text-slate-400 mb-1">Liên kết cá nhân / Kênh</label>
+                <label className="block text-xs font-bold uppercase text-on-surface-variant mb-1">Liên kết cá nhân / Kênh</label>
                 <input
                   type="url"
                   placeholder="https://tiktok.com/@username"
                   value={kolContactLink}
                   onChange={(e) => setKolContactLink(e.target.value)}
-                  className="w-full rounded-xl border border-slate-800 bg-slate-950 p-3 text-xs text-white focus:border-indigo-500 focus:outline-none"
+                  className="w-full rounded-2xl border border-surface-variant/40 bg-surface-container-low dark:bg-surface-variant/20 p-3 text-xs text-primary dark:text-inverse-primary focus:outline-none focus:ring-2 focus:ring-secondary/40"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold uppercase text-slate-400 mb-1">Ngày dự kiến lên bài</label>
+                <label className="block text-xs font-bold uppercase text-on-surface-variant mb-1">Ngày dự kiến lên bài</label>
                 <input
                   type="date"
                   value={scheduledDate}
                   onChange={(e) => setScheduledDate(e.target.value)}
-                  className="w-full rounded-xl border border-slate-800 bg-slate-950 p-3 text-xs text-white focus:border-indigo-500 focus:outline-none"
+                  className="w-full rounded-2xl border border-surface-variant/40 bg-surface-container-low dark:bg-surface-variant/20 p-3 text-xs text-primary dark:text-inverse-primary focus:outline-none focus:ring-2 focus:ring-secondary/40"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold uppercase text-slate-400 mb-1">Ghi chú lời mời</label>
+                <label className="block text-xs font-bold uppercase text-on-surface-variant mb-1">Ghi chú lời mời</label>
                 <textarea
                   placeholder="Nhập nội dung thỏa thuận sơ bộ..."
                   value={inviteNote}
                   onChange={(e) => setInviteNote(e.target.value)}
-                  className="w-full rounded-xl border border-slate-800 bg-slate-950 p-3 text-xs text-white focus:border-indigo-500 focus:outline-none h-20 resize-none"
+                  className="w-full rounded-2xl border border-surface-variant/40 bg-surface-container-low dark:bg-surface-variant/20 p-3 text-xs text-primary dark:text-inverse-primary focus:outline-none focus:ring-2 focus:ring-secondary/40 h-20 resize-none"
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-3 pt-2">
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-surface-variant/30">
                 <button
                   type="button"
                   onClick={() => setIsInviteModalOpen(false)}
-                  className="rounded-xl px-4 py-2 text-xs font-bold text-slate-400 hover:bg-slate-800"
+                  className="rounded-full px-4 py-2 text-xs font-bold text-on-surface-variant hover:bg-surface-container-high"
                 >
                   Hủy
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmittingInvite}
-                  className="rounded-xl bg-indigo-600 hover:bg-indigo-500 px-5 py-2 text-xs font-bold text-white shadow-md disabled:opacity-50"
+                  className="rounded-full bg-primary text-on-primary hover:opacity-90 px-5 py-2 text-xs font-bold shadow-sm disabled:opacity-50"
                 >
                   {isSubmittingInvite ? 'Đang gửi...' : 'Gửi lời mời ngay'}
                 </button>
@@ -480,58 +477,58 @@ export default function KolBookingManager() {
 
       {/* Auto-Budget Sync Modal (Prompted when setting status to ACCEPTED) */}
       {isBudgetModalOpen && pendingStatusUpdate && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fade-in">
-          <div className="w-full max-w-md overflow-hidden rounded-3xl border border-emerald-500/40 bg-slate-900 p-6 shadow-2xl text-white">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-primary/40 backdrop-blur-sm animate-fade-in">
+          <div className="relative w-full max-w-md overflow-hidden rounded-[2.5rem] border border-surface-variant/40 bg-surface-container-lowest dark:bg-tertiary-container p-6 sm:p-8 shadow-ambient text-primary dark:text-inverse-primary">
             
             <div className="flex items-center gap-3 mb-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                <DollarSign className="h-5 w-5" />
+              <div className="w-10 h-10 rounded-2xl bg-secondary-container text-secondary flex items-center justify-center shrink-0">
+                <DollarSign size={20} />
               </div>
               <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400 block">Tự động đồng bộ Ngân sách</span>
-                <h3 className="text-base font-bold text-white">Thêm chi phí book KOL này?</h3>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-secondary block">Tự động đồng bộ Ngân sách</span>
+                <h3 className="text-base font-bold text-primary dark:text-inverse-primary">Thêm chi phí book KOL này?</h3>
               </div>
             </div>
 
-            <p className="text-xs text-slate-300 mb-4 leading-relaxed">
-              Bạn đang chuyển trạng thái KOL <strong className="text-white">{pendingStatusUpdate.bookingObj?.kolName}</strong> sang <span className="text-emerald-400 font-bold">"Đã chấp nhận"</span>. Bạn có muốn tự động ghi nhận chi phí này vào bảng Ngân sách chiến dịch không?
+            <p className="text-xs text-on-surface-variant mb-4 leading-relaxed">
+              Bạn đang chuyển trạng thái KOL <strong className="text-primary dark:text-inverse-primary">{pendingStatusUpdate.bookingObj?.kolName}</strong> sang <span className="text-emerald-600 dark:text-emerald-400 font-bold">"Đã chấp nhận"</span>. Bạn có muốn tự động ghi nhận chi phí này vào bảng Ngân sách chiến dịch không?
             </p>
 
             <form onSubmit={handleConfirmBudgetSync} className="space-y-3.5">
               <div>
-                <label className="block text-[11px] font-bold uppercase text-slate-400 mb-1">Số tiền thỏa thuận (VND)</label>
+                <label className="block text-[11px] font-bold uppercase text-on-surface-variant mb-1">Số tiền thỏa thuận (VND)</label>
                 <input
                   type="number"
                   value={budgetAmount}
                   onChange={(e) => setBudgetAmount(e.target.value)}
-                  className="w-full rounded-xl border border-slate-800 bg-slate-950 p-3 text-xs font-bold text-emerald-400 focus:border-emerald-500 focus:outline-none"
+                  className="w-full rounded-2xl border border-surface-variant/40 bg-surface-container-low dark:bg-surface-variant/20 p-3 text-xs font-bold text-primary dark:text-inverse-primary focus:outline-none focus:ring-2 focus:ring-secondary/40"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-[11px] font-bold uppercase text-slate-400 mb-1">Ghi chú chi phí</label>
+                <label className="block text-[11px] font-bold uppercase text-on-surface-variant mb-1">Ghi chú chi phí</label>
                 <input
                   type="text"
                   value={budgetNote}
                   onChange={(e) => setBudgetNote(e.target.value)}
-                  className="w-full rounded-xl border border-slate-800 bg-slate-950 p-3 text-xs text-white focus:border-emerald-500 focus:outline-none"
+                  className="w-full rounded-2xl border border-surface-variant/40 bg-surface-container-low dark:bg-surface-variant/20 p-3 text-xs text-primary dark:text-inverse-primary focus:outline-none focus:ring-2 focus:ring-secondary/40"
                 />
               </div>
 
-              <div className="flex items-center justify-between gap-3 pt-3 border-t border-slate-800">
+              <div className="flex items-center justify-between gap-3 pt-3 border-t border-surface-variant/30">
                 <button
                   type="button"
                   onClick={handleSkipBudgetSync}
-                  className="rounded-xl px-4 py-2.5 text-xs font-bold text-slate-400 hover:bg-slate-800 transition-colors"
+                  className="rounded-full px-4 py-2.5 text-xs font-bold text-on-surface-variant hover:bg-surface-container-high transition-colors"
                 >
-                  Bỏ qua (Chỉ cập nhật trạng thái)
+                  Bỏ qua (Chỉ cập nhật)
                 </button>
 
                 <button
                   type="submit"
                   disabled={isSyncingBudget}
-                  className="rounded-xl bg-emerald-600 hover:bg-emerald-500 px-5 py-2.5 text-xs font-bold text-white shadow-md disabled:opacity-50"
+                  className="rounded-full bg-primary text-on-primary hover:opacity-90 px-5 py-2.5 text-xs font-bold shadow-sm disabled:opacity-50"
                 >
                   {isSyncingBudget ? 'Đang lưu...' : '+ Thêm vào Ngân sách'}
                 </button>

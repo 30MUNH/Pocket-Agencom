@@ -1,14 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Wallet, 
-  TrendingUp, 
-  RefreshCw, 
-  PieChart, 
-  ArrowUpRight, 
-  Megaphone, 
-  Users, 
-  CreditCard 
-} from 'lucide-react';
+import { Wallet, TrendingUp, RefreshCw, PieChart, ArrowUpRight } from 'lucide-react';
 import { budgetApi } from '../../api/budgetApi';
 
 export default function MonthlySpendWidget() {
@@ -33,9 +24,9 @@ export default function MonthlySpendWidget() {
 
   if (loading) {
     return (
-      <div className="rounded-3xl border border-slate-800 bg-slate-900/60 p-6 text-center text-slate-400 backdrop-blur-md">
-        <RefreshCw className="mx-auto h-6 w-6 animate-spin text-indigo-400 mb-2" />
-        <span className="text-xs">Đang tổng hợp chi tiêu tháng...</span>
+      <div className="bg-surface-container-lowest dark:bg-tertiary-container rounded-3xl p-6 shadow-ambient border border-surface-variant/30 text-center text-on-surface-variant">
+        <RefreshCw className="mx-auto h-6 w-6 animate-spin text-primary mb-2" />
+        <span className="text-xs font-medium">Đang tổng hợp chi tiêu tháng...</span>
       </div>
     );
   }
@@ -49,59 +40,61 @@ export default function MonthlySpendWidget() {
   } = data || {};
 
   return (
-    <div className="relative overflow-hidden rounded-3xl border border-slate-800 bg-gradient-to-br from-slate-900 via-slate-900/90 to-indigo-950/40 p-6 shadow-xl backdrop-blur-xl transition-all hover:border-slate-700">
-      {/* Background Subtle Accent Glow */}
-      <div className="pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full bg-emerald-500/10 blur-2xl" />
+    <div className="bg-surface-container-lowest dark:bg-tertiary-container rounded-3xl p-6 shadow-ambient hover:shadow-ambient-hover border border-surface-variant/30 transition-all duration-300 relative overflow-hidden group">
+      {/* Decorative ambient gradient */}
+      <div className="absolute top-0 right-0 w-32 h-32 bg-secondary-container/40 rounded-full -translate-y-1/2 translate-x-1/2 blur-xl pointer-events-none" />
 
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-slate-800/80 pb-4 mb-4">
+      <div className="flex items-center justify-between border-b border-surface-variant/20 pb-4 mb-4 relative z-10">
         <div className="flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 shadow-inner">
-            <Wallet className="h-6 w-6" />
+          <div className="w-12 h-12 rounded-2xl bg-secondary-container text-primary flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+            <Wallet size={22} />
           </div>
           <div>
-            <h3 className="text-base font-bold text-white">Tổng chi tiêu tháng</h3>
-            <span className="text-xs text-slate-400 capitalize">{monthYear}</span>
+            <h3 className="text-label-sm font-label-sm text-primary dark:text-inverse-primary font-bold">
+              Tổng chi tiêu tháng
+            </h3>
+            <span className="text-xs text-on-surface-variant capitalize">{monthYear}</span>
           </div>
         </div>
 
-        <span className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-bold text-emerald-400">
+        <span className="px-3 py-1 rounded-full bg-secondary-container text-secondary text-xs font-bold border border-secondary-container/60">
           {budgetUtilization}% Định mức
         </span>
       </div>
 
-      {/* Total Spend Stat */}
-      <div>
-        <span className="text-xs font-medium text-slate-400">Tổng đã giải ngân</span>
+      {/* Main Metric */}
+      <div className="relative z-10">
+        <span className="text-xs font-medium text-on-surface-variant block">Đã giải ngân</span>
         <div className="mt-1 flex items-baseline gap-2">
-          <span className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
+          <span className="text-2xl sm:text-3xl font-extrabold tracking-tight text-primary dark:text-inverse-primary">
             {totalMonthlySpend.toLocaleString('vi-VN')} ₫
           </span>
         </div>
-        <div className="mt-2 text-xs text-slate-400">
-          Định mức mục tiêu: <span className="font-bold text-slate-200">{monthlyBudgetGoal.toLocaleString('vi-VN')} ₫</span>
+        <div className="mt-2 text-xs text-on-surface-variant">
+          Định mức mục tiêu: <span className="font-bold text-primary dark:text-inverse-primary">{monthlyBudgetGoal.toLocaleString('vi-VN')} ₫</span>
         </div>
       </div>
 
-      {/* Spend Breakdown Cards Grid */}
-      <div className="mt-5 grid grid-cols-3 gap-2.5 pt-4 border-t border-slate-800/80">
-        <div className="rounded-2xl border border-purple-500/20 bg-purple-500/10 p-2.5 text-center">
-          <span className="text-[10px] font-bold uppercase text-purple-300 block">KOL Booking</span>
-          <span className="text-xs font-extrabold text-white mt-1 block truncate">
+      {/* Breakdown Cards Grid */}
+      <div className="mt-5 grid grid-cols-3 gap-2.5 pt-4 border-t border-surface-variant/20 relative z-10">
+        <div className="bg-surface-container-low dark:bg-surface-variant/20 rounded-2xl p-2.5 text-center border border-surface-variant/30">
+          <span className="text-[10px] font-bold uppercase text-on-surface-variant block">KOL Booking</span>
+          <span className="text-xs font-bold text-primary dark:text-inverse-primary mt-1 block truncate">
             {(breakdown.kolSpend || 0).toLocaleString('vi-VN')} ₫
           </span>
         </div>
 
-        <div className="rounded-2xl border border-indigo-500/20 bg-indigo-500/10 p-2.5 text-center">
-          <span className="text-[10px] font-bold uppercase text-indigo-300 block">Quảng cáo Ads</span>
-          <span className="text-xs font-extrabold text-white mt-1 block truncate">
+        <div className="bg-surface-container-low dark:bg-surface-variant/20 rounded-2xl p-2.5 text-center border border-surface-variant/30">
+          <span className="text-[10px] font-bold uppercase text-on-surface-variant block">Quảng cáo Ads</span>
+          <span className="text-xs font-bold text-primary dark:text-inverse-primary mt-1 block truncate">
             {(breakdown.adsSpend || 0).toLocaleString('vi-VN')} ₫
           </span>
         </div>
 
-        <div className="rounded-2xl border border-slate-700 bg-slate-800/50 p-2.5 text-center">
-          <span className="text-[10px] font-bold uppercase text-slate-300 block">Khác</span>
-          <span className="text-xs font-extrabold text-white mt-1 block truncate">
+        <div className="bg-surface-container-low dark:bg-surface-variant/20 rounded-2xl p-2.5 text-center border border-surface-variant/30">
+          <span className="text-[10px] font-bold uppercase text-on-surface-variant block">Khác</span>
+          <span className="text-xs font-bold text-primary dark:text-inverse-primary mt-1 block truncate">
             {(breakdown.customSpend || 0).toLocaleString('vi-VN')} ₫
           </span>
         </div>

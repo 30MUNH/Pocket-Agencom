@@ -1,18 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  DollarSign, 
-  TrendingUp, 
-  RefreshCw, 
-  Plus, 
-  Receipt, 
-  Sparkles, 
-  CheckCircle2, 
-  AlertCircle, 
-  PieChart,
-  ShoppingBag,
-  Megaphone,
-  CreditCard
-} from 'lucide-react';
+import { DollarSign, TrendingUp, RefreshCw, Plus, Receipt, Sparkles } from 'lucide-react';
 import { budgetApi } from '../../api/budgetApi';
 import { toast } from '../../store/toastStore';
 
@@ -73,12 +60,11 @@ export default function CampaignBudgetTracker({ campaignId = 1, initialData = nu
     }
   };
 
-  // Simulated Mock Sync for Ads Spend (TikTok/Facebook/Google Ads API)
+  // Simulated Mock Sync for Ads Spend
   const handleSyncAdsSpend = async () => {
     try {
       setIsSyncingAds(true);
-      // Simulate API response delay
-      await new Promise(r => setTimeout(r, 1500));
+      await new Promise(r => setTimeout(r, 1200));
 
       const mockAdSpendAmount = Math.floor(Math.random() * 3000000) + 1500000;
       await budgetApi.addExpense({
@@ -99,9 +85,9 @@ export default function CampaignBudgetTracker({ campaignId = 1, initialData = nu
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center p-8 text-slate-400">
-        <RefreshCw className="h-6 w-6 animate-spin text-indigo-400 mr-2" />
-        <span>Đang tính toán ngân sách chiến dịch...</span>
+      <div className="flex items-center justify-center p-8 text-on-surface-variant bg-surface-container-lowest dark:bg-tertiary-container rounded-3xl border border-surface-variant/30">
+        <RefreshCw className="h-6 w-6 animate-spin text-primary mr-2" />
+        <span className="text-sm font-medium">Đang tính toán ngân sách chiến dịch...</span>
       </div>
     );
   }
@@ -117,22 +103,26 @@ export default function CampaignBudgetTracker({ campaignId = 1, initialData = nu
   // Progress Bar Dynamic Color
   const progressColor =
     percentageUsed >= 100
-      ? 'bg-rose-500'
+      ? 'bg-error'
       : percentageUsed >= 80
       ? 'bg-amber-500'
       : 'bg-emerald-500';
 
   return (
-    <div className="space-y-6 rounded-3xl border border-slate-800 bg-slate-900/60 p-6 sm:p-7 backdrop-blur-md">
+    <div className="bg-surface-container-lowest dark:bg-tertiary-container rounded-[2.5rem] p-6 sm:p-8 shadow-ambient border border-surface-variant/40 space-y-6 relative overflow-hidden">
       
       {/* Header Row */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-800 pb-5">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-surface-variant/30 pb-5">
         <div>
-          <div className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-400 uppercase tracking-wider mb-1">
-            <DollarSign className="h-4 w-4" /> Quản lý Ngân sách & Chi tiêu
-          </div>
-          <h3 className="text-xl font-bold text-white">Theo dõi ngân sách chiến dịch</h3>
-          <p className="text-xs text-slate-400 mt-0.5">So sánh chi phí thực tế với ngân sách tiếp thị đã phê duyệt.</p>
+          <span className="inline-flex items-center gap-1.5 text-xs font-bold text-secondary uppercase tracking-wider mb-1 bg-secondary-container px-3 py-1 rounded-full">
+            <DollarSign size={14} /> Quản lý Ngân sách & Chi tiêu
+          </span>
+          <h3 className="text-2xl font-bold text-primary dark:text-inverse-primary mt-1">
+            Theo dõi ngân sách chiến dịch
+          </h3>
+          <p className="text-xs text-on-surface-variant mt-0.5">
+            So sánh chi phí thực tế với ngân sách tiếp thị đã phê duyệt.
+          </p>
         </div>
 
         {/* Mock Sync Ads Button */}
@@ -140,9 +130,9 @@ export default function CampaignBudgetTracker({ campaignId = 1, initialData = nu
           type="button"
           onClick={handleSyncAdsSpend}
           disabled={isSyncingAds}
-          className="inline-flex items-center justify-center gap-2 rounded-xl border border-indigo-500/30 bg-indigo-500/10 hover:bg-indigo-500/20 px-4 py-2.5 text-xs font-bold text-indigo-300 transition-all disabled:opacity-50"
+          className="inline-flex items-center justify-center gap-2 rounded-full border border-surface-variant/50 bg-secondary-container hover:bg-secondary-container/80 px-5 py-2.5 text-xs font-bold text-primary transition-all disabled:opacity-50 shrink-0"
         >
-          <RefreshCw className={`h-4 w-4 ${isSyncingAds ? 'animate-spin' : ''}`} />
+          <RefreshCw size={14} className={isSyncingAds ? 'animate-spin' : ''} />
           <span>{isSyncingAds ? 'Đang kết nối Ads API...' : 'Đồng bộ chi phí Ads'}</span>
         </button>
       </div>
@@ -150,23 +140,23 @@ export default function CampaignBudgetTracker({ campaignId = 1, initialData = nu
       {/* Budget Summary Metrics & Progress Bar */}
       <div className="space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
-            <span className="text-xs text-slate-400 block font-medium">Tổng ngân sách cấp</span>
-            <span className="text-xl font-bold text-white mt-1 block">
+          <div className="bg-surface-container-low dark:bg-surface-variant/20 rounded-2xl p-4 border border-surface-variant/30">
+            <span className="text-xs text-on-surface-variant block font-medium">Tổng ngân sách cấp</span>
+            <span className="text-xl font-bold text-primary dark:text-inverse-primary mt-1 block">
               {totalBudget.toLocaleString('vi-VN')} ₫
             </span>
           </div>
 
-          <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
-            <span className="text-xs text-slate-400 block font-medium">Đã thực chi</span>
-            <span className="text-xl font-bold text-indigo-400 mt-1 block">
+          <div className="bg-surface-container-low dark:bg-surface-variant/20 rounded-2xl p-4 border border-surface-variant/30">
+            <span className="text-xs text-on-surface-variant block font-medium">Đã thực chi</span>
+            <span className="text-xl font-bold text-secondary mt-1 block">
               {totalSpent.toLocaleString('vi-VN')} ₫
             </span>
           </div>
 
-          <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
-            <span className="text-xs text-slate-400 block font-medium">Ngân sách còn lại</span>
-            <span className={`text-xl font-bold mt-1 block ${remainingBudget > 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+          <div className="bg-surface-container-low dark:bg-surface-variant/20 rounded-2xl p-4 border border-surface-variant/30">
+            <span className="text-xs text-on-surface-variant block font-medium">Ngân sách còn lại</span>
+            <span className={`text-xl font-bold mt-1 block ${remainingBudget > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-error'}`}>
               {remainingBudget.toLocaleString('vi-VN')} ₫
             </span>
           </div>
@@ -175,12 +165,12 @@ export default function CampaignBudgetTracker({ campaignId = 1, initialData = nu
         {/* Dynamic Progress Bar */}
         <div className="space-y-1.5">
           <div className="flex items-center justify-between text-xs font-semibold">
-            <span className="text-slate-400">Tiến độ giải ngân</span>
-            <span className={percentageUsed >= 100 ? 'text-rose-400 font-bold' : 'text-emerald-400'}>
+            <span className="text-on-surface-variant">Tiến độ giải ngân</span>
+            <span className={percentageUsed >= 100 ? 'text-error font-bold' : 'text-primary dark:text-inverse-primary'}>
               {percentageUsed}% ({totalSpent.toLocaleString('vi-VN')} ₫ / {totalBudget.toLocaleString('vi-VN')} ₫)
             </span>
           </div>
-          <div className="h-3 w-full overflow-hidden rounded-full bg-slate-950 border border-slate-800">
+          <div className="h-3 w-full overflow-hidden rounded-full bg-surface-container-high dark:bg-surface-variant/40 border border-surface-variant/30">
             <div
               className={`h-full transition-all duration-500 ${progressColor}`}
               style={{ width: `${Math.min(100, percentageUsed)}%` }}
@@ -190,16 +180,18 @@ export default function CampaignBudgetTracker({ campaignId = 1, initialData = nu
       </div>
 
       {/* Log Expense Form */}
-      <form onSubmit={handleAddExpense} className="rounded-2xl border border-slate-800 bg-slate-950/50 p-4 space-y-3">
-        <span className="text-xs font-bold text-white uppercase tracking-wider block">Ghi nhận chi phí mới</span>
+      <form onSubmit={handleAddExpense} className="bg-surface-container-low dark:bg-surface-variant/20 rounded-3xl p-5 border border-surface-variant/30 space-y-3">
+        <span className="text-xs font-bold text-primary dark:text-inverse-primary uppercase tracking-wider block">
+          Ghi nhận chi phí mới
+        </span>
         
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div>
-            <label className="block text-[11px] text-slate-400 mb-1">Loại chi phí</label>
+            <label className="block text-xs font-medium text-on-surface-variant mb-1">Loại chi phí</label>
             <select
               value={expenseType}
               onChange={(e) => setExpenseType(e.target.value)}
-              className="w-full rounded-xl border border-slate-800 bg-slate-900 p-2.5 text-xs text-white focus:border-indigo-500 focus:outline-none"
+              className="w-full rounded-2xl border border-surface-variant/40 bg-surface-container-lowest dark:bg-tertiary-container p-3 text-xs text-primary dark:text-inverse-primary focus:outline-none focus:ring-2 focus:ring-secondary/40"
             >
               <option value="KOL">Booking KOL / KOC</option>
               <option value="Ads">Quảng cáo (Ads)</option>
@@ -208,42 +200,42 @@ export default function CampaignBudgetTracker({ campaignId = 1, initialData = nu
           </div>
 
           <div>
-            <label className="block text-[11px] text-slate-400 mb-1">Số tiền (VND)</label>
+            <label className="block text-xs font-medium text-on-surface-variant mb-1">Số tiền (VND)</label>
             <input
               type="number"
               placeholder="Ví dụ: 5000000"
               value={amountInput}
               onChange={(e) => setAmountInput(e.target.value)}
-              className="w-full rounded-xl border border-slate-800 bg-slate-900 p-2.5 text-xs text-white focus:border-indigo-500 focus:outline-none"
+              className="w-full rounded-2xl border border-surface-variant/40 bg-surface-container-lowest dark:bg-tertiary-container p-3 text-xs text-primary dark:text-inverse-primary focus:outline-none focus:ring-2 focus:ring-secondary/40"
             />
           </div>
 
           <div>
-            <label className="block text-[11px] text-slate-400 mb-1">Ghi chú / Mô tả</label>
+            <label className="block text-xs font-medium text-on-surface-variant mb-1">Ghi chú / Mô tả</label>
             <input
               type="text"
               placeholder="Nhập ghi chú chi tiết..."
               value={noteInput}
               onChange={(e) => setNoteInput(e.target.value)}
-              className="w-full rounded-xl border border-slate-800 bg-slate-900 p-2.5 text-xs text-white focus:border-indigo-500 focus:outline-none"
+              className="w-full rounded-2xl border border-surface-variant/40 bg-surface-container-lowest dark:bg-tertiary-container p-3 text-xs text-primary dark:text-inverse-primary focus:outline-none focus:ring-2 focus:ring-secondary/40"
             />
           </div>
         </div>
 
-        <div className="flex justify-end pt-1">
+        <div className="flex justify-end pt-2">
           <button
             type="submit"
             disabled={isSubmitting}
-            className="inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 px-4 py-2 text-xs font-bold text-white shadow-md disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 rounded-full bg-primary text-on-primary hover:opacity-90 px-6 py-2.5 text-xs font-label-sm font-bold shadow-sm transition-opacity disabled:opacity-50"
           >
-            <Plus className="h-4 w-4" /> Ghi nhận chi phí
+            <Plus size={16} /> Ghi nhận chi phí
           </button>
         </div>
       </form>
 
       {/* Expenses Table List */}
       <div className="space-y-3 pt-2">
-        <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">
+        <h4 className="text-xs font-bold uppercase tracking-wider text-on-surface-variant">
           Danh sách chi phí đã ghi nhận ({expenses.length})
         </h4>
 
@@ -251,28 +243,22 @@ export default function CampaignBudgetTracker({ campaignId = 1, initialData = nu
           {expenses.map((exp) => (
             <div
               key={exp.id}
-              className="flex items-center justify-between gap-3 rounded-2xl border border-slate-800 bg-slate-950/60 p-3.5"
+              className="flex items-center justify-between gap-3 rounded-2xl bg-surface-container-lowest dark:bg-tertiary-container p-4 border border-surface-variant/30 shadow-sm"
             >
               <div className="flex items-center gap-3">
-                <span className={`px-2.5 py-1 rounded-xl text-xs font-bold uppercase ${
-                  exp.expenseType === 'KOL'
-                    ? 'bg-purple-500/15 text-purple-400 border border-purple-500/30'
-                    : exp.expenseType === 'Ads'
-                    ? 'bg-indigo-500/15 text-indigo-400 border border-indigo-500/30'
-                    : 'bg-slate-800 text-slate-300 border border-slate-700'
-                }`}>
+                <span className="px-3 py-1 rounded-full text-xs font-bold bg-secondary-container text-secondary border border-secondary-container/60">
                   {exp.expenseType}
                 </span>
 
                 <div>
-                  <p className="text-xs font-bold text-white">{exp.note || `Chi phí ${exp.expenseType}`}</p>
-                  <span className="text-[11px] text-slate-500">
+                  <p className="text-xs font-bold text-primary dark:text-inverse-primary">{exp.note || `Chi phí ${exp.expenseType}`}</p>
+                  <span className="text-[11px] text-on-surface-variant">
                     {new Date(exp.date || exp.createdAt).toLocaleDateString('vi-VN')}
                   </span>
                 </div>
               </div>
 
-              <span className="text-sm font-bold text-emerald-400">
+              <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">
                 +{Number(exp.amount).toLocaleString('vi-VN')} ₫
               </span>
             </div>

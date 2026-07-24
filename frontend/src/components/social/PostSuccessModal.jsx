@@ -1,263 +1,199 @@
 import React, { useState } from 'react';
 import { 
   CheckCircle2, 
-  X, 
+  Share2, 
   Copy, 
   Check, 
-  Share2, 
   ExternalLink, 
+  X, 
   Sparkles, 
-  Send, 
-  MessageCircle, 
-  Globe
+  Globe,
+  Send,
+  MessageSquare
 } from 'lucide-react';
 import { toast } from '../../store/toastStore';
 
-// Custom Brand Icons
-function FacebookIcon({ className = "w-5 h-5" }) {
-  return (
-    <svg className={className} fill="currentColor" viewBox="0 0 24 24">
-      <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-    </svg>
-  );
-}
+export default function PostSuccessModal({ isOpen, onClose, post = null }) {
+  if (!isOpen) return null;
 
-function TikTokIcon({ className = "w-5 h-5" }) {
-  return (
-    <svg className={className} fill="currentColor" viewBox="0 0 24 24">
-      <path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.17-2.89-.6-4.09-1.51-.71-.53-1.3-1.22-1.74-2v6.62c.04 2.87-1.39 5.86-3.99 7.06-2.58 1.25-6.02.9-8.15-1.14-2.28-2.26-2.47-6.27-.42-8.77 1.83-2.3 5.34-2.88 7.82-1.33v4.19c-1.41-.95-3.41-.74-4.57.51-.97 1.09-1.01 2.89-.08 4 .98 1.22 2.85 1.48 4.09.57.85-.59 1.28-1.63 1.25-2.67V.02z"/>
-    </svg>
-  );
-}
+  const [copiedText, setCopiedText] = useState(false);
 
-function InstagramIcon({ className = "w-5 h-5" }) {
-  return (
-    <svg className={className} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-      <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
-      <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
-      <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
-    </svg>
-  );
-}
+  const postTitle = post?.title || 'Bài viết đã được tạo thành công';
+  const postContent = post?.content || '';
+  const postUrl = post?.url || window.location.href;
 
-function ZaloIcon({ className = "w-5 h-5" }) {
-  return (
-    <div className={`flex items-center justify-center font-bold text-xs bg-blue-600 text-white rounded-md px-1 py-0.5 ${className}`}>
-      Zalo
-    </div>
-  );
-}
-
-export default function PostSuccessModal({ isOpen, onClose, post }) {
-  const [copied, setCopied] = useState(false);
-
-  if (!isOpen || !post) return null;
-
-  const {
-    title = 'Bài viết mới',
-    content = '',
-    url = window.location.href,
-    platform = 'Facebook'
-  } = post;
-
-  const fullShareText = `${title}\n\n${content}\n\n${url ? `Chi tiết: ${url}` : ''}`.trim();
-
-  // Robust Clipboard Handler with fallback
-  const handleCopyToClipboard = async (customMessage = 'Đã sao chép nội dung bài viết!') => {
-    try {
-      if (navigator.clipboard && window.isSecureContext) {
-        await navigator.clipboard.writeText(fullShareText);
-      } else {
-        // Fallback for non-HTTPS or older browsers
-        const textArea = document.createElement('textarea');
-        textArea.value = fullShareText;
-        textArea.style.position = 'fixed';
-        textArea.style.opacity = '0';
-        document.body.appendChild(textArea);
-        textArea.focus();
-        textArea.select();
-        document.execCommand('copy');
-        document.body.removeChild(textArea);
+  // Social Share Intent URLs
+  const shareLinks = [
+    {
+      name: 'Facebook',
+      color: 'bg-blue-600 hover:bg-blue-700 text-white',
+      icon: Globe,
+      action: () => {
+        const fbUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(postUrl)}`;
+        window.open(fbUrl, '_blank', 'width=600,height=400');
       }
-      setCopied(true);
-      toast.success(customMessage);
-      setTimeout(() => setCopied(false), 2500);
+    },
+    {
+      name: 'TikTok',
+      color: 'bg-black hover:bg-slate-900 text-white',
+      icon: Send,
+      action: async () => {
+        try {
+          await navigator.clipboard.writeText(postContent);
+          toast.success('Đã sao chép nội dung bài viết! Đang mở TikTok...');
+          setTimeout(() => {
+            window.open('https://www.tiktok.com/upload', '_blank');
+          }, 800);
+        } catch (err) {
+          toast.error('Không thể sao chép nội dung tự động.');
+        }
+      }
+    },
+    {
+      name: 'Instagram',
+      color: 'bg-gradient-to-r from-purple-600 via-pink-600 to-amber-500 text-white',
+      icon: Sparkles,
+      action: async () => {
+        try {
+          await navigator.clipboard.writeText(postContent);
+          toast.success('Đã sao chép nội dung! Hãy dán vào bài viết Instagram.');
+          setTimeout(() => {
+            window.open('https://www.instagram.com', '_blank');
+          }, 800);
+        } catch (err) {
+          toast.error('Không thể sao chép nội dung.');
+        }
+      }
+    },
+    {
+      name: 'Zalo',
+      color: 'bg-blue-500 hover:bg-blue-600 text-white',
+      icon: MessageSquare,
+      action: async () => {
+        try {
+          await navigator.clipboard.writeText(postContent);
+          toast.success('Đã sao chép nội dung bài viết cho Zalo!');
+          setTimeout(() => {
+            window.open('https://chat.zalo.me', '_blank');
+          }, 800);
+        } catch (err) {
+          toast.error('Không thể sao chép nội dung.');
+        }
+      }
+    }
+  ];
+
+  const handleCopyContent = async () => {
+    try {
+      await navigator.clipboard.writeText(postContent);
+      setCopiedText(true);
+      toast.success('Đã sao chép toàn bộ nội dung bài viết!');
+      setTimeout(() => setCopiedText(false), 2000);
     } catch (err) {
-      console.error('Clipboard copy error:', err);
-      toast.error('Không thể sao chép tự động. Vui lòng chọn và sao chép thủ công.');
+      toast.error('Không thể sao chép nội dung.');
     }
   };
 
-  // Facebook Share Intent
-  const handleFacebookShare = () => {
-    const shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url || window.location.href)}&quote=${encodeURIComponent(title)}`;
-    window.open(shareUrl, '_blank', 'width=600,height=500,location=no,menubar=no,toolbar=no');
-  };
-
-  // TikTok Intent (Copy text + Open TikTok Web)
-  const handleTikTokShare = async () => {
-    await handleCopyToClipboard('Đã copy nội dung. Hãy dán vào TikTok!');
-    setTimeout(() => {
-      window.open('https://www.tiktok.com/upload', '_blank');
-    }, 600);
-  };
-
-  // Instagram Intent (Copy text + Open Instagram Web)
-  const handleInstagramShare = async () => {
-    await handleCopyToClipboard('Đã copy nội dung. Hãy dán vào Instagram!');
-    setTimeout(() => {
-      window.open('https://www.instagram.com', '_blank');
-    }, 600);
-  };
-
-  // Zalo Share Intent
-  const handleZaloShare = async () => {
-    await handleCopyToClipboard('Đã copy nội dung. Hãy dán vào Zalo!');
-    const zaloShareUrl = `https://zalo.me/share?url=${encodeURIComponent(url || window.location.href)}&title=${encodeURIComponent(title)}`;
-    window.open(zaloShareUrl, '_blank');
-  };
-
-  // Native Web Share API Handler
   const handleNativeShare = async () => {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: title,
-          text: content.substring(0, 120) + '...',
-          url: url || window.location.href,
+          title: postTitle,
+          text: postContent,
+          url: postUrl,
         });
         toast.success('Đã chia sẻ thành công!');
       } catch (err) {
-        if (err.name !== 'AbortError') {
-          console.error('Web Share Error:', err);
-        }
+        console.log('Native share error/cancelled:', err);
       }
     } else {
-      handleCopyToClipboard('Thiết bị không hỗ trợ Menu chia sẻ. Đã sao chép nội dung vào bộ nhớ tạm!');
+      toast.info('Trình duyệt không hỗ trợ Web Share API. Hãy sử dụng các nút bên trên!');
     }
   };
 
-  const isWebShareSupported = typeof navigator !== 'undefined' && Boolean(navigator.share);
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md animate-fade-in">
-      <div className="relative w-full max-w-lg overflow-hidden rounded-3xl border border-slate-700/80 bg-slate-900/90 p-6 sm:p-8 shadow-2xl backdrop-blur-xl text-white">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-primary/40 backdrop-blur-sm animate-fade-in">
+      <div className="relative w-full max-w-lg overflow-hidden rounded-[2.5rem] bg-surface-container-lowest dark:bg-tertiary-container p-6 sm:p-8 shadow-ambient border border-surface-variant/40 text-primary dark:text-inverse-primary">
         
-        {/* Decorative Top Accent Glow */}
-        <div className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-emerald-500/20 blur-3xl" />
-        <div className="pointer-events-none absolute -left-10 -bottom-10 h-32 w-32 rounded-full bg-indigo-500/20 blur-3xl" />
-
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute right-4 top-4 rounded-full p-2 text-slate-400 hover:bg-slate-800 hover:text-white transition-colors"
+          className="absolute right-6 top-6 rounded-full p-2 text-on-surface-variant hover:bg-surface-container-high transition-colors"
         >
-          <X className="h-5 w-5" />
+          <X size={20} />
         </button>
 
         {/* Success Header */}
         <div className="flex flex-col items-center text-center space-y-3">
-          <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 shadow-inner">
-            <CheckCircle2 className="h-9 w-9 animate-bounce" />
+          <div className="w-14 h-14 rounded-full bg-secondary-container text-secondary flex items-center justify-center">
+            <CheckCircle2 size={32} />
           </div>
-          <div>
-            <h3 className="text-xl sm:text-2xl font-extrabold tracking-tight text-white">
-              Bài viết đã được tạo thành công!
-            </h3>
-            <p className="mt-1 text-xs sm:text-sm text-slate-400">
-              Nội dung chuẩn SEO & bắt trend đã sẵn sàng để đăng tải.
-            </p>
-          </div>
-        </div>
-
-        {/* Post Preview Box */}
-        <div className="mt-5 rounded-2xl border border-slate-800 bg-slate-950/70 p-4 text-left">
-          <div className="flex items-center justify-between gap-2 border-b border-slate-800/80 pb-2.5 mb-2.5">
-            <span className="text-xs font-bold uppercase text-indigo-400 flex items-center gap-1">
-              <Sparkles className="h-3.5 w-3.5" /> {platform} Post
-            </span>
-            <span className="text-[11px] text-slate-500">Sẵn sàng xuất bản</span>
-          </div>
-          <h4 className="text-sm font-bold text-slate-200 line-clamp-1">{title}</h4>
-          <p className="mt-1 text-xs text-slate-400 line-clamp-2 leading-relaxed">
-            {content}
+          <span className="text-xs font-bold uppercase tracking-wider text-secondary bg-secondary-container px-3 py-1 rounded-full">
+            Tạo bài thành công
+          </span>
+          <h3 className="text-2xl font-bold text-primary dark:text-inverse-primary">
+            Bài viết đã sẵn sàng đăng tải!
+          </h3>
+          <p className="text-xs text-on-surface-variant max-w-sm">
+            Chọn nền tảng mạng xã hội bạn muốn xuất bản bài viết bên dưới.
           </p>
         </div>
 
-        {/* Social Publishing Options */}
-        <div className="mt-6 space-y-3">
-          <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 text-left">
-            Đăng tải lên các nền tảng:
-          </label>
-
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            {/* Facebook Share Button */}
-            <button
-              onClick={handleFacebookShare}
-              className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-blue-600/30 bg-blue-600/10 p-3 text-blue-400 hover:bg-blue-600 hover:text-white transition-all hover:scale-105 shadow-md"
-            >
-              <FacebookIcon className="h-5 w-5" />
-              <span className="text-xs font-bold">Facebook</span>
-            </button>
-
-            {/* TikTok Share Button */}
-            <button
-              onClick={handleTikTokShare}
-              className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-slate-700 bg-slate-800/80 p-3 text-slate-200 hover:bg-black hover:text-white transition-all hover:scale-105 shadow-md"
-            >
-              <TikTokIcon className="h-5 w-5" />
-              <span className="text-xs font-bold">TikTok</span>
-            </button>
-
-            {/* Instagram Share Button */}
-            <button
-              onClick={handleInstagramShare}
-              className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-pink-500/30 bg-pink-500/10 p-3 text-pink-400 hover:bg-gradient-to-tr hover:from-amber-500 hover:via-pink-500 hover:to-purple-600 hover:text-white transition-all hover:scale-105 shadow-md"
-            >
-              <InstagramIcon className="h-5 w-5" />
-              <span className="text-xs font-bold">Instagram</span>
-            </button>
-
-            {/* Zalo Share Button */}
-            <button
-              onClick={handleZaloShare}
-              className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-blue-500/30 bg-blue-500/10 p-3 text-blue-400 hover:bg-blue-600 hover:text-white transition-all hover:scale-105 shadow-md"
-            >
-              <ZaloIcon className="h-5 w-5" />
-              <span className="text-xs font-bold">Zalo</span>
-            </button>
-          </div>
-
-          {/* Secondary Actions: Native Web Share & Copy */}
-          <div className="pt-2 flex flex-col sm:flex-row gap-2.5">
-            {isWebShareSupported && (
+        {/* Post Content Preview Box */}
+        {postContent && (
+          <div className="mt-6 rounded-3xl bg-surface-container-low dark:bg-surface-variant/20 p-4 border border-surface-variant/30 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-bold text-on-surface-variant uppercase tracking-wider">
+                Xem trước nội dung
+              </span>
               <button
-                onClick={handleNativeShare}
-                className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl border border-indigo-500/30 bg-indigo-500/15 px-4 py-2.5 text-xs font-bold text-indigo-300 hover:bg-indigo-500 hover:text-white transition-all"
+                onClick={handleCopyContent}
+                className="inline-flex items-center gap-1 text-xs font-bold text-secondary hover:underline"
               >
-                <Share2 className="h-4 w-4" /> Chia sẻ qua...
+                {copiedText ? <Check size={14} className="text-emerald-500" /> : <Copy size={14} />}
+                <span>{copiedText ? 'Đã copy' : 'Sao chép nội dung'}</span>
               </button>
-            )}
+            </div>
+            <p className="text-xs text-primary dark:text-inverse-primary line-clamp-3 leading-relaxed whitespace-pre-wrap">
+              {postContent}
+            </p>
+          </div>
+        )}
 
-            <button
-              onClick={() => handleCopyToClipboard('Đã sao chép nội dung bài viết!')}
-              className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl border border-slate-700 bg-slate-800/90 px-4 py-2.5 text-xs font-bold text-slate-200 hover:bg-slate-700 transition-all"
-            >
-              {copied ? <Check className="h-4 w-4 text-emerald-400" /> : <Copy className="h-4 w-4" />}
-              <span>{copied ? 'Đã sao chép!' : 'Sao chép bài viết'}</span>
-            </button>
+        {/* Platform Share Action Buttons */}
+        <div className="mt-6 space-y-3">
+          <span className="text-xs font-bold uppercase tracking-wider text-on-surface-variant block text-center">
+            Đăng tải lên các nền tảng:
+          </span>
+
+          <div className="grid grid-cols-2 gap-3">
+            {shareLinks.map((link, idx) => {
+              const Icon = link.icon;
+              return (
+                <button
+                  key={idx}
+                  onClick={link.action}
+                  className={`py-3 px-4 rounded-2xl font-label-sm text-xs font-bold flex items-center justify-center gap-2 shadow-sm transition-transform active:scale-[0.98] ${link.color}`}
+                >
+                  <Icon size={16} />
+                  <span>{link.name}</span>
+                </button>
+              );
+            })}
           </div>
         </div>
 
-        {/* Footer Done Action */}
-        <div className="mt-6 pt-4 border-t border-slate-800">
-          <button
-            onClick={onClose}
-            className="w-full rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 text-sm transition-all shadow-lg shadow-indigo-600/30"
-          >
-            Hoàn tất
-          </button>
-        </div>
+        {/* Web Share API Fallback */}
+        {typeof navigator !== 'undefined' && navigator.share && (
+          <div className="mt-4 pt-4 border-t border-surface-variant/30 text-center">
+            <button
+              onClick={handleNativeShare}
+              className="inline-flex items-center justify-center gap-2 w-full py-3 rounded-full bg-secondary-container text-primary font-label-sm text-xs font-bold hover:bg-secondary-container/80 transition-colors"
+            >
+              <Share2 size={16} /> Chia sẻ qua ứng dụng khác (Web Share API)
+            </button>
+          </div>
+        )}
 
       </div>
     </div>
