@@ -211,8 +211,10 @@ test('Zero-Cost Free Tier: model whitelist verifies zero-cost models and rejects
   assert.equal(aiConfig.isModelFree('openrouter', 'anthropic/claude-3.5-sonnet'), false);
 
   // Gemini verified free
-  assert.equal(aiConfig.isModelFree('gemini', 'gemini-2.0-flash'), true);
   assert.equal(aiConfig.isModelFree('gemini', 'gemini-2.5-flash'), true);
+  assert.equal(aiConfig.isModelFree('gemini', 'gemini-3.5-flash'), true);
+  assert.equal(aiConfig.isModelFree('gemini', 'gemini-3.8-flash'), true);
+  assert.equal(aiConfig.isModelFree('gemini', 'gemini-2.0-flash'), false); // shut down June 2026
   assert.equal(aiConfig.isModelFree('gemini', 'gemini-1.5-pro'), false);
 
   // Cloudflare Workers AI free tier
@@ -294,21 +296,27 @@ test('Zero-Cost Free Tier: Cloudflare Workers AI sharp center-crop produces accu
   assert.equal(meta16x9.width, 1344);
   assert.equal(meta16x9.height, 768);
   assert.equal(result16x9.postProcessed, true);
+  assert.ok(result16x9.originalBuffer, 'Original 1024x1024 buffer must be preserved');
+  assert.equal(result16x9.originalBuffer.length, testSquareBuffer.length);
+
+  // Verify composition guidance
+  assert.match(CloudflareProvider.getCompositionGuidance('9:16'), /vertical framing/);
+  assert.match(CloudflareProvider.getCompositionGuidance('16:9'), /wide horizontal landscape/);
 });
 
-test('Zero-Cost Free Tier: user daily quotas enforce limits and reject requests when exhausted', () => {
+test('Zero-Cost Free Tier: user daily quotas enforce limits and reject requests when exhausted (async & sync)', async () => {
   const testUserId = 99991;
 
   // Consume text quota up to limit
   for (let i = 0; i < aiConfig.userQuotas.dailyGenerationsLimit; i++) {
-    const res = aiService.checkAndIncrementUserQuota(testUserId, 'text');
+    const res = await aiService.checkAndIncrementUserQuota(testUserId, 'text');
     assert.equal(res.allowed, true);
   }
 
   // Next text generation attempt must throw 429
-  assert.throws(
-    () => {
-      aiService.checkAndIncrementUserQuota(testUserId, 'text');
+  await assert.rejects(
+    async () => {
+      await aiService.checkAndIncrementUserQuota(testUserId, 'text');
     },
     (err) => {
       assert.equal(err.statusCode, 429);
@@ -318,10 +326,17 @@ test('Zero-Cost Free Tier: user daily quotas enforce limits and reject requests 
   );
 
   // Check quota status reporting
-  const status = aiService.getUserQuotaStatus(testUserId);
+  const status = await aiService.getUserQuotaStatus(testUserId);
   assert.equal(status.text.used, aiConfig.userQuotas.dailyGenerationsLimit);
   assert.equal(status.text.remaining, 0);
   assert.equal(status.image.remaining, aiConfig.userQuotas.dailyImagesLimit);
+
+  // Verify sync helper also behaves properly
+  const syncUserId = 99992;
+  const syncRes = aiService.checkAndIncrementUserQuotaSync(syncUserId, 'text');
+  assert.equal(syncRes.allowed, true);
+  const syncStatus = aiService.getUserQuotaStatusSync(syncUserId);
+  assert.equal(syncStatus.text.used, 1);
 });
 
 test('Persistence: scheduled post format extracts embedded image URLs without schema drift', () => {
@@ -341,5 +356,66 @@ test('Persistence: scheduled post format extracts embedded image URLs without sc
   const formattedNoImg = scheduledPostService.formatPostWithImage(noImagePost);
   assert.equal(formattedNoImg.content, 'Chỉ có văn bản thuần.');
   assert.equal(formattedNoImg.imageUrl, null);
+});
+
+test('Ownership & Security: scheduled posts and media library prevent cross-user modifications', async () => {
+  const userA = 501;
+  const userB = 502;
+
+  // Create post for user A
+  const postA = await scheduledPostService.createScheduledPost(userA, {
+    title: 'Post của User A',
+    content: 'Nội dung bảo mật của User A',
+    imageUrl: 'https://example.com/userA.jpg',
+  });
+
+  // User B cannot update post A
+  await assert.rejects(
+    async () => {
+      await scheduledPostService.updateScheduledPostStatus(userB, postA.id, 'approved');
+    },
+    (err) => {
+      assert.equal(err.statusCode, 404);
+      return true;
+    }
+  );
+
+  // User B cannot delete post A
+  await assert.rejects(
+    async () => {
+      await scheduledPostService.deleteScheduledPost(userB, postA.id);
+    },
+    (err) => {
+      assert.equal(err.statusCode, 404);
+      return true;
+    }
+  );
+
+  // User A can update their own post
+  const updated = await scheduledPostService.updateScheduledPost(userA, postA.id, {
+    title: 'Post của User A (Đã cập nhật)',
+  });
+  assert.equal(updated.title, 'Post của User A (Đã cập nhật)');
+  assert.equal(updated.imageUrl, 'https://example.com/userA.jpg');
+
+  // Media Library: User B cannot delete User A's asset
+  const assetA = await mediaService.uploadMediaAsset(userA, {
+    name: 'asset_userA.jpg',
+    url: 'https://example.com/assetA.jpg',
+  });
+
+  await assert.rejects(
+    async () => {
+      await mediaService.deleteMediaAsset(userB, assetA.id);
+    },
+    (err) => {
+      assert.equal(err.statusCode, 404);
+      return true;
+    }
+  );
+
+  // User A can delete their own asset
+  const deletedAsset = await mediaService.deleteMediaAsset(userA, assetA.id);
+  assert.equal(deletedAsset.deleted, true);
 });
 

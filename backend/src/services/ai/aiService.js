@@ -15,14 +15,99 @@ const prisma = require('../../config/prisma');
 const usageLog = [];
 let activeGenerations = 0;
 
-// Daily user quota tracking (in-memory map keyed by `${userId}:${date}:${type}`)
+// Daily user quota tracking (in-memory cache synced with persistent database)
 const userDailyQuotaUsage = new Map();
 
 function getTodayKey() {
   return new Date().toISOString().slice(0, 10);
 }
 
-function checkAndIncrementUserQuota(userId, type = 'text') {
+/**
+ * Checks and atomically increments user daily quota in PostgreSQL via Prisma,
+ * falling back gracefully to memory store if database is offline or unmigrated.
+ */
+async function checkAndIncrementUserQuota(userId, type = 'text') {
+  if (!userId) return { allowed: true, remaining: 999 };
+  const dateKey = getTodayKey();
+  const quotaKey = `${userId}:${dateKey}:${type}`;
+  const maxLimit =
+    type === 'image'
+      ? aiConfig.userQuotas.dailyImagesLimit
+      : aiConfig.userQuotas.dailyGenerationsLimit;
+
+  let currentCount;
+  try {
+    const existing = await prisma.aiQuotaUsage.findUnique({
+      where: {
+        userId_dateKey_type: {
+          userId: Number(userId),
+          dateKey,
+          type,
+        },
+      },
+    });
+
+    if (existing && existing.count >= maxLimit) {
+      userDailyQuotaUsage.set(quotaKey, existing.count);
+      throw new AppError(
+        `Bạn đã đạt giới hạn sử dụng AI miễn phí trong ngày (${maxLimit} lượt ${type === 'image' ? 'tạo ảnh' : 'tạo nội dung'}). Hạn ngạch sẽ được làm mới vào ngày mai!`,
+        429
+      );
+    }
+
+    const record = await prisma.aiQuotaUsage.upsert({
+      where: {
+        userId_dateKey_type: {
+          userId: Number(userId),
+          dateKey,
+          type,
+        },
+      },
+      update: {
+        count: { increment: 1 },
+      },
+      create: {
+        userId: Number(userId),
+        dateKey,
+        type,
+        count: 1,
+      },
+    });
+    currentCount = record.count;
+    userDailyQuotaUsage.set(quotaKey, currentCount);
+  } catch (err) {
+    if (err instanceof AppError) throw err;
+    // Memory fallback when DB is unreachable (e.g. unit tests or offline DB)
+    const inMem = userDailyQuotaUsage.get(quotaKey) || 0;
+    if (inMem >= maxLimit) {
+      throw new AppError(
+        `Bạn đã đạt giới hạn sử dụng AI miễn phí trong ngày (${maxLimit} lượt ${type === 'image' ? 'tạo ảnh' : 'tạo nội dung'}). Hạn ngạch sẽ được làm mới vào ngày mai!`,
+        429
+      );
+    }
+    currentCount = inMem + 1;
+    userDailyQuotaUsage.set(quotaKey, currentCount);
+  }
+
+  if (currentCount > maxLimit) {
+    throw new AppError(
+      `Bạn đã đạt giới hạn sử dụng AI miễn phí trong ngày (${maxLimit} lượt ${type === 'image' ? 'tạo ảnh' : 'tạo nội dung'}). Hạn ngạch sẽ được làm mới vào ngày mai!`,
+      429
+    );
+  }
+
+  return {
+    allowed: true,
+    used: currentCount,
+    limit: maxLimit,
+    remaining: Math.max(0, maxLimit - currentCount),
+  };
+}
+
+/**
+ * Synchronous quota check for in-memory only operations & synchronous callers
+ */
+function checkAndIncrementUserQuotaSync(userId, type = 'text') {
   if (!userId) return { allowed: true, remaining: 999 };
   const dateKey = getTodayKey();
   const quotaKey = `${userId}:${dateKey}:${type}`;
@@ -49,7 +134,48 @@ function checkAndIncrementUserQuota(userId, type = 'text') {
   };
 }
 
-function getUserQuotaStatus(userId) {
+async function getUserQuotaStatus(userId) {
+  if (!userId) {
+    return {
+      text: { used: 0, limit: aiConfig.userQuotas.dailyGenerationsLimit, remaining: aiConfig.userQuotas.dailyGenerationsLimit },
+      image: { used: 0, limit: aiConfig.userQuotas.dailyImagesLimit, remaining: aiConfig.userQuotas.dailyImagesLimit },
+    };
+  }
+  const dateKey = getTodayKey();
+  let textUsed = 0;
+  let imageUsed = 0;
+
+  try {
+    const records = await prisma.aiQuotaUsage.findMany({
+      where: {
+        userId: Number(userId),
+        dateKey,
+      },
+    });
+    for (const r of records) {
+      if (r.type === 'text') textUsed = r.count;
+      if (r.type === 'image') imageUsed = r.count;
+    }
+  } catch (err) {
+    textUsed = userDailyQuotaUsage.get(`${userId}:${dateKey}:text`) || 0;
+    imageUsed = userDailyQuotaUsage.get(`${userId}:${dateKey}:image`) || 0;
+  }
+
+  return {
+    text: {
+      used: textUsed,
+      limit: aiConfig.userQuotas.dailyGenerationsLimit,
+      remaining: Math.max(0, aiConfig.userQuotas.dailyGenerationsLimit - textUsed),
+    },
+    image: {
+      used: imageUsed,
+      limit: aiConfig.userQuotas.dailyImagesLimit,
+      remaining: Math.max(0, aiConfig.userQuotas.dailyImagesLimit - imageUsed),
+    },
+  };
+}
+
+function getUserQuotaStatusSync(userId) {
   if (!userId) {
     return {
       text: { used: 0, limit: aiConfig.userQuotas.dailyGenerationsLimit, remaining: aiConfig.userQuotas.dailyGenerationsLimit },
@@ -321,7 +447,7 @@ class AIService {
    */
   async generateMarketingPlan(userId, data, profile) {
     if (userId) {
-      checkAndIncrementUserQuota(userId, 'text');
+      await checkAndIncrementUserQuota(userId, 'text');
     }
     const brandVoice = profile?.brandVoice || 'Chuyên nghiệp, tin cậy, gần gũi với khách hàng Việt Nam';
     const usp = profile?.usp || 'Sản phẩm chất lượng cao, giá thành hợp lý';
@@ -587,7 +713,7 @@ ${postContent.slice(0, 1000)}`;
     businessProfileId = null,
   }) {
     if (userId) {
-      checkAndIncrementUserQuota(userId, 'image');
+      await checkAndIncrementUserQuota(userId, 'image');
     }
     await this.acquireConcurrencySlot();
     const startTime = Date.now();
@@ -662,8 +788,10 @@ ${postContent.slice(0, 1000)}`;
       }
     }
 
+    let originalPersistentUrl = null;
+    const fileExt = mimeType.includes('png') ? '.png' : '.jpg';
+
     if (imageBuffer) {
-      const fileExt = mimeType.includes('png') ? '.png' : '.jpg';
       const fileName = `ai-${Date.now()}-${Math.round(Math.random() * 1e6)}${fileExt}`;
 
       try {
@@ -681,6 +809,23 @@ ${postContent.slice(0, 1000)}`;
         console.warn('[Storage Notice] Could not mirror image to Supabase Storage, using provider result:', storageErr.message);
         if (!persistentUrl && imageBuffer) {
           persistentUrl = `data:${mimeType};base64,${imageBuffer.toString('base64')}`;
+        }
+      }
+
+      // Preserve uncropped 1:1 original if post-processing was performed
+      if (generatedImageResult.originalBuffer && generatedImageResult.postProcessed) {
+        try {
+          const origFileName = `ai-orig-${Date.now()}-${Math.round(Math.random() * 1e6)}${fileExt}`;
+          const origUploaded = await uploadCampaignAsset({
+            buffer: generatedImageResult.originalBuffer,
+            mimetype: mimeType,
+            originalname: origFileName,
+          }, `user-${userId}`);
+          if (origUploaded?.publicUrl) {
+            originalPersistentUrl = origUploaded.publicUrl;
+          }
+        } catch (origErr) {
+          // Non-blocking for primary delivery
         }
       }
     }
@@ -712,6 +857,7 @@ ${postContent.slice(0, 1000)}`;
 
     return {
       imageUrl: persistentUrl,
+      originalImageUrl: originalPersistentUrl,
       mediaAssetId: assetRecord?.id || null,
       prompt,
       aspectRatio,
@@ -726,6 +872,8 @@ const aiService = new AIService();
 aiService.isTransientError = isTransientError;
 aiService.AIService = AIService;
 aiService.checkAndIncrementUserQuota = checkAndIncrementUserQuota;
+aiService.checkAndIncrementUserQuotaSync = checkAndIncrementUserQuotaSync;
 aiService.getUserQuotaStatus = getUserQuotaStatus;
+aiService.getUserQuotaStatusSync = getUserQuotaStatusSync;
 aiService.marketingPlanOutputSchema = marketingPlanOutputSchema;
 module.exports = aiService;

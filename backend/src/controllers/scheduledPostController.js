@@ -56,9 +56,24 @@ async function deletePost(req, res, next) {
   }
 }
 
+/**
+ * PATCH /api/scheduled-posts/:id
+ */
+async function updatePost(req, res, next) {
+  try {
+    const userId = req.user.id;
+    const { id } = req.params;
+    const updated = await scheduledPostService.updateScheduledPost(userId, id, req.body);
+    return success(res, updated);
+  } catch (err) {
+    next(err);
+  }
+}
+
 module.exports = {
   getPosts,
   createPost,
+  updatePost,
   updateStatus,
   deletePost
 };

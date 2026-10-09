@@ -58,18 +58,28 @@ async function getMediaAssets(userId) {
 }
 
 /**
- * Deletes a media asset by ID.
+ * Deletes a media asset by ID with strict user ownership verification.
  */
 async function deleteMediaAsset(userId, assetId) {
   const idNum = parseInt(assetId, 10);
 
   try {
+    const existing = await prisma.mediaAsset.findUnique({ where: { id: idNum } });
+    if (!existing || existing.userId !== userId) {
+      throw new AppError('Không tìm thấy tài sản truyền thông hoặc bạn không có quyền xóa.', 404);
+    }
+
     await prisma.mediaAsset.delete({
       where: { id: idNum }
     });
     return { deleted: true };
   } catch (err) {
+    if (err instanceof AppError) throw err;
     console.warn('[Prisma Fallback] Deleting media asset in memory store:', err.message);
+    const target = demoMediaAssetsStore.find(a => a.id === idNum);
+    if (!target || target.userId !== userId) {
+      throw new AppError('Không tìm thấy tài sản truyền thông hoặc bạn không có quyền xóa.', 404);
+    }
     demoMediaAssetsStore = demoMediaAssetsStore.filter(a => a.id !== idNum);
     return { deleted: true };
   }

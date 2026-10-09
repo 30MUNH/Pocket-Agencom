@@ -8,6 +8,7 @@ router.use(authMiddleware);
 
 router.get('/', scheduledPostController.getPosts);
 router.post('/', scheduledPostController.createPost);
+router.patch('/:id', scheduledPostController.updatePost);
 router.patch('/:id/status', scheduledPostController.updateStatus);
 router.delete('/:id', scheduledPostController.deletePost);
 

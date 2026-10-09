@@ -88,6 +88,7 @@ model User {
   socialPlatforms  SocialPlatform[]
   scheduledPosts   ScheduledPost[]
   mediaAssets      MediaAsset[]
+  aiQuotaUsage     AiQuotaUsage[]
 
   @@map("users")
 }
@@ -239,6 +240,7 @@ model ScheduledPost {
   businessProfileId Int?       @map("business_profile_id")
   title             String
   content           String     @db.Text
+  imageUrl          String?    @map("image_url")
   platform          String // 'Facebook', 'TikTok', 'Instagram', 'Zalo', etc.
   scheduledTime     DateTime?  @map("scheduled_time")
   status            PostStatus @default(pending_approval)
@@ -249,6 +251,20 @@ model ScheduledPost {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("scheduled_posts")
+}
+
+model AiQuotaUsage {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @map("user_id")
+  dateKey   String   @map("date_key") // 'YYYY-MM-DD'
+  type      String   // 'text' or 'image'
+  count     Int      @default(0)
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, dateKey, type])
+  @@map("ai_quota_usage")
 }
 
 model MediaAsset {
