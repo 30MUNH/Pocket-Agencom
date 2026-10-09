@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
+import { normalizePlanContent } from '../src/utils/planContent.js';
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 
@@ -41,3 +42,26 @@ test('historical plans show a retired-feature notice and disable reuse actions',
   assert.match(source, /hasLegacyContent/);
   assert.match(source, /tính năng đã ngừng hoạt động/i);
 });
+
+test('plain-text historical fields remain visible without array operations', () => {
+  const normalized = normalizePlanContent({
+    contentIdeas: 'Original idea text',
+    videoScripts: 'Original script text',
+    checklist: 'Original checklist text',
+    seoKeywords: 'Original keyword text',
+  });
+  assert.equal(normalized.contentIdeas[0].description, 'Original idea text');
+  assert.equal(normalized.videoScripts[0].action, 'Original script text');
+  assert.equal(normalized.checklist[0].title, 'Original checklist text');
+  assert.deepEqual(normalized.seoKeywords, ['Original keyword text']);
+});
+
+test('staff plan review renders normalized content and historical plan notice without hardcoded mock text', async () => {
+  const source = await read('src/pages/staff/PlanReviewPage.jsx');
+  assert.match(source, /normalizePlanContent/);
+  assert.match(source, /hasLegacyContent/);
+  assert.doesNotMatch(source, /3 Cách phối đồ với Trench Coat/);
+  assert.doesNotMatch(source, /Hậu trường: Lụa Bền vững/);
+  assert.doesNotMatch(source, /Morning Rush/);
+});
+

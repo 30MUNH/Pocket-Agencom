@@ -1,12 +1,13 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
-import { Lightbulb, Heart, Mail, FileText, ClipboardCheck, Check, PlayCircle, Play, Video, Copy, BookOpen, RefreshCw, Download, Clock, Loader2, Target, Sparkles, Image as ImageIcon, Upload, X, Wand2, Users, Search } from 'lucide-react';
+import { Lightbulb, Heart, Mail, FileText, ClipboardCheck, Check, PlayCircle, Play, Video, Copy, BookOpen, RefreshCw, Download, Clock, Loader2, Target, Sparkles, Image as ImageIcon, Upload, X, Wand2, Users } from 'lucide-react';
 import { useMarketingPlan, useSavePlan, useGeneratePost, useGeneratePostWithImage } from '../../hooks/useMarketingPlans';
 import { useAuthStore } from '../../store/authStore';
 import { toast } from '../../store/toastStore';
 import BudgetBreakdownCard from '../../components/marketing/BudgetBreakdownCard';
 import RevisionChatPanel from '../../components/marketing/RevisionChatPanel';
 import CampaignBudgetTracker from '../../components/marketing/CampaignBudgetTracker';
+import { normalizePlanContent } from '../../utils/planContent';
 
 /**
  * Splits AI Advisor output into { postContent, designTips }.
@@ -392,7 +393,8 @@ export default function MarketingResult() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const planId = searchParams.get('planId');
-  const { data: plan, isLoading } = useMarketingPlan(planId);
+  const { data: rawPlan, isLoading } = useMarketingPlan(planId);
+  const plan = useMemo(() => (rawPlan ? normalizePlanContent(rawPlan) : null), [rawPlan]);
   const savePlan = useSavePlan();
   const user = useAuthStore((s) => s.user);
   const monthlyMarketingBudget = user?.businessProfile?.monthlyMarketingBudget;
@@ -680,7 +682,7 @@ export default function MarketingResult() {
                   <div className="flex-1 space-y-2">
                     <div className="flex items-center justify-between">
                       <h4 className="text-lg font-bold text-primary dark:text-inverse-primary">
-                        {script.scene}
+                        {script.scene || script.title || `Phân cảnh ${index + 1}`}
                       </h4>
                       <span className="text-xs font-bold text-on-surface-variant bg-surface-container dark:bg-outline/20 px-2.5 py-1 rounded shrink-0 ml-2">
                         Cảnh {index + 1}
@@ -698,7 +700,7 @@ export default function MarketingResult() {
                       onClick={() =>
                         copyToClipboard(
                           `scene-${index}`,
-                          `[${script.scene}] ${script.action}\nLời thoại: ${script.dialogue || ''}`
+                          `[${script.scene || script.title || `Phân cảnh ${index + 1}`}] ${script.action}\nLời thoại: ${script.dialogue || ''}`
                         )
                       }
                       className="text-label-sm font-label-sm text-secondary hover:text-primary dark:text-secondary-fixed-dim dark:hover:text-primary-fixed flex items-center gap-1.5 transition-colors"

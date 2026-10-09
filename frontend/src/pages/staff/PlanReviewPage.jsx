@@ -1,8 +1,7 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import {
   ArrowLeft,
-  XCircle,
   Edit,
   CheckCircle2,
   Lightbulb,
@@ -13,20 +12,20 @@ import {
   Calendar,
   MessageSquare,
   Eye,
-  Heart,
 } from 'lucide-react';
 import { useMarketingPlan, useReviewPlan } from '../../hooks/useMarketingPlans';
 import { PLAN_STATUS_LABELS } from '../../utils/statusLabels';
 import { toast } from '../../store/toastStore';
 import { useAuthStore } from '../../store/authStore';
+import { normalizePlanContent } from '../../utils/planContent';
 
 export default function PlanReviewPage() {
   const { id } = useParams();
   const user = useAuthStore((s) => s.user);
-  const { data: plan, isLoading } = useMarketingPlan(id);
+  const { data: rawPlan, isLoading } = useMarketingPlan(id);
+  const plan = useMemo(() => (rawPlan ? normalizePlanContent(rawPlan) : null), [rawPlan]);
   const reviewPlan = useReviewPlan();
   const [newNoteText, setNewNoteText] = useState('');
-  const [isScriptOpen, setIsScriptOpen] = useState(false);
   const [notes, setNotes] = useState([
     {
       id: 1,
@@ -156,6 +155,12 @@ export default function PlanReviewPage() {
         )}
       </div>
 
+      {plan.hasLegacyContent && (
+        <div className="rounded-2xl border border-amber-300/60 bg-amber-50 dark:bg-amber-950/20 px-5 py-4 text-sm text-amber-900 dark:text-amber-200">
+          Kế hoạch lịch sử này có nội dung tham chiếu một tính năng đã ngừng hoạt động. Nội dung gốc được giữ nguyên để đối chiếu; các thao tác tạo lại hoặc tái sử dụng tự động đã được tắt.
+        </div>
+      )}
+
       {/* Main Layout Grid */}
       <div className="flex flex-col xl:flex-row gap-8">
         {/* Center: Strategy Detail Column */}
@@ -167,8 +172,10 @@ export default function PlanReviewPage() {
               <h3 className="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-widest mb-4">
                 Tóm tắt Dự án
               </h3>
-              <p className="text-body-lg text-on-surface dark:text-inverse-primary leading-relaxed relative z-10">
-                Một chiến dịch tập trung vào hình ảnh và kể chuyện được thiết kế để thu hút lại các khách hàng cũ trước đợt cao điểm ngày lễ. Tập trung vào phong cách tối giản và chất liệu bền vững thông qua video ngắn và chuỗi email được chọn lọc.
+              <p className="text-body-lg text-on-surface dark:text-inverse-primary leading-relaxed relative z-10 whitespace-pre-wrap">
+                {typeof plan.playbook === 'string'
+                  ? plan.playbook
+                  : (plan.campaignReason || plan.campaignType || plan.goal || 'Chưa có thông tin tóm tắt.')}
               </p>
             </div>
 
@@ -177,10 +184,10 @@ export default function PlanReviewPage() {
                 Khách hàng Mục tiêu
               </h3>
               <p className="text-headline-md font-bold text-primary dark:text-inverse-primary mb-1">
-                Phụ nữ 28-45
+                {plan.businessProfile?.targetCustomer || plan.targetCustomer || 'Chưa xác định'}
               </p>
               <p className="text-body-md text-on-surface-variant leading-relaxed">
-                Chuyên gia thành thị tìm kiếm trang phục cơ bản cao cấp.
+                {plan.businessProfile?.businessType || plan.businessProfile?.productDescription || plan.businessType || 'Doanh nghiệp'}
               </p>
             </div>
           </section>
@@ -194,39 +201,30 @@ export default function PlanReviewPage() {
               Ý tưởng Nội dung
             </h3>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Concept 1 */}
-              <div className="p-6 rounded-2xl bg-surface dark:bg-surface-variant/20 border border-surface-variant/30 hover:-translate-y-0.5 transition-all">
-                <span className="inline-block px-3 py-1 bg-surface-container dark:bg-outline/20 rounded-full text-label-sm font-label-sm text-on-surface-variant dark:text-inverse-on-surface mb-4">
-                  Instagram Reel
-                </span>
-                <h4 className="text-body-lg font-semibold text-on-surface dark:text-inverse-primary mb-2">
-                  "3 Cách phối đồ với Trench Coat Cổ điển"
-                </h4>
-                <p className="text-body-md text-on-surface-variant mb-4">
-                  Các chuyển cảnh nhanh cho thấy cùng một chiếc áo khoác đi từ văn phòng đến bữa trưa cuối tuần. Âm thanh năng lượng cao.
-                </p>
-                <div className="flex items-center gap-2 text-label-sm font-label-sm text-secondary dark:text-secondary-fixed">
-                  <Eye size={14} /> Tập trung Nhận diện
-                </div>
+            {plan.contentIdeas && plan.contentIdeas.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {plan.contentIdeas.map((idea, index) => (
+                  <div key={index} className="p-6 rounded-2xl bg-surface dark:bg-surface-variant/20 border border-surface-variant/30 hover:-translate-y-0.5 transition-all">
+                    <span className="inline-block px-3 py-1 bg-surface-container dark:bg-outline/20 rounded-full text-label-sm font-label-sm text-on-surface-variant dark:text-inverse-on-surface mb-4">
+                      {idea.channel || idea.format || 'Đa kênh'}
+                    </span>
+                    <h4 className="text-body-lg font-semibold text-on-surface dark:text-inverse-primary mb-2">
+                      {idea.title}
+                    </h4>
+                    <p className="text-body-md text-on-surface-variant mb-4 whitespace-pre-wrap leading-relaxed">
+                      {idea.description}
+                    </p>
+                    {idea.format && (
+                      <div className="flex items-center gap-2 text-label-sm font-label-sm text-secondary dark:text-secondary-fixed">
+                        <Eye size={14} /> {idea.format}
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
-
-              {/* Concept 2 */}
-              <div className="p-6 rounded-2xl bg-surface dark:bg-surface-variant/20 border border-surface-variant/30 hover:-translate-y-0.5 transition-all">
-                <span className="inline-block px-3 py-1 bg-surface-container dark:bg-outline/20 rounded-full text-label-sm font-label-sm text-on-surface-variant dark:text-inverse-on-surface mb-4">
-                  Bản tin Email
-                </span>
-                <h4 className="text-body-lg font-semibold text-on-surface dark:text-inverse-primary mb-2">
-                  "Hậu trường: Lụa Bền vững"
-                </h4>
-                <p className="text-body-md text-on-surface-variant mb-4">
-                  Bài viết ảnh giáo dục chi tiết về nguồn cung ứng dòng lụa mới của chúng tôi. Giọng điệu mềm mại, gần gũi với các trích dẫn của người sáng lập.
-                </p>
-                <div className="flex items-center gap-2 text-label-sm font-label-sm text-secondary dark:text-secondary-fixed">
-                  <Heart size={14} /> Tập trung Nuôi dưỡng
-                </div>
-              </div>
-            </div>
+            ) : (
+              <p className="text-body-md text-on-surface-variant">Chưa có ý tưởng nội dung.</p>
+            )}
           </section>
 
           {/* Approved Scripts Section */}
@@ -237,51 +235,57 @@ export default function PlanReviewPage() {
                 <div className="w-10 h-10 rounded-full bg-primary text-on-primary flex items-center justify-center">
                   <Video size={20} />
                 </div>
-                Kịch bản Được Duyệt
+                Kịch bản Video
               </h3>
 
-              <div className="space-y-4">
-                <details
-                  className="group bg-surface dark:bg-surface-variant/20 rounded-2xl border border-surface-variant/30 overflow-hidden"
-                  open={isScriptOpen}
-                  onToggle={(e) => setIsScriptOpen(e.target.open)}
-                >
-                  <summary className="flex items-center justify-between p-6 cursor-pointer hover:bg-surface-container-low dark:hover:bg-surface-variant/35 transition-colors">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-xl bg-surface-container dark:bg-outline/20 flex items-center justify-center">
-                        <Play size={16} className="text-primary dark:text-inverse-primary" />
-                      </div>
-                      <div>
-                        <h4 className="text-body-lg font-semibold text-on-surface dark:text-inverse-primary">
-                          Phần Hook 'Morning Rush'
-                        </h4>
-                        <p className="text-label-sm font-label-sm text-on-surface-variant mt-1">
-                          Thời lượng: 15 giây • TikTok
-                        </p>
-                      </div>
-                    </div>
-                    <ChevronDown className="text-on-surface-variant group-open:rotate-180 transition-transform" size={18} />
-                  </summary>
-                  <div className="p-6 pt-0 border-t border-surface-variant/30 bg-surface dark:bg-surface-variant/5">
-                    <div className="grid grid-cols-1 md:grid-cols-[1fr_2fr] gap-6 mt-6">
-                      <div>
-                        <h5 className="text-label-sm font-label-sm text-on-surface-variant uppercase mb-2">Hình ảnh</h5>
-                        <p className="text-body-md text-on-surface dark:text-inverse-primary">
-                          Cận cảnh đồng hồ báo thức chỉ 7:30 sáng. Cắt nhanh sang tủ quần áo hỗn loạn. Phóng to khuôn mặt lo lắng.
-                        </p>
-                      </div>
-                      <div>
-                        <h5 className="text-label-sm font-label-sm text-on-surface-variant uppercase mb-2">Âm thanh / Trên màn hình</h5>
-                        <div className="text-body-md text-on-surface bg-surface-container-low dark:bg-surface-variant/20 p-4 rounded-xl italic">
-                          (Âm thanh: Tiếng tích tắc nhanh của đồng hồ dừng đột ngột bằng một tiếng xước đĩa) <br />
-                          <br />
-                          Chữ: "Lại không có gì để mặc?"
+              {plan.videoScripts && plan.videoScripts.length > 0 ? (
+                <div className="space-y-4">
+                  {plan.videoScripts.map((script, index) => (
+                    <details
+                      key={index}
+                      className="group bg-surface dark:bg-surface-variant/20 rounded-2xl border border-surface-variant/30 overflow-hidden"
+                      defaultOpen={index === 0}
+                    >
+                      <summary className="flex items-center justify-between p-6 cursor-pointer hover:bg-surface-container-low dark:hover:bg-surface-variant/35 transition-colors">
+                        <div className="flex items-center gap-4">
+                          <div className="w-12 h-12 rounded-xl bg-surface-container dark:bg-outline/20 flex items-center justify-center">
+                            <Play size={16} className="text-primary dark:text-inverse-primary" />
+                          </div>
+                          <div>
+                            <h4 className="text-body-lg font-semibold text-on-surface dark:text-inverse-primary">
+                              {script.scene || script.title || `Phân cảnh ${index + 1}`}
+                            </h4>
+                            {script.title && script.scene && (
+                              <p className="text-label-sm font-label-sm text-on-surface-variant mt-1">
+                                {script.title}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        <ChevronDown className="text-on-surface-variant group-open:rotate-180 transition-transform" size={18} />
+                      </summary>
+                      <div className="p-6 pt-0 border-t border-surface-variant/30 bg-surface dark:bg-surface-variant/5">
+                        <div className="grid grid-cols-1 md:grid-cols-[1fr_2fr] gap-6 mt-6">
+                          <div>
+                            <h5 className="text-label-sm font-label-sm text-on-surface-variant uppercase mb-2">Hình ảnh / Hành động</h5>
+                            <p className="text-body-md text-on-surface dark:text-inverse-primary leading-relaxed whitespace-pre-wrap">
+                              {script.visual || script.action || 'Không có mô tả hình ảnh'}
+                            </p>
+                          </div>
+                          <div>
+                            <h5 className="text-label-sm font-label-sm text-on-surface-variant uppercase mb-2">Âm thanh / Lời thoại</h5>
+                            <div className="text-body-md text-on-surface bg-surface-container-low dark:bg-surface-variant/20 p-4 rounded-xl italic leading-relaxed whitespace-pre-wrap">
+                              {script.audio || script.dialogue || script.action || 'Không có lời thoại'}
+                            </div>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </div>
-                </details>
-              </div>
+                    </details>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-body-md text-on-surface-variant">Chưa có kịch bản video.</p>
+              )}
             </div>
           </section>
 
@@ -294,29 +298,63 @@ export default function PlanReviewPage() {
               Lộ trình Triển khai
             </h3>
 
-            <div className="relative border-l-2 border-surface-variant/50 dark:border-outline/20 ml-6 space-y-10 pb-4">
-              <div className="relative pl-8">
-                <div className="absolute -left-[11px] top-1 w-5 h-5 rounded-full bg-primary flex items-center justify-center ring-4 ring-surface-container-lowest dark:ring-tertiary-container">
-                  <div className="w-2 h-2 rounded-full bg-on-primary" />
-                </div>
-                <h4 className="text-body-lg font-semibold text-on-surface dark:text-inverse-primary">
-                  Tuần 1: Giai đoạn Teaser
-                </h4>
-                <p className="text-body-md text-on-surface-variant mt-2">
-                  Đăng 3 Instagram Stories gợi ý về bộ sưu tập mới. Gửi email 'Truy cập sớm cho VIP' tới danh sách phân khúc.
-                </p>
+            {Array.isArray(plan.playbook) && plan.playbook.length > 0 ? (
+              <div className="relative border-l-2 border-surface-variant/50 dark:border-outline/20 ml-6 space-y-10 pb-4">
+                {plan.playbook.map((phase, index) => (
+                  <div key={index} className="relative pl-8">
+                    <div className="absolute -left-[11px] top-1 w-5 h-5 rounded-full bg-primary flex items-center justify-center ring-4 ring-surface-container-lowest dark:ring-tertiary-container">
+                      <div className="w-2 h-2 rounded-full bg-on-primary" />
+                    </div>
+                    <div className="flex flex-wrap items-center gap-3">
+                      <h4 className="text-body-lg font-semibold text-on-surface dark:text-inverse-primary">
+                        {phase.phaseName || `Giai đoạn ${index + 1}`}
+                      </h4>
+                      {phase.duration && (
+                        <span className="text-xs px-2.5 py-0.5 rounded-full bg-surface-container text-on-surface-variant font-medium">
+                          {phase.duration}
+                        </span>
+                      )}
+                    </div>
+                    {phase.objective && (
+                      <p className="text-body-md text-on-surface-variant mt-2">
+                        {phase.objective}
+                      </p>
+                    )}
+                    {Array.isArray(phase.keyActions) && phase.keyActions.length > 0 && (
+                      <ul className="mt-2 space-y-1 text-body-sm text-on-surface-variant list-disc list-inside">
+                        {phase.keyActions.map((action, aIdx) => (
+                          <li key={aIdx}>{typeof action === 'string' ? action.replace(/\*\*/g, '') : action}</li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                ))}
               </div>
-
-              <div className="relative pl-8">
-                <div className="absolute -left-[11px] top-1 w-5 h-5 rounded-full bg-surface-variant dark:bg-outline/35 flex items-center justify-center ring-4 ring-surface-container-lowest dark:ring-tertiary-container" />
-                <h4 className="text-body-lg font-semibold text-on-surface dark:text-inverse-primary">
-                  Tuần 2: Ra mắt Chính thức
-                </h4>
-                <p className="text-body-md text-on-surface-variant mt-2">
-                  Xuất bản video chính trên Reels và TikTok. Kích hoạt chuỗi email chào mừng cho người đăng ký mới.
-                </p>
+            ) : Array.isArray(plan.checklist) && plan.checklist.length > 0 ? (
+              <div className="relative border-l-2 border-surface-variant/50 dark:border-outline/20 ml-6 space-y-8 pb-4">
+                {plan.checklist.map((item, index) => (
+                  <div key={index} className="relative pl-8">
+                    <div className="absolute -left-[11px] top-1 w-5 h-5 rounded-full bg-primary flex items-center justify-center ring-4 ring-surface-container-lowest dark:ring-tertiary-container">
+                      <div className="w-2 h-2 rounded-full bg-on-primary" />
+                    </div>
+                    <h4 className="text-body-lg font-semibold text-on-surface dark:text-inverse-primary">
+                      {item.title}
+                    </h4>
+                    {item.desc && (
+                      <p className="text-body-md text-on-surface-variant mt-1">
+                        {item.desc}
+                      </p>
+                    )}
+                  </div>
+                ))}
               </div>
-            </div>
+            ) : typeof plan.playbook === 'string' && plan.playbook.trim() ? (
+              <div className="prose prose-sm max-w-none text-on-surface-variant leading-relaxed whitespace-pre-wrap pl-6">
+                {plan.playbook}
+              </div>
+            ) : (
+              <p className="text-body-md text-on-surface-variant">Chưa có lộ trình triển khai.</p>
+            )}
           </section>
         </div>
 
