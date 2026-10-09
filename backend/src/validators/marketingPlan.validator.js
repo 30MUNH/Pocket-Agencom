@@ -40,6 +40,23 @@ const generatePostWithImageSchema = z.object({
   campaignReason: z.string().optional(),
 });
 
+const refinePlanSchema = z.object({
+  instruction: z.string().min(3, 'Chỉ dẫn điều chỉnh phải có ít nhất 3 ký tự'),
+});
+
+const generateImagePromptSchema = z.object({
+  postContent: z.string().min(5, 'Nội dung bài viết phải có ít nhất 5 ký tự'),
+  platform: z.string().optional(),
+  businessProfileId: z.coerce.number().optional(),
+});
+
+const generateSocialImageSchema = z.object({
+  prompt: z.string().min(5, 'Mô tả hình ảnh (prompt) phải có ít nhất 5 ký tự'),
+  aspectRatio: z.enum(['1:1', '4:5', '9:16', '16:9']).optional().default('1:1'),
+  platform: z.string().optional().default('Facebook'),
+  businessProfileId: z.coerce.number().optional(),
+});
+
 const VALID_PLAN_TRANSITIONS = {
   draft: ['saved'],
   saved: ['reviewed', 'need_revision'],
@@ -59,4 +76,7 @@ module.exports = {
   isValidPlanTransition,
   generatePostSchema,
   generatePostWithImageSchema,
+  refinePlanSchema,
+  generateImagePromptSchema,
+  generateSocialImageSchema,
 };

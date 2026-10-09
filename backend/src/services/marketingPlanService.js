@@ -3,242 +3,10 @@ const supabase = require('../config/supabase');
 const path = require('path');
 const { AppError } = require('../middleware/errorHandler');
 const { isValidPlanTransition } = require('../validators/marketingPlan.validator');
-const { GoogleGenerativeAI } = require('@google/generative-ai');
-const { findSimilarStrategies } = require('./ragService');
+const aiService = require('./ai/aiService');
 
-// ── Gemini SDK Initialization ──────────────────────────────────────────────────
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-
-const geminiModel = genAI.getGenerativeModel({
-  model: 'gemini-2.5-flash',
-  generationConfig: {
-    responseMimeType: 'application/json',
-    temperature: 0.9,
-  },
-});
-
-const geminiTextModel = genAI.getGenerativeModel({
-  model: 'gemini-2.5-flash',
-  generationConfig: {
-    temperature: 0.8,
-  },
-});
-
-const SYSTEM_PROMPT = `Bạn là một Chuyên gia Chiến lược Marketing hàng đầu chuyên về Doanh nghiệp Siêu nhỏ và Nhỏ (Micro-SME) tại Việt Nam.
-Bạn có kiến thức sâu rộng về thị trường Việt Nam, hành vi người tiêu dùng Việt và các kênh tiếp thị phổ biến (TikTok, Facebook, Instagram, YouTube Shorts, email và thương mại điện tử).
-
-NHIỆM VỤ: Dựa trên thông tin chiến dịch do người dùng cung cấp, hãy tạo ra một bản kế hoạch marketing chi tiết, sáng tạo, thực tế và hoàn toàn bằng tiếng Việt.
-
-QUY TẮC BẮT BUỘC:
-1. Toàn bộ nội dung PHẢI được viết bằng tiếng Việt tự nhiên, phù hợp với văn hóa và thị hiếu người Việt.
-2. Ý tưởng nội dung phải sáng tạo, bắt trend và phù hợp với ngân sách của doanh nghiệp nhỏ.
-3. Kịch bản video phải chi tiết, có phân cảnh rõ ràng với thời gian cụ thể và lời thoại tự nhiên, đúng giọng thương hiệu.
-4. Checklist phải có tối thiểu 5 mục, mỗi mục là một hành động cụ thể và khả thi.
-5. Playbook phải là một mảng chứa các giai đoạn chiến dịch cụ thể, được tổ chức tuần tự từ lúc bắt đầu chuẩn bị đến khi đo lường kết quả. Mỗi hành động quan trọng trong keyActions bắt buộc phải dùng định dạng markdown **bold** cho các keywords quan trọng.
-6. seoKeywords phải là một danh sách chứa từ 8-12 từ khóa chuẩn SEO và từ khóa đấu thầu quảng cáo (ad-bidding keywords) tiềm năng và có tỷ lệ chuyển đổi cao nhất cho chiến dịch này tại Việt Nam.
-7. budgetBreakdown PHẢI phản ánh đúng các kênh triển khai (deploymentChannels) mà người dùng đã nhập. Nếu người dùng chỉ triển khai trên Facebook thì CHỈ phân bổ cho Facebook và các hạng mục liên quan. Nếu triển khai trên nhiều kênh, hãy chia tỷ lệ hợp lý giữa các kênh đó. KHÔNG được thêm kênh nào mà người dùng không yêu cầu. Tổng percentOfTotal của tất cả channels PHẢI bằng 100. Tổng percent của tất cả items trong mỗi channel PHẢI bằng 100. Mỗi channel phải có ít nhất 3 items chi tiết.
-
-Trả về DUY NHẤT một JSON object hợp lệ theo đúng cấu trúc sau (KHÔNG kèm markdown, backtick, hay văn bản hội thoại):
-{
-  "contentIdeas": [
-    { "title": "string", "channel": "string", "format": "string", "description": "string" }
-  ],
-  "videoScripts": [
-    { "scene": "string (ví dụ: 0-3s)", "action": "string", "dialogue": "string" }
-  ],
-  "checklist": [ "string", "string", "..." ],
-  "playbook": [
-    {
-      "phaseName": "string (Tên Giai Đoạn, ví dụ: Giai đoạn 1: Thu hút & Tạo tò mò)",
-      "duration": "string (Thời gian, ví dụ: Ngày 1 - Ngày 7)",
-      "objective": "string (Mục tiêu cốt lõi của giai đoạn này)",
-      "keyActions": [
-        "string (Hành động cụ thể 1, bắt buộc dùng markdown **bold** cho các keywords quan trọng)",
-        "string (Hành động cụ thể 2)",
-        "string (Hành động cụ thể 3)"
-      ],
-      "focusChannels": [ "string", "string", "..." ]
-    }
-  ],
-  "seoKeywords": [ "string", "string", "..." ],
-  "budgetBreakdown": {
-    "channels": [
-      {
-        "channelName": "string (Tên kênh, ví dụ: TikTok Shop, Facebook Ads, Shopee, Instagram...)",
-        "percentOfTotal": "number (Phần trăm ngân sách dành cho kênh này, tổng tất cả channels = 100)",
-        "description": "string (Mô tả ngắn lý do phân bổ cho kênh này, 1-2 câu)",
-        "items": [
-          { "name": "string (Tên hạng mục chi phí)", "percent": "number (Phần trăm trong kênh, tổng = 100)" }
-        ]
-      }
-    ]
-  }
-}`;
-
-// ── Gemini-powered AI Content Generator ────────────────────────────────────────
-async function generateAIContent(data, profile) {
-  const usp = profile?.usp || 'Chưa xác định';
-  const brandVoice = profile?.brandVoice || 'Chuyên nghiệp, tin cậy';
-  const priceRange = profile?.priceRange || 'Chưa xác định';
-  const bestSellingProduct = profile?.bestSellingProduct || 'Chưa xác định';
-  const location = profile?.location || 'Chưa xác định';
-
-  const ENRICHED_SYSTEM_PROMPT = `${SYSTEM_PROMPT}
-
-THÔNG TIN THƯƠNG HIỆU DOANH NGHIỆP (BẮT BUỘC TUÂN THỦ CHẶT CHẼ):
-- Điểm khác biệt độc nhất (USP): ${usp}
-- Phong cách & Giọng điệu thương hiệu (Brand Voice): ${brandVoice}
-- Phân khúc giá sản phẩm: ${priceRange}
-- Sản phẩm bán chạy nhất: ${bestSellingProduct}
-- Khu vực hoạt động/Địa điểm: ${location}
-
-BỐI CẢNH TRIỂN KHAI THỰC TẾ (BẮT BUỘC BÁM SÁT):
-- Kênh triển khai chính: ${data.deploymentChannels || 'Chưa xác định'}
-- Tài nguyên hiện có: ${data.existingResources || 'Chưa xác định'}
-- Lý do triển khai chiến dịch: ${data.campaignReason || 'Chưa xác định'}
-
-YÊU CẦU ĐẶC BIỆT:
-1. Giọng điệu (tone of voice) trong toàn bộ kịch bản hội thoại (videoScripts) và mô tả ý tưởng nội dung (contentIdeas) PHẢI thể hiện rõ ràng nét tính cách thương hiệu "${brandVoice}" đã được định hình.
-2. Các gợi ý tiếp thị và playbook hành động phải làm nổi bật điểm khác biệt thương hiệu (USP) "${usp}" và định vị sản phẩm bán chạy nhất "${bestSellingProduct}" của doanh nghiệp.
-3. Nếu có "Lý do triển khai chiến dịch", thông điệp cốt lõi (core message) và mức độ khẩn cấp (urgency) của TOÀN BỘ kế hoạch PHẢI được xây dựng xoay quanh lý do đó (ví dụ: xả kho → nhấn mạnh ưu đãi giới hạn thời gian; dịp lễ → khai thác cảm xúc và không khí mùa lễ). Lý do này phải xuất hiện xuyên suốt trong contentIdeas, videoScripts và playbook.
-4. Nếu có "Tài nguyên hiện có", các ý tưởng nội dung (contentIdeas) và kịch bản video (videoScripts) PHẢI được thiết kế để tận dụng tối đa chính các tài nguyên đó. TUYỆT ĐỐI KHÔNG đề xuất nội dung đòi hỏi tài nguyên mà doanh nghiệp không có (ví dụ: không gợi ý thuê studio quay chuyên nghiệp nếu họ chỉ có ảnh chụp sản phẩm thật).
-5. Nếu có "Kênh triển khai chính", toàn bộ các bước trong playbook, focusChannels, định dạng nội dung (format) và kênh (channel) trong contentIdeas PHẢI tập trung tối đa vào đúng các kênh đó, thay vì dàn trải sang các nền tảng khác.`;
-
-  let userPrompt = `Hãy tạo kế hoạch marketing cho chiến dịch sau:
-
-- Loại chiến dịch: ${data.campaignType}
-- Ngành hàng: ${data.businessType}
-- Mô tả sản phẩm/dịch vụ: ${data.productDescription}
-- Khách hàng mục tiêu: ${data.targetCustomer}
-- Mục tiêu chiến dịch: ${data.goal}
-- Ngân sách dự kiến: ${data.budget ? Number(data.budget).toLocaleString('vi-VN') + ' VNĐ' : 'Chưa xác định'}
-- Kênh triển khai chủ yếu: ${data.deploymentChannels || 'Chưa xác định'}
-- Tài nguyên hiện có: ${data.existingResources || 'Chưa xác định'}
-- Lý do triển khai chiến dịch: ${data.campaignReason || 'Chưa xác định'}
-
-Yêu cầu:
-- Tạo ít nhất 3 ý tưởng nội dung (contentIdeas) phù hợp với ngành ${data.businessType} và loại chiến dịch ${data.campaignType}.
-- Tạo kịch bản video ngắn (videoScripts) gồm ít nhất 4 phân cảnh chi tiết.
-- Tạo danh sách checklist công việc (checklist) gồm ít nhất 5 mục hành động cụ thể.
-- Tạo playbook hướng dẫn quy trình thực thi gồm các giai đoạn chiến dịch chi tiết (phaseName, duration, objective, keyActions, focusChannels).`;
-
-  // RAG: enrich prompt with past successful strategies (findSimilarStrategies returns [] on failure)
-  const similar = await findSimilarStrategies(
-    `${data.businessType} - ${data.campaignType} - ${data.goal}`
-  );
-  if (similar.length > 0) {
-    userPrompt += `
-
-Dưới đây là các case study và chiến lược đã thành công trong quá khứ. Hãy tham khảo phong cách và định dạng của chúng để xây dựng kế hoạch mới:
-${similar.map((s, i) => `--- Case study ${i + 1} ---\n${s.content}`).join('\n\n')}`;
-  }
-
-  try {
-    const result = await geminiModel.generateContent({
-      contents: [{ role: 'user', parts: [{ text: userPrompt }] }],
-      systemInstruction: { parts: [{ text: ENRICHED_SYSTEM_PROMPT }] },
-    });
-
-    const responseText = result.response.text();
-    const parsed = JSON.parse(responseText);
-
-    // Validate required fields exist
-    if (!parsed.contentIdeas || !parsed.videoScripts || !parsed.checklist || !parsed.playbook || !parsed.seoKeywords) {
-      throw new Error('Gemini response missing required fields');
-    }
-
-    // Ensure budgetBreakdown has valid structure
-    if (!parsed.budgetBreakdown || !Array.isArray(parsed.budgetBreakdown?.channels)) {
-      parsed.budgetBreakdown = null;
-    }
-
-    return parsed;
-  } catch (err) {
-    console.error('[Gemini AI Error]', err.message || err);
-
-    // Fallback: return minimal valid content so the request doesn't crash
-    return {
-      contentIdeas: [
-        {
-          title: 'Video giới thiệu sản phẩm',
-          channel: 'TikTok/Reels',
-          format: 'Short Video (60s)',
-          description: `Giới thiệu ${(data.productDescription || '').slice(0, 80)} một cách chân thực và gần gũi.`,
-        },
-        {
-          title: 'Bài viết hình ảnh chuyên sâu',
-          channel: 'Facebook',
-          format: 'Bài viết kèm album ảnh',
-          description: `Nội dung hướng đến ${(data.targetCustomer || '').slice(0, 60)} với thông điệp rõ ràng.`,
-        },
-        {
-          title: 'Livestream tương tác trực tiếp',
-          channel: 'Facebook/TikTok',
-          format: 'Livestream (30-60 phút)',
-          description: 'Trải nghiệm sản phẩm trực tiếp, giải đáp thắc mắc và tặng voucher cho người xem.',
-        },
-      ],
-      videoScripts: [
-        { scene: '0-3s', action: 'Hook gây tò mò, hiển thị sản phẩm nổi bật', dialogue: 'Chào mọi người! Hôm nay mình sẽ chia sẻ một sản phẩm cực kỳ đáng thử...' },
-        { scene: '3-20s', action: 'Demo sản phẩm, nêu bật lợi ích chính', dialogue: `Điểm mình thích nhất ở sản phẩm này là phù hợp hoàn hảo cho ${(data.targetCustomer || '').slice(0, 50)}...` },
-        { scene: '20-50s', action: 'Chia sẻ trải nghiệm cá nhân và kết quả thực tế', dialogue: 'Sau khi sử dụng, mình thấy sự khác biệt rõ rệt...' },
-        { scene: '50-60s', action: 'CTA kèm ưu đãi độc quyền', dialogue: `Link ở bio nhé! Đừng bỏ lỡ ưu đãi đặc biệt chỉ có hôm nay!` },
-      ],
-      checklist: [
-        'Chuẩn bị sản phẩm, bối cảnh và đạo cụ trước ngày quay 3 ngày',
-        'Duyệt kịch bản nháp với đội ngũ nội dung',
-        'Thiết lập link tracking và mã giảm giá riêng cho chiến dịch',
-        'Lên lịch đăng bài vào khung giờ vàng tương tác',
-        'Theo dõi số liệu và điều chỉnh chiến lược hàng tuần',
-      ],
-      playbook: [
-        {
-          phaseName: 'Giai đoạn 1: Chuẩn bị & Lên kế hoạch',
-          duration: 'Ngày 1 - Ngày 5',
-          objective: 'Xây dựng thông điệp chiến dịch và kế hoạch nội dung phù hợp.',
-          keyActions: [
-            'Xác định rõ **thông điệp cốt lõi** và **lợi ích độc đáo** của sản phẩm.',
-            'Lập danh sách **tối thiểu 5 chủ đề nội dung** bám sát nhu cầu khách hàng.',
-            'Chuẩn bị **mẫu sản phẩm thử** để gửi đi đúng hạn.'
-          ],
-          focusChannels: ['Facebook', 'TikTok']
-        },
-        {
-          phaseName: 'Giai đoạn 2: Sản xuất & Triển khai',
-          duration: 'Ngày 6 - Ngày 15',
-          objective: 'Sản xuất các nội dung chất lượng cao và phủ sóng thương hiệu rộng rãi.',
-          keyActions: [
-            'Duyệt **kịch bản video ngắn** với đội ngũ nội dung trước khi bấm máy.',
-            'Đăng bài **theo khung giờ vàng** (11h30 trưa và 20h tối) để tiếp cận nhiều khách hàng nhất.',
-            'Chạy **quảng cáo tăng cường** (Facebook Ads/TikTok Spark Ads) cho các bài viết có tương tác tự nhiên tốt.'
-          ],
-          focusChannels: ['TikTok', 'Facebook']
-        },
-        {
-          phaseName: 'Giai đoạn 3: Đo lường & Tối ưu',
-          duration: 'Ngày 16 - Ngày 20',
-          objective: 'Đánh giá doanh số, lượng tương tác và rút kinh nghiệm cho chiến dịch sau.',
-          keyActions: [
-            'Tổng hợp số lượt xem, bình luận và **tỷ lệ nhấp chuột (CTR)** từ các link tiếp thị.',
-            'Tính toán **chỉ số ROI** (tỷ suất lợi nhuận trên chi phí quảng cáo).',
-            'Chăm sóc các khách hàng cũ qua **tin nhắn tự động** để thúc đẩy mua lại.'
-          ],
-          focusChannels: ['Facebook', 'TikTok', 'Cửa hàng']
-        }
-      ],
-      seoKeywords: [
-        'từ khóa SEO 1',
-        'từ khóa SEO 2',
-        'quảng cáo giá rẻ',
-        'chiến dịch tiếp thị',
-        'tăng tương tác facebook',
-        'quảng cáo tik tok hiệu quả',
-        'chạy quảng cáo chuyên nghiệp',
-        'tối ưu chi phí marketing'
-      ],
-      budgetBreakdown: null,
-    };
-  }
+async function generateAIContent(data, profile, userId) {
+  return aiService.generateMarketingPlan(userId, data, profile);
 }
 
 function formatPlan(plan) {
@@ -509,101 +277,15 @@ async function generateDetailedPost(user, { ideaTitle, ideaDescription, platform
     throw new AppError('Access denied', 403);
   }
 
-  const brandVoice = profile.brandVoice || 'Chuyên nghiệp, tin cậy';
-  const usp = profile.usp || 'Chưa xác định';
-  const resources = existingResources || 'Chưa xác định';
-  const reason = campaignReason || 'Chưa xác định';
-
-  const DETAILED_POST_SYSTEM_PROMPT = `Bạn là một Chuyên gia Sáng tạo Nội dung (Content Creator) hàng đầu tại Việt Nam.
-Nhiệm vụ của bạn là viết một bài đăng mạng xã hội (social media post) hoàn chỉnh, sẵn sàng đăng tải dựa trên ý tưởng và nền tảng được cung cấp, phù hợp với tiếng nói thương hiệu và các điểm nổi bật của doanh nghiệp.
-
-BÀI VIẾT CẦN CÓ CẤU TRÚC RÕ RÀNG:
-1. Hook (Tiêu đề/Câu mở đầu thu hút, gây tò mò hoặc đánh trúng nỗi đau khách hàng).
-2. Body (Nội dung chính chia sẻ giá trị, giải pháp hoặc mô tả sản phẩm hấp dẫn).
-3. Call-to-Action (Lời kêu gọi hành động rõ ràng như mua hàng, nhắn tin, bấm link).
-4. Sử dụng emojis phù hợp để tăng tính sinh động.
-5. Hashtags liên quan ở cuối bài viết.
-
-Định dạng đầu ra: Chỉ trả về nội dung văn bản thô (raw text) của bài đăng. KHÔNG thêm bất kỳ giải thích nào trước hoặc sau bài đăng. KHÔNG sử dụng các định dạng markdown bao ngoài như \`\`\` hay \`\`\`html.`;
-
-  const userPrompt = `Hãy viết một bài đăng mạng xã hội chi tiết cho nền tảng: "${platform}"
-
-Ý tưởng:
-- Tiêu đề ý tưởng: ${ideaTitle}
-- Mô tả ý tưởng: ${ideaDescription}
-
-Thông tin thương hiệu để cá nhân hóa nội dung:
-- Điểm khác biệt độc nhất (USP): ${usp}
-- Giọng điệu thương hiệu (Brand Voice): ${brandVoice}
-- Tài nguyên hiện có: ${resources}
-- Bối cảnh/Lý do chiến dịch: ${reason}
-
-Yêu cầu viết bằng tiếng Việt, giọng điệu tự nhiên phù hợp với phong cách mạng xã hội ở Việt Nam và bám sát brand voice "${brandVoice}".`;
-
-  try {
-    const result = await geminiTextModel.generateContent({
-      contents: [{ role: 'user', parts: [{ text: userPrompt }] }],
-      systemInstruction: { parts: [{ text: DETAILED_POST_SYSTEM_PROMPT }] },
-    });
-
-    return { content: result.response.text() };
-  } catch (err) {
-    console.error('[Gemini Detailed Post Error]', err.message || err);
-    return {
-      content: `🔥 [Ý tưởng: ${ideaTitle}] 🔥\n\n📌 ${ideaDescription}\n\n✨ Điểm đặc biệt của chúng tôi:\n- ${usp}\n\n👉 Nhắn tin cho chúng tôi ngay hôm nay để nhận tư vấn chi tiết!\n\n#${platform.replace(/\s+/g, '')} #creative #brandvoice`
-    };
-  }
-}
-
-// ── Gemini Vision: generate post + design advice from an uploaded image ────────
-
-/**
- * Converts a multer memory-storage file into a Gemini SDK inlineData part.
- */
-function fileToGenerativePart(file) {
-  return {
-    inlineData: {
-      data: file.buffer.toString('base64'),
-      mimeType: file.mimetype,
-    },
-  };
-}
-
-function generatePostWithImagePrompt({ ideaTitle, ideaDescription, platform, usp, brandVoice, resources, reason }) {
-  const systemPrompt = `Bạn là Giám đốc Sáng tạo (Creative Director) của một Marketing Agency hàng đầu Việt Nam, có chuyên môn sâu về cả viết nội dung (copywriting) lẫn thiết kế hình ảnh (visual design).
-
-Người dùng là chủ doanh nghiệp nhỏ, KHÔNG chuyên về thiết kế. Họ gửi cho bạn một tấm ảnh THÔ (ảnh sản phẩm tự chụp, ảnh feedback khách hàng...) và cần bạn:
-1. Viết bài đăng mạng xã hội hoàn chỉnh dựa trên NHỮNG GÌ BẠN THẤY TRONG ẢNH kết hợp với ý tưởng và thương hiệu.
-2. Đưa ra hướng dẫn chỉnh sửa ảnh THỰC TẾ, DỄ LÀM để tấm ảnh thô đó trở nên chuyên nghiệp hơn khi đăng.
-
-QUY TẮC BẮT BUỘC VỀ ĐỊNH DẠNG ĐẦU RA:
-Trả về CHÍNH XÁC hai phần với hai tiêu đề như sau (giữ nguyên cả dấu ngoặc vuông), không thêm bất kỳ văn bản nào trước, giữa hay sau hai phần này:
-
-[NỘI DUNG BÀI ĐĂNG]
-(Bài đăng hoàn chỉnh sẵn sàng đăng tải: Hook thu hút -> Nội dung chính mô tả/khai thác chi tiết NHÌN THẤY trong ảnh -> Call-to-Action -> Hashtags. Dùng emoji phù hợp. Giọng điệu phải đúng brand voice.)
-
-[GỢI Ý THIẾT KẾ]
-(4-6 gạch đầu dòng hướng dẫn chỉnh sửa CHÍNH TẤM ẢNH NÀY, cụ thể và dễ hiểu cho người không biết thiết kế. Mỗi gợi ý phải nhắc đến chi tiết thật trong ảnh. Ví dụ phong cách: "Dùng Canva, cắt bớt phần nền lộn xộn phía sau kệ hàng", "Thêm khung viền màu be nhạt đồng bộ với tông sản phẩm", "Chèn text 'Ưu đãi 20%' ở góc trên bên phải, font đậm dễ đọc". Ưu tiên công cụ miễn phí như Canva, CapCut.)
-
-QUY TẮC NỘI DUNG:
-- Toàn bộ bằng tiếng Việt tự nhiên.
-- Bài đăng PHẢI khai thác chi tiết cụ thể nhìn thấy trong ảnh (màu sắc, bối cảnh, con người, sản phẩm, chữ trong ảnh nếu có) — tuyệt đối không viết chung chung như thể chưa xem ảnh.
-- Nếu ảnh là feedback/tin nhắn khách hàng: khai thác nó làm social proof trong bài đăng.
-- KHÔNG dùng markdown bao ngoài như \`\`\`.`;
-
-  const userPrompt = `Hãy xem kỹ tấm ảnh đính kèm và tạo nội dung cho nền tảng: "${platform}"
-
-Ý tưởng cần triển khai:
-- Tiêu đề ý tưởng: ${ideaTitle}
-- Mô tả ý tưởng: ${ideaDescription}
-
-Thông tin thương hiệu (bắt buộc bám sát):
-- Điểm khác biệt độc nhất (USP): ${usp}
-- Giọng điệu thương hiệu (Brand Voice): ${brandVoice}
-- Tài nguyên hiện có: ${resources}
-- Bối cảnh/Lý do chiến dịch: ${reason}`;
-
-  return { systemPrompt, userPrompt };
+  return aiService.generateDetailedPost({
+    ideaTitle,
+    ideaDescription,
+    platform,
+    brandVoice: profile.brandVoice,
+    usp: profile.usp,
+    resources: existingResources,
+    reason: campaignReason,
+  });
 }
 
 async function generateDetailedPostWithImage(user, { ideaTitle, ideaDescription, platform, businessProfileId, existingResources, campaignReason }, file, imageUrl) {
@@ -619,50 +301,93 @@ async function generateDetailedPostWithImage(user, { ideaTitle, ideaDescription,
     throw new AppError('Access denied', 403);
   }
 
-  const brandVoice = profile.brandVoice || 'Chuyên nghiệp, tin cậy';
-  const usp = profile.usp || 'Chưa xác định';
-  const resources = existingResources || 'Chưa xác định';
-  const reason = campaignReason || 'Chưa xác định';
-
-  const { systemPrompt, userPrompt } = generatePostWithImagePrompt({
+  return aiService.generateDetailedPostWithImage({
     ideaTitle,
     ideaDescription,
     platform,
-    usp,
-    brandVoice,
-    resources,
-    reason,
+    brandVoice: profile.brandVoice,
+    usp: profile.usp,
+    resources: existingResources,
+    reason: campaignReason,
+    file,
+    imageUrl,
+  });
+}
+
+/**
+ * Real Marketing Plan Revision Assistant
+ */
+async function refinePlan(id, userId, { instruction }) {
+  const plan = await prisma.marketingPlan.findUnique({
+    where: { id: Number(id) },
+    include: { businessProfile: true },
   });
 
-  const imagePart = fileToGenerativePart(file);
-
-  try {
-    const result = await geminiTextModel.generateContent({
-      contents: [{ role: 'user', parts: [{ text: userPrompt }, imagePart] }],
-      systemInstruction: { parts: [{ text: systemPrompt }] },
-    });
-
-    return { content: result.response.text(), imageUrl };
-  } catch (err) {
-    console.error('[Gemini Vision Post Error]', err.message || err);
-    const fallback = `[NỘI DUNG BÀI ĐĂNG]
-🔥 ${ideaTitle} 🔥
-
-📌 ${ideaDescription}
-
-✨ Điểm đặc biệt của chúng tôi: ${usp}
-
-👉 Nhắn tin ngay hôm nay để nhận tư vấn chi tiết!
-
-#${platform.replace(/\s+/g, '')} #creative
-
-[GỢI Ý THIẾT KẾ]
-- Dùng Canva (miễn phí) để cắt gọn bố cục, đưa sản phẩm vào chính giữa khung hình.
-- Tăng nhẹ độ sáng và độ tương phản để ảnh trông rõ ràng, chuyên nghiệp hơn.
-- Chèn logo thương hiệu ở góc dưới bên phải với kích thước nhỏ.
-- Thêm dòng chữ ưu đãi/CTA ngắn gọn ở phần trên của ảnh, dùng font đậm dễ đọc.`;
-    return { content: fallback, imageUrl };
+  if (!plan) {
+    throw new AppError('Marketing plan not found', 404);
   }
+
+  if (plan.userId !== userId) {
+    throw new AppError('Access denied', 403);
+  }
+
+  const refinedData = await aiService.refineMarketingPlan({ plan, instruction });
+
+  const updated = await prisma.marketingPlan.update({
+    where: { id: Number(id) },
+    data: {
+      contentIdeas: JSON.stringify(refinedData.contentIdeas),
+      videoScripts: JSON.stringify(refinedData.videoScripts),
+      checklist: JSON.stringify(refinedData.checklist),
+      playbook: JSON.stringify(refinedData.playbook),
+      seoKeywords: JSON.stringify(refinedData.seoKeywords || []),
+      hasLegacyContent: false,
+    },
+    include: {
+      businessProfile: true,
+      reviewedBy: { select: { id: true, name: true } },
+      user: { select: { id: true, name: true, email: true } },
+    },
+  });
+
+  return {
+    ...formatPlan(updated),
+    revisionSummary: refinedData.revisionSummary,
+  };
+}
+
+/**
+ * Derives an AI Image Prompt from post content
+ */
+async function generateImagePrompt(userId, { postContent, platform, businessProfileId }) {
+  let brandContext = '';
+  if (businessProfileId) {
+    const profile = await prisma.businessProfile.findUnique({
+      where: { id: Number(businessProfileId) },
+    });
+    if (profile) {
+      brandContext = `${profile.businessType || ''} - USP: ${profile.usp || ''} - Giọng điệu: ${profile.brandVoice || ''}`;
+    }
+  }
+
+  return aiService.generateImagePrompt({
+    postContent,
+    platform: platform || 'Facebook',
+    brandContext,
+  });
+}
+
+/**
+ * Generates AI Social Post Image
+ */
+async function generateSocialImage(userId, { prompt, aspectRatio, platform, businessProfileId }) {
+  return aiService.generateSocialImage({
+    prompt,
+    aspectRatio: aspectRatio || '1:1',
+    platform: platform || 'Facebook',
+    userId,
+    businessProfileId,
+  });
 }
 
 module.exports = {
@@ -675,4 +400,7 @@ module.exports = {
   deletePlan,
   generateDetailedPost,
   generateDetailedPostWithImage,
+  refinePlan,
+  generateImagePrompt,
+  generateSocialImage,
 };

@@ -100,4 +100,43 @@ async function generatePostWithImage(req, res, next) {
   }
 }
 
-module.exports = { generate, list, getById, save, review, remove, generatePost, generatePostWithImage };
+async function refine(req, res, next) {
+  try {
+    const result = await marketingPlanService.refinePlan(req.params.id, req.user.id, req.body);
+    return success(res, result);
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function generateImagePrompt(req, res, next) {
+  try {
+    const result = await marketingPlanService.generateImagePrompt(req.user.id, req.body);
+    return success(res, result);
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function generateSocialImage(req, res, next) {
+  try {
+    const result = await marketingPlanService.generateSocialImage(req.user.id, req.body);
+    return success(res, result, 201);
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = {
+  generate,
+  list,
+  getById,
+  save,
+  review,
+  remove,
+  generatePost,
+  generatePostWithImage,
+  refine,
+  generateImagePrompt,
+  generateSocialImage,
+};

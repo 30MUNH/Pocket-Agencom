@@ -20,6 +20,9 @@ export const marketingPlanApi = {
     });
   },
   save: (id) => axiosClient.post(`/marketing-plans/${id}/save`),
+  refine: (id, data) => axiosClient.post(`/marketing-plans/${id}/refine`, data),
+  generateImagePrompt: (data) => axiosClient.post('/marketing-plans/generate-image-prompt', data),
+  generateImage: (data) => axiosClient.post('/marketing-plans/generate-image', data),
   review: (id, data) => axiosClient.patch(`/marketing-plans/${id}/review`, data),
   remove: (id) => axiosClient.delete(`/marketing-plans/${id}`),
 };

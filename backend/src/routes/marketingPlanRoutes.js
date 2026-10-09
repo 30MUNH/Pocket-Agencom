@@ -7,6 +7,9 @@ const {
   generatePlanSchema,
   reviewPlanSchema,
   generatePostSchema,
+  refinePlanSchema,
+  generateImagePromptSchema,
+  generateSocialImageSchema,
 } = require('../validators/marketingPlan.validator');
 
 const router = express.Router();
@@ -32,6 +35,24 @@ router.post(
   requireRole('user', 'admin'),
   uploadCampaignImage,
   marketingPlanController.generatePostWithImage
+);
+router.post(
+  '/generate-image-prompt',
+  requireRole('user', 'admin'),
+  validate(generateImagePromptSchema),
+  marketingPlanController.generateImagePrompt
+);
+router.post(
+  '/generate-image',
+  requireRole('user', 'admin'),
+  validate(generateSocialImageSchema),
+  marketingPlanController.generateSocialImage
+);
+router.post(
+  '/:id/refine',
+  requireRole('user', 'admin'),
+  validate(refinePlanSchema),
+  marketingPlanController.refine
 );
 router.post('/:id/save', requireRole('user', 'admin'), marketingPlanController.save);
 router.patch(

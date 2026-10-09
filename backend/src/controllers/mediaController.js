@@ -41,8 +41,26 @@ async function deleteMedia(req, res, next) {
   }
 }
 
+async function generateImage(req, res, next) {
+  try {
+    const aiService = require('../services/ai/aiService');
+    const { prompt, aspectRatio, platform, businessProfileId } = req.body;
+    const result = await aiService.generateSocialImage({
+      prompt,
+      aspectRatio,
+      platform,
+      userId: req.user.id,
+      businessProfileId,
+    });
+    return success(res, result, 201);
+  } catch (err) {
+    next(err);
+  }
+}
+
 module.exports = {
   getMediaAssets,
   uploadMedia,
-  deleteMedia
+  deleteMedia,
+  generateImage,
 };

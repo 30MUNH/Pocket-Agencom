@@ -1,89 +1,84 @@
 const prisma = require('../config/prisma');
-const { GoogleGenerativeAI } = require('@google/generative-ai');
+const aiService = require('./ai/aiService');
+const { scrapePublicMetrics } = require('./scraperService');
 const { AppError } = require('../middleware/errorHandler');
 
-// Initialize Gemini SDK
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const geminiModel = genAI.getGenerativeModel({
-  model: 'gemini-2.5-flash',
-  generationConfig: {
-    responseMimeType: 'application/json',
-    temperature: 0.9,
-  },
-});
-
 /**
- * Simulates analysis of a social profile URL using Gemini API.
- * Returns a JSON object with mock followers, engagement rate, strengths, and areas to improve.
+ * Analyzes a social profile URL.
+ * Uses real public metadata scraping for numeric metrics,
+ * and AI solely for qualitative strategic insights (strengths, areas to improve).
  */
 async function analyzeSocialProfile(url, platform) {
-  const SYSTEM_PROMPT = `Bạn là một chuyên gia phân tích dữ liệu mạng xã hội hàng đầu tại Việt Nam.
-Nhiệm vụ của bạn là nhận vào một URL tài khoản mạng xã hội (từ TikTok, Facebook, hoặc Instagram) và phân tích/giả lập các chỉ số kênh của họ dựa trên thông tin trong URL hoặc tên thương hiệu/username được gợi ý trong URL.
+  // Step 1: Scrape real public metrics
+  let scraped = {};
+  try {
+    scraped = await scrapePublicMetrics(url);
+  } catch (err) {
+    console.warn('[Social Scraper Notice] Could not scrape public metrics:', err.message);
+  }
 
-Hãy trả về duy nhất một đối tượng JSON có cấu trúc sau (KHÔNG kèm theo markdown, ký tự \`\`\` hay văn bản hội thoại):
+  const followers = scraped.followers || 0;
+  const engagementRate = scraped.engagementRate || 0;
+
+  // Step 2: Use AI for strategic qualitative feedback
+  const SYSTEM_PROMPT = `Bạn là một chuyên gia tư vấn chiến lược mạng xã hội hàng đầu tại Việt Nam.
+Nhiệm vụ của bạn là đưa ra nhận xét chiến lược về kênh truyền thông dựa trên nền tảng và liên kết.
+Trả về DUY NHẤT một đối tượng JSON:
 {
-  "followers": number (số lượng người theo dõi ngẫu nhiên phù hợp với nền tảng và tên kênh, ví dụ từ 1200 đến 850000),
-  "engagementRate": number (tỷ lệ tương tác theo %, ví dụ từ 1.2 đến 15.0),
-  "strengths": string[] (mảng chứa ít nhất 3 nhận xét chiến lược bằng tiếng Việt về điểm mạnh hiện tại của kênh),
-  "areasToImprove": string[] (mảng chứa ít nhất 3 nhận xét chiến lược bằng tiếng Việt về những điểm cần tối ưu hóa hoặc cải thiện để phát triển kênh)
+  "strengths": ["Điểm mạnh 1", "Điểm mạnh 2", "Điểm mạnh 3"],
+  "areasToImprove": ["Điểm cần tối ưu 1", "Điểm cần tối ưu 2", "Điểm cần tối ưu 3"]
 }`;
 
-  const userPrompt = `Hãy phân tích tài khoản mạng xã hội này:
+  const userPrompt = `Đưa ra nhận xét chiến lược cho kênh mạng xã hội:
 - Nền tảng: ${platform}
-- URL: ${url}
+- URL: ${url}`;
 
-Hãy đọc kỹ URL, trích xuất username/thương hiệu (nếu có) và sinh ra các số liệu, phân tích sát thực tế và cụ thể cho kênh đó. Trả về đúng định dạng JSON yêu cầu.`;
+  let qualitative = {
+    strengths: [
+      'Hồ sơ cập nhật kênh liên lạc rõ ràng',
+      'Định vị kênh phù hợp với đối tượng mục tiêu',
+      'Có tiềm năng phát triển nội dung đa định dạng',
+    ],
+    areasToImprove: [
+      'Nên duy trì lịch đăng bài đều đặn vào khung giờ vàng',
+      'Tăng cường các định dạng video ngắn (Reels, TikTok, Shorts)',
+      'Bổ sung lời kêu gọi hành động (CTA) cụ thể ở mỗi bài đăng',
+    ],
+  };
 
   try {
-    const result = await geminiModel.generateContent({
-      contents: [{ role: 'user', parts: [{ text: userPrompt }] }],
-      systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
+    const aiResult = await aiService.generateStructuredContent({
+      prompt: userPrompt,
+      systemPrompt: SYSTEM_PROMPT,
+      validatorFn: (parsed) => {
+        if (!Array.isArray(parsed.strengths) || !Array.isArray(parsed.areasToImprove)) {
+          throw new Error('Invalid structure');
+        }
+        return parsed;
+      },
     });
 
-    const responseText = result.response.text();
-    const parsed = JSON.parse(responseText);
-
-    return {
-      followers: Number(parsed.followers) || Math.floor(Math.random() * 45000) + 5000,
-      engagementRate: Number(parsed.engagementRate) || parseFloat((Math.random() * 5 + 1.5).toFixed(2)),
-      strengths: Array.isArray(parsed.strengths) ? parsed.strengths : [
-        'Hình ảnh sản phẩm rõ ràng, chuyên nghiệp',
-        'Tương tác tốt với khách hàng dưới phần bình luận',
-        'Nội dung video ngắn bắt mắt, trực quan'
-      ],
-      areasToImprove: Array.isArray(parsed.areasToImprove) ? parsed.areasToImprove : [
-        'Cần đăng bài đều đặn hơn vào các khung giờ vàng',
-        'Chưa đa dạng hóa định dạng nội dung (thiếu Reels/Shorts)',
-        'Nên bổ sung thêm lời kêu gọi hành động (CTA) rõ ràng'
-      ]
-    };
-  } catch (err) {
-    console.error('[Gemini Social AI Error]', err.message || err);
-    // Fallback in case of API limits, network issues, or parsing errors
-    return {
-      followers: Math.floor(Math.random() * 25000) + 2500,
-      engagementRate: parseFloat((Math.random() * 4 + 1.8).toFixed(2)),
-      strengths: [
-        'Hồ sơ được cập nhật thông tin liên hệ đầy đủ',
-        'Có tệp khách hàng trung thành tương tác thường xuyên',
-        'Hình ảnh mang phong cách riêng nhất quán'
-      ],
-      areasToImprove: [
-        'Tần suất đăng tải nội dung còn thưa thớt',
-        'Cần tối ưu hóa mô tả kênh để tăng tính thương hiệu',
-        'Chưa tận dụng tốt âm thanh thịnh hành (đối với video ngắn)'
-      ]
-    };
+    if (aiResult.data) {
+      qualitative = aiResult.data;
+    }
+  } catch (aiErr) {
+    console.warn('[Social AI Advice Notice] Could not generate qualitative advice:', aiErr.message);
   }
+
+  return {
+    followers,
+    engagementRate,
+    strengths: qualitative.strengths,
+    areasToImprove: qualitative.areasToImprove,
+  };
 }
 
 /**
  * Connects a new social platform link for a user's business profile.
  */
 async function addPlatform(userId, { platform, url }) {
-  // Find or create Business Profile
   let businessProfile = await prisma.businessProfile.findUnique({
-    where: { userId }
+    where: { userId },
   });
 
   if (!businessProfile) {
@@ -93,28 +88,24 @@ async function addPlatform(userId, { platform, url }) {
         businessType: 'General',
         productDescription: 'Chưa thiết lập mô tả sản phẩm',
         targetCustomer: 'Khách hàng đại chúng',
-      }
+      },
     });
   }
 
-  // Analyze profile URL via Gemini
   const analysis = await analyzeSocialProfile(url, platform);
 
-  // Format the aiInsight as a neat markdown string
-  const aiInsight = `### Điểm mạnh\n${analysis.strengths.map(s => `- ${s}`).join('\n')}\n\n### Cần cải thiện\n${analysis.areasToImprove.map(a => `- ${a}`).join('\n')}`;
+  const aiInsight = `### Điểm mạnh\n${analysis.strengths.map((s) => `- ${s}`).join('\n')}\n\n### Cần cải thiện\n${analysis.areasToImprove.map((a) => `- ${a}`).join('\n')}`;
 
-  // Check if platform is already linked for this user to avoid duplicates
   const existing = await prisma.socialPlatform.findFirst({
     where: {
       userId,
-      platform
-    }
+      platform,
+    },
   });
 
-  // Infer platform type (social, ecommerce, custom) and generate initial dynamic metrics
-  const { inferPlatformType, generateDemoMetrics } = require('./analyticsService');
+  const { inferPlatformType, generatePlatformMetrics } = require('./analyticsService');
   const platformType = inferPlatformType(platform, url);
-  const metrics = generateDemoMetrics(platform, platformType, analysis.followers, analysis.engagementRate);
+  const metrics = generatePlatformMetrics(platform, platformType, analysis.followers, analysis.engagementRate);
 
   let record;
   if (existing) {
@@ -127,8 +118,8 @@ async function addPlatform(userId, { platform, url }) {
         engagementRate: analysis.engagementRate,
         metrics,
         aiInsight,
-        businessProfileId: businessProfile.id
-      }
+        businessProfileId: businessProfile.id,
+      },
     });
   } else {
     record = await prisma.socialPlatform.create({
@@ -141,8 +132,8 @@ async function addPlatform(userId, { platform, url }) {
         engagementRate: analysis.engagementRate,
         metrics,
         aiInsight,
-        businessProfileId: businessProfile.id
-      }
+        businessProfileId: businessProfile.id,
+      },
     });
   }
 
@@ -155,7 +146,7 @@ async function addPlatform(userId, { platform, url }) {
 async function getPlatforms(userId) {
   return prisma.socialPlatform.findMany({
     where: { userId },
-    orderBy: { createdAt: 'desc' }
+    orderBy: { createdAt: 'desc' },
   });
 }
 
@@ -164,7 +155,7 @@ async function getPlatforms(userId) {
  */
 async function deletePlatform(userId, id) {
   const record = await prisma.socialPlatform.findUnique({
-    where: { id }
+    where: { id },
   });
 
   if (!record) {
@@ -176,7 +167,7 @@ async function deletePlatform(userId, id) {
   }
 
   await prisma.socialPlatform.delete({
-    where: { id }
+    where: { id },
   });
 
   return { deleted: true };
@@ -187,7 +178,7 @@ async function deletePlatform(userId, id) {
  */
 async function triggerAnalysis(userId, id) {
   const record = await prisma.socialPlatform.findUnique({
-    where: { id }
+    where: { id },
   });
 
   if (!record) {
@@ -199,15 +190,15 @@ async function triggerAnalysis(userId, id) {
   }
 
   const analysis = await analyzeSocialProfile(record.url, record.platform);
-  const aiInsight = `### Điểm mạnh\n${analysis.strengths.map(s => `- ${s}`).join('\n')}\n\n### Cần cải thiện\n${analysis.areasToImprove.map(a => `- ${a}`).join('\n')}`;
+  const aiInsight = `### Điểm mạnh\n${analysis.strengths.map((s) => `- ${s}`).join('\n')}\n\n### Cần cải thiện\n${analysis.areasToImprove.map((a) => `- ${a}`).join('\n')}`;
 
   const updated = await prisma.socialPlatform.update({
     where: { id },
     data: {
       followersCount: analysis.followers,
       engagementRate: analysis.engagementRate,
-      aiInsight
-    }
+      aiInsight,
+    },
   });
 
   return updated;
@@ -218,5 +209,5 @@ module.exports = {
   addPlatform,
   getPlatforms,
   deletePlatform,
-  triggerAnalysis
+  triggerAnalysis,
 };

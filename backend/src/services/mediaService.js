@@ -1,36 +1,8 @@
 const prisma = require('../config/prisma');
 const { AppError } = require('../middleware/errorHandler');
 
-// Demo memory fallback store in case database tables are not migrated yet
-let demoMediaAssetsStore = [
-  {
-    id: 1,
-    userId: 1,
-    name: 'Logo_Thương_Hiệu_Brand.png',
-    url: 'https://images.unsplash.com/photo-1542744094-3a317272018a?auto=format&fit=crop&w=800&q=80',
-    fileType: 'image',
-    sizeBytes: 450000,
-    createdAt: new Date(Date.now() - 86400000 * 5).toISOString()
-  },
-  {
-    id: 2,
-    userId: 1,
-    name: 'Poster_Chiến_Dịch_BlindBox.jpg',
-    url: 'https://images.unsplash.com/photo-1513151233558-d860c5398176?auto=format&fit=crop&w=800&q=80',
-    fileType: 'image',
-    sizeBytes: 1200000,
-    createdAt: new Date(Date.now() - 86400000 * 2).toISOString()
-  },
-  {
-    id: 3,
-    userId: 1,
-    name: 'Video_Review_Product_Teaser.mp4',
-    url: 'https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?auto=format&fit=crop&w=800&q=80',
-    fileType: 'video',
-    sizeBytes: 8500000,
-    createdAt: new Date(Date.now() - 86400000 * 1).toISOString()
-  }
-];
+// In-memory fallback store in case database tables are not migrated yet
+let demoMediaAssetsStore = [];
 
 /**
  * Uploads/records a media asset in the library.
@@ -76,17 +48,13 @@ async function getMediaAssets(userId) {
   try {
     const assets = await prisma.mediaAsset.findMany({
       where: { userId },
-      orderBy: { createdAt: 'desc' }
+      orderBy: { createdAt: 'desc' },
     });
-
-    if (assets && assets.length > 0) {
-      return assets;
-    }
+    return assets || [];
   } catch (err) {
-    console.warn('[Prisma Fallback] Falling back to demo media assets memory store');
+    console.warn('[Prisma Warning] Could not retrieve media assets:', err.message);
+    return [];
   }
-
-  return demoMediaAssetsStore;
 }
 
 /**
