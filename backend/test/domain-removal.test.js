@@ -118,6 +118,31 @@ test('expense creation rejects categories outside the retained financial contrac
   );
 });
 
+test('budget reads and writes deny cross-user plan access', async () => {
+  const { getCampaignBudget, addExpense } = require('../src/services/budgetService');
+  const fakePrisma = {
+    marketingPlan: {
+      findFirst: async ({ where }) => where.userId === 9 ? null : { id: 4, userId: 4, budget: 1000, expenses: [] },
+    },
+    expense: { create: async () => assert.fail('expense must not be created') },
+  };
+  const intruder = { id: 9, role: 'user' };
+
+  await assert.rejects(getCampaignBudget(4, intruder, fakePrisma), (error) => error.statusCode === 404);
+  await assert.rejects(
+    addExpense(intruder, { marketingPlanId: 4, expenseType: 'Custom', amount: 100 }, fakePrisma),
+    (error) => error.statusCode === 404,
+  );
+});
+
+test('business profile sync retains every supported social and commerce channel', () => {
+  const { MANAGED_SOCIAL_PLATFORMS } = require('../src/services/authService');
+  assert.deepEqual(MANAGED_SOCIAL_PLATFORMS, [
+    'facebook', 'instagram', 'tiktok', 'youtube', 'threads',
+    'shopee', 'lazada', 'tiki', 'tiktok_shop', 'chotot',
+  ]);
+});
+
 test('marketing-plan responses preserve historical text and expose its legacy marker', () => {
   const { formatPlan } = require('../src/services/marketingPlanService');
   const contentIdeas = '[{"title":"Historical content"}]';

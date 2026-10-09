@@ -95,7 +95,10 @@ async function getMe(userId) {
   return user;
 }
 
-const MANAGED_SOCIAL_PLATFORMS = ['tiktok', 'facebook', 'instagram'];
+const MANAGED_SOCIAL_PLATFORMS = [
+  'facebook', 'instagram', 'tiktok', 'youtube', 'threads',
+  'shopee', 'lazada', 'tiki', 'tiktok_shop', 'chotot',
+];
 
 async function updateBusinessProfile(userId, data) {
   const profile = await prisma.businessProfile.upsert({
@@ -216,4 +219,5 @@ module.exports = {
   getMe,
   updateBusinessProfile,
   updateProfile,
+  MANAGED_SOCIAL_PLATFORMS,
 };

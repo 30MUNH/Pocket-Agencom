@@ -7,7 +7,7 @@ const { success } = require('../utils/response');
 async function getCampaignBudget(req, res, next) {
   try {
     const { id } = req.params;
-    const result = await budgetService.getCampaignBudget(id);
+    const result = await budgetService.getCampaignBudget(id, req.user);
     return success(res, result);
   } catch (err) {
     next(err);
@@ -19,8 +19,7 @@ async function getCampaignBudget(req, res, next) {
  */
 async function addExpense(req, res, next) {
   try {
-    const userId = req.user.id;
-    const expense = await budgetService.addExpense(userId, req.body);
+    const expense = await budgetService.addExpense(req.user, req.body);
     return success(res, expense, 201);
   } catch (err) {
     next(err);

@@ -4,11 +4,11 @@ const { AppError } = require('../middleware/errorHandler');
 /**
  * Gets campaign budget summary and itemized expenses.
  */
-async function getCampaignBudget(campaignId) {
+async function getCampaignBudget(campaignId, user, prismaClient = prisma) {
   const planId = parseInt(campaignId, 10);
-
-  const plan = await prisma.marketingPlan.findUnique({
-    where: { id: planId },
+  const canReviewAll = user?.role === 'staff' || user?.role === 'admin';
+  const plan = await prismaClient.marketingPlan.findFirst({
+    where: { id: planId, ...(canReviewAll ? {} : { userId: user?.id }) },
     include: { expenses: true }
   });
   if (!plan) throw new AppError('Không tìm thấy kế hoạch.', 404);
@@ -34,7 +34,7 @@ async function getCampaignBudget(campaignId) {
 /**
  * Logs a new expense for a campaign.
  */
-async function addExpense(userId, { marketingPlanId = 1, expenseType = 'Custom', amount, note }) {
+async function addExpense(user, { marketingPlanId = 1, expenseType = 'Custom', amount, note }, prismaClient = prisma) {
   const planId = parseInt(marketingPlanId, 10);
   const numericAmount = Number(amount);
 
@@ -46,7 +46,14 @@ async function addExpense(userId, { marketingPlanId = 1, expenseType = 'Custom',
     throw new AppError('Loại chi phí không hợp lệ.', 400);
   }
 
-  return prisma.expense.create({
+  if (user?.role === 'staff') throw new AppError('Không có quyền ghi nhận chi phí.', 403);
+  const plan = await prismaClient.marketingPlan.findFirst({
+    where: { id: planId, ...(user?.role === 'admin' ? {} : { userId: user?.id }) },
+    select: { id: true },
+  });
+  if (!plan) throw new AppError('Không tìm thấy kế hoạch.', 404);
+
+  return prismaClient.expense.create({
     data: {
       marketingPlanId: planId,
       expenseType,
