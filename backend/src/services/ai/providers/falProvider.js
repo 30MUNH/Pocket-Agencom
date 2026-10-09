@@ -2,7 +2,8 @@ const axios = require('axios');
 const aiConfig = require('../aiConfig');
 
 /**
- * fal.ai Provider for high-speed, cost-effective image generation (FLUX models)
+ * fal.ai Provider for high-speed image generation (FLUX models).
+ * In FREE_ONLY_MODE, fal.ai is strictly disabled to prevent paid credits consumption.
  */
 class FalProvider {
   constructor(apiKey = aiConfig.keys.fal, model = aiConfig.defaultImageModels.fal) {
@@ -13,6 +14,9 @@ class FalProvider {
   }
 
   isAvailable() {
+    if (aiConfig.freeOnlyMode || !aiConfig.allowPaidModels) {
+      return false;
+    }
     return Boolean(this.apiKey && this.apiKey.trim().length > 0);
   }
 
@@ -21,6 +25,12 @@ class FalProvider {
     aspectRatio = '1:1',
     timeoutMs = aiConfig.limits.imageTimeoutMs,
   }) {
+    if (aiConfig.freeOnlyMode || !aiConfig.allowPaidModels) {
+      const error = new Error('fal.ai is disabled because FREE_ONLY_MODE is enabled ($0 budget constraint).');
+      error.status = 403;
+      throw error;
+    }
+
     if (!this.isAvailable()) {
       throw new Error('fal.ai API Key (FAL_KEY) is not configured.');
     }
@@ -63,3 +73,4 @@ class FalProvider {
 }
 
 module.exports = FalProvider;
+

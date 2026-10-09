@@ -13,7 +13,9 @@ class GeminiProvider {
   }
 
   isAvailable() {
-    return Boolean(this.apiKey && this.apiKey.trim().length > 0 && this.client);
+    if (!this.apiKey || this.apiKey.trim().length === 0 || !this.client) return false;
+    if (aiConfig.freeOnlyMode && !aiConfig.isModelFree('gemini', this.model)) return false;
+    return true;
   }
 
   async generateText({
@@ -21,13 +23,20 @@ class GeminiProvider {
     systemPrompt = '',
     temperature = 0.7,
     jsonMode = false,
+    model = this.model,
   }) {
     if (!this.isAvailable()) {
       throw new Error('Gemini API Key is not configured.');
     }
 
+    if (aiConfig.freeOnlyMode && !aiConfig.isModelFree('gemini', model)) {
+      const err = new Error(`Gemini model "${model}" is not in the verified free-tier whitelist.`);
+      err.status = 403;
+      throw err;
+    }
+
     const genModel = this.client.getGenerativeModel({
-      model: this.model,
+      model,
       generationConfig: {
         temperature,
         ...(jsonMode ? { responseMimeType: 'application/json' } : {}),

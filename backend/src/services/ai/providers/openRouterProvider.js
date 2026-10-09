@@ -1,8 +1,10 @@
 const axios = require('axios');
 const aiConfig = require('../aiConfig');
+const { AppError } = require('../../../middleware/errorHandler');
 
 /**
- * OpenRouter Provider (unified access to hundreds of open & commercial models)
+ * OpenRouter Provider
+ * In FREE_ONLY_MODE, strictly routes to verified zero-cost models (e.g. openrouter/free or *:free)
  */
 class OpenRouterProvider {
   constructor(
@@ -18,7 +20,11 @@ class OpenRouterProvider {
   }
 
   isAvailable() {
-    return Boolean(this.apiKey && this.apiKey.trim().length > 0);
+    if (!this.apiKey || this.apiKey.trim().length === 0) return false;
+    if (aiConfig.freeOnlyMode && !aiConfig.isModelFree('openrouter', this.textModel)) {
+      return false;
+    }
+    return true;
   }
 
   async generateText({
@@ -29,8 +35,15 @@ class OpenRouterProvider {
     jsonMode = false,
     timeoutMs = aiConfig.limits.requestTimeoutMs,
   }) {
-    if (!this.isAvailable()) {
-      throw new Error('OpenRouter API Key is not configured.');
+    if (!this.apiKey || this.apiKey.trim().length === 0) {
+      throw new AppError('OpenRouter API Key is not configured.', 400);
+    }
+
+    if (aiConfig.freeOnlyMode && !aiConfig.isModelFree('openrouter', this.textModel)) {
+      throw new AppError(
+        `Mô hình OpenRouter "${this.textModel}" không phải mô hình miễn phí $0. Trong chế độ FREE_ONLY_MODE, chỉ được sử dụng openrouter/free hoặc mô hình kết thúc bằng :free.`,
+        403
+      );
     }
 
     const messages = [];
@@ -70,51 +83,15 @@ class OpenRouterProvider {
     };
   }
 
-  async generateImage({
-    prompt,
-    aspectRatio = '1:1',
-    timeoutMs = aiConfig.limits.imageTimeoutMs,
-  }) {
-    if (!this.isAvailable()) {
-      throw new Error('OpenRouter API Key is not configured.');
+  async generateImage() {
+    if (aiConfig.freeOnlyMode && !aiConfig.allowPaidModels) {
+      throw new AppError(
+        'Tạo ảnh qua OpenRouter bị vô hiệu hóa trong chế độ FREE_ONLY_MODE vì không thuộc gói miễn phí $0.',
+        403
+      );
     }
 
-    // Attempt generation via image-capable model prompt
-    const response = await axios.post(
-      this.baseUrl,
-      {
-        model: this.imageModel,
-        messages: [
-          {
-            role: 'user',
-            content: `Generate a high quality marketing image with aspect ratio ${aspectRatio}: ${prompt}`,
-          },
-        ],
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${this.apiKey}`,
-          'Content-Type': 'application/json',
-          'HTTP-Referer': 'https://pocket-agencom.com',
-          'X-Title': 'Pocket Agencom Marketing SaaS',
-        },
-        timeout: timeoutMs,
-      }
-    );
-
-    const message = response.data?.choices?.[0]?.message;
-    // Check if image URL was returned in content or multimodal fields
-    const imageUrl = message?.images?.[0] || message?.image_url || null;
-    if (!imageUrl) {
-      throw new Error('OpenRouter image model did not return a valid image URL.');
-    }
-
-    return {
-      imageUrl,
-      provider: this.name,
-      model: this.imageModel,
-      aspectRatio,
-    };
+    throw new AppError('OpenRouter image generation is not configured for free tier.', 403);
   }
 }
 
