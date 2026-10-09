@@ -29,6 +29,20 @@ class CloudflareProvider {
     );
   }
 
+  static getCompositionGuidance(aspectRatio) {
+    switch (aspectRatio) {
+      case '9:16':
+        return 'vertical framing, subject centered in safe area, generous top and bottom breathing room, wide angle view, no edge clipping';
+      case '16:9':
+        return 'wide horizontal landscape framing, centered subject, wide field of view, horizontal breathing room, no edge clipping';
+      case '4:5':
+        return 'portrait framing, centered subject, balanced safe area margins, social feed orientation';
+      case '1:1':
+      default:
+        return 'balanced square framing, centered subject, clean borders';
+    }
+  }
+
   /**
    * Generates an image using Cloudflare Workers AI
    * @param {Object} options
@@ -59,12 +73,16 @@ class CloudflareProvider {
 
     const endpoint = `https://api.cloudflare.com/client/v4/accounts/${this.accountId}/ai/run/${this.model}`;
 
+    // Append composition-aware guidance to prevent critical subjects being clipped
+    const guidance = CloudflareProvider.getCompositionGuidance(aspectRatio);
+    const enrichedPrompt = `${prompt.trim()}, ${guidance}`;
+
     let response;
     try {
       response = await axios.post(
         endpoint,
         {
-          prompt: prompt.trim(),
+          prompt: enrichedPrompt,
           steps: Math.min(Math.max(steps, 1), 4),
         },
         {
@@ -123,11 +141,12 @@ class CloudflareProvider {
       mimeType = 'image/jpeg';
     }
 
-    // Step 3: Aspect Ratio Processing
+    // Step 3: Aspect Ratio Processing with Attention Strategy and Center Fallback
     const processed = await this.postProcessImageWithSharp(rawBuffer, aspectRatio);
 
     return {
       buffer: processed.buffer,
+      originalBuffer: rawBuffer,
       mimeType: processed.postProcessed ? 'image/jpeg' : mimeType,
       provider: this.name,
       model: this.model,
@@ -139,7 +158,7 @@ class CloudflareProvider {
   }
 
   /**
-   * Post-processes 1024x1024 native image to standard aspect ratios via Sharp center-crop
+   * Post-processes 1024x1024 native image to standard aspect ratios via Sharp attention-crop with center fallback
    */
   async postProcessImageWithSharp(rawBuffer, aspectRatio = '1:1') {
     const targetConfig = aiConfig.aspectRatios[aspectRatio] || aiConfig.aspectRatios['1:1'];
@@ -148,25 +167,41 @@ class CloudflareProvider {
 
     if (aspectRatio !== '1:1') {
       try {
+        // First try attention-based crop to preserve faces and primary visual subjects
         finalBuffer = await sharp(rawBuffer)
           .resize({
             width: targetConfig.width,
             height: targetConfig.height,
             fit: 'cover',
-            position: 'center',
+            position: sharp.strategy.attention,
           })
           .jpeg({ quality: 90 })
           .toBuffer();
         postProcessed = true;
-      } catch (sharpErr) {
-        console.warn('[Sharp Aspect Ratio Notice] Post-processing failed, preserving 1:1 image:', sharpErr.message);
-        finalBuffer = rawBuffer;
-        postProcessed = false;
+      } catch (attErr) {
+        // Fallback to center crop
+        try {
+          finalBuffer = await sharp(rawBuffer)
+            .resize({
+              width: targetConfig.width,
+              height: targetConfig.height,
+              fit: 'cover',
+              position: 'center',
+            })
+            .jpeg({ quality: 90 })
+            .toBuffer();
+          postProcessed = true;
+        } catch (centerErr) {
+          console.warn('[Sharp Aspect Ratio Notice] Post-processing failed, preserving 1:1 image:', centerErr.message);
+          finalBuffer = rawBuffer;
+          postProcessed = false;
+        }
       }
     }
 
     return {
       buffer: finalBuffer,
+      originalBuffer: rawBuffer,
       width: postProcessed ? targetConfig.width : 1024,
       height: postProcessed ? targetConfig.height : 1024,
       postProcessed,

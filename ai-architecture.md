@@ -37,7 +37,7 @@ flowchart TD
 ### 2. Zero-Cost Text & Strategic Planning Stack
 - **Primary — GroqCloud Free Tier**: Uses `openai/gpt-oss-120b` (replacing deprecated `llama-3.3-70b-versatile`). High throughput, low latency, and zero billing required.
 - **Secondary Fallback — OpenRouter Free Router**: Configured with free models (e.g. `meta-llama/llama-3.3-70b-instruct:free` or `openrouter/free`). In free-only mode, paid OpenRouter models are strictly forbidden.
-- **Tertiary & Multimodal — Google Gemini Free Tier**: `gemini-2.5-flash` or `gemini-2.0-flash` for vision analysis (evaluating uploaded product photos) and fallback copywriting.
+- **Tertiary & Multimodal — Google Gemini Free Tier**: `gemini-2.5-flash` (or newer `gemini-3.x-flash` series) for vision analysis (evaluating uploaded product photos) and fallback copywriting. **`gemini-2.0-flash` was shut down on June 1, 2026 and must not be used.**
 
 ### 3. Zero-Cost Image Generation via Cloudflare Workers AI
 - **Cloudflare Workers AI**: Utilizes Cloudflare's free daily Neurons allocation running `@cf/black-forest-labs/flux-1-schnell`.
