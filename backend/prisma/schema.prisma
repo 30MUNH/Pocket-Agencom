@@ -14,13 +14,13 @@ enum UserRole {
   user
   staff
   admin
-  kol
 }
 
 enum AccountStatus {
   active
   inactive
   banned
+  archived
 }
 
 enum PlanStatus {
@@ -29,17 +29,6 @@ enum PlanStatus {
   reviewed
   approved
   need_revision
-}
-
-enum ApplicationStatus {
-  pending
-  accepted
-  rejected
-}
-
-enum MediaType {
-  IMAGE
-  VIDEO
 }
 
 enum TemplateType {
@@ -55,44 +44,6 @@ enum TemplateStatus {
   inactive
 }
 
-enum KolType {
-  nano_koc
-  micro_kol
-  local_influencer
-  reviewer
-  livestream_seller
-  content_creator
-}
-
-enum KolStatus {
-  active
-  inactive
-  pending
-}
-
-enum ServiceType {
-  tiktok_video
-  instagram_reels
-  facebook_post
-  story_post
-  livestream
-  product_review
-  unboxing
-  combo
-}
-
-enum BookingStatus {
-  pending
-  staff_reviewing
-  need_more_info
-  approved
-  confirmed
-  in_progress
-  content_submitted
-  completed
-  cancelled
-}
-
 enum TicketStatus {
   open
   in_progress
@@ -104,7 +55,6 @@ enum TicketStatus {
 enum TicketCategory {
   account
   marketing_plan
-  booking
   payment
   technical
   other
@@ -113,7 +63,6 @@ enum TicketCategory {
 enum NotificationType {
   system
   plan
-  booking
   support
 }
 
@@ -130,19 +79,13 @@ model User {
   updatedAt    DateTime      @default(now()) @updatedAt @map("updated_at")
 
   businessProfile  BusinessProfile?
-  kolProfile       KolProfile?      @relation("OwnKolProfile")
   marketingPlans   MarketingPlan[]  @relation("UserPlans")
   reviewedPlans    MarketingPlan[]  @relation("ReviewedPlans")
   createdTemplates Template[]
-  createdKols      KolProfile[]     @relation("CreatedKols")
-  bookings         KolBooking[]     @relation("UserBookings")
-  assignedBookings KolBooking[]     @relation("StaffBookings")
-  bookingReviews   BookingReview[]
   tickets          SupportTicket[]  @relation("UserTickets")
   assignedTickets  SupportTicket[]  @relation("StaffTickets")
   notifications    Notification[]
   socialPlatforms  SocialPlatform[]
-  smeKolReviews    KolReview[]       @relation("SmeKolReviews")
   scheduledPosts   ScheduledPost[]
   mediaAssets      MediaAsset[]
 
@@ -150,56 +93,55 @@ model User {
 }
 
 model BusinessProfile {
-  id                 Int      @id @default(autoincrement())
-  userId             Int      @unique @map("user_id")
-  businessName       String?  @map("business_name")
-  businessType       String   @map("business_type")
-  productDescription String   @map("product_description")
-  targetCustomer     String   @map("target_customer")
-  marketingGoal      String?  @map("marketing_goal")
-  budgetRange        String?  @map("budget_range")
-  location           String?
-  usp                String?  @map("usp")
-  brandVoice         String?  @map("brand_voice")
-  priceRange         String?  @map("price_range")
-  bestSellingProduct String?  @map("best_selling_product")
-  monthlyMarketingBudget String? @map("monthly_marketing_budget")
-  createdAt          DateTime @default(now()) @map("created_at")
-  updatedAt          DateTime @default(now()) @updatedAt @map("updated_at")
+  id                     Int      @id @default(autoincrement())
+  userId                 Int      @unique @map("user_id")
+  businessName           String?  @map("business_name")
+  businessType           String   @map("business_type")
+  productDescription     String   @map("product_description")
+  targetCustomer         String   @map("target_customer")
+  marketingGoal          String?  @map("marketing_goal")
+  budgetRange            String?  @map("budget_range")
+  location               String?
+  usp                    String?  @map("usp")
+  brandVoice             String?  @map("brand_voice")
+  priceRange             String?  @map("price_range")
+  bestSellingProduct     String?  @map("best_selling_product")
+  monthlyMarketingBudget String?  @map("monthly_marketing_budget")
+  createdAt              DateTime @default(now()) @map("created_at")
+  updatedAt              DateTime @default(now()) @updatedAt @map("updated_at")
 
-  user           User            @relation(fields: [userId], references: [id])
-  marketingPlans MarketingPlan[]
+  user            User             @relation(fields: [userId], references: [id])
+  marketingPlans  MarketingPlan[]
   socialPlatforms SocialPlatform[]
 
   @@map("business_profiles")
 }
 
 model MarketingPlan {
-  id                Int        @id @default(autoincrement())
-  userId            Int        @map("user_id")
-  businessProfileId Int        @map("business_profile_id")
-  goal              String
-  campaignType      String?    @map("campaign_type")
-  budget            Decimal?
-  contentIdeas      String?    @map("content_ideas")
-  videoScripts      String?    @map("video_scripts")
-  checklist         String?
-  playbook          String?
-  seoKeywords       String?    @map("seo_keywords")
-  budgetBreakdown   String?    @map("budget_breakdown")
-  deploymentChannels String?   @map("deployment_channels")
-  existingResources String?    @map("existing_resources")
-  campaignReason    String?    @map("campaign_reason")
-  isLookingForKol   Boolean    @default(false) @map("is_looking_for_kol")
-  status            PlanStatus @default(saved)
-  reviewedById      Int?       @map("reviewed_by")
-  createdAt         DateTime   @default(now()) @map("created_at")
-  updatedAt         DateTime   @default(now()) @updatedAt @map("updated_at")
+  id                 Int        @id @default(autoincrement())
+  userId             Int        @map("user_id")
+  businessProfileId  Int        @map("business_profile_id")
+  goal               String
+  campaignType       String?    @map("campaign_type")
+  budget             Decimal?
+  contentIdeas       String?    @map("content_ideas")
+  videoScripts       String?    @map("video_scripts")
+  checklist          String?
+  playbook           String?
+  seoKeywords        String?    @map("seo_keywords")
+  budgetBreakdown    String?    @map("budget_breakdown")
+  deploymentChannels String?    @map("deployment_channels")
+  existingResources  String?    @map("existing_resources")
+  campaignReason     String?    @map("campaign_reason")
+  hasLegacyContent   Boolean    @default(false) @map("has_legacy_content")
+  status             PlanStatus @default(saved)
+  reviewedById       Int?       @map("reviewed_by")
+  createdAt          DateTime   @default(now()) @map("created_at")
+  updatedAt          DateTime   @default(now()) @updatedAt @map("updated_at")
 
-  user            User                  @relation("UserPlans", fields: [userId], references: [id])
-  businessProfile BusinessProfile       @relation(fields: [businessProfileId], references: [id])
-  reviewedBy      User?                 @relation("ReviewedPlans", fields: [reviewedById], references: [id])
-  applications    CampaignApplication[]
+  user            User            @relation("UserPlans", fields: [userId], references: [id])
+  businessProfile BusinessProfile @relation(fields: [businessProfileId], references: [id])
+  reviewedBy      User?           @relation("ReviewedPlans", fields: [reviewedById], references: [id])
   expenses        Expense[]
 
   @@map("marketing_plans")
@@ -223,168 +165,6 @@ model Template {
   @@map("templates")
 }
 
-model KolProfile {
-  id                 Int       @id @default(autoincrement())
-  userId             Int?      @unique @map("user_id")
-  name               String
-  avatarUrl          String?   @map("avatar_url")
-  coverUrl           String?   @map("cover_url")
-  bio                String?
-  kolType            KolType   @default(content_creator) @map("kol_type")
-  niche              String    @default("General")
-  categories         String[]  @default([])
-  platforms          Json?     @default("{}")
-  location           String?
-  followerCount      Int       @default(0) @map("follower_count")
-  engagementRate     Decimal   @default(0) @map("engagement_rate")
-  rating             Decimal   @default(0)
-  completedCampaigns Int       @default(0) @map("completed_campaigns")
-  audienceGender     String?   @map("audience_gender")
-  audienceAgeRange   String?   @map("audience_age_range")
-  audienceLocation   String?   @map("audience_location")
-  audienceInterests  String?   @map("audience_interests")
-  priceFrom          Decimal?  @map("price_from")
-  bookingPrice       Float?
-  isVerified         Boolean   @default(false) @map("is_verified")
-  isPublic           Boolean   @default(false) @map("is_public")
-  status             KolStatus @default(active)
-  createdById        Int?      @map("created_by")
-  createdAt          DateTime  @default(now()) @map("created_at")
-  updatedAt          DateTime  @default(now()) @updatedAt @map("updated_at")
-
-  user              User?                 @relation("OwnKolProfile", fields: [userId], references: [id])
-  createdBy         User?                 @relation("CreatedKols", fields: [createdById], references: [id])
-  platformAccounts  KolPlatformAccount[]
-  servicePackages   KolServicePackage[]
-  availabilitySlots KolAvailabilitySlot[]
-  bookings          KolBooking[]
-  reviews           BookingReview[]
-  applications      CampaignApplication[]
-  media             KolMedia[]
-  kolReviews        KolReview[]
-  performances      KolPerformance[]
-
-  @@map("kol_profiles")
-}
-
-model KolPlatformAccount {
-  id              Int      @id @default(autoincrement())
-  kolId           Int      @map("kol_id")
-  platform        String
-  profileUrl      String?  @map("profile_url")
-  username        String?
-  followerCount   Int?     @map("follower_count")
-  engagementRate  Decimal? @map("engagement_rate")
-  averageViews    Int?     @map("average_views")
-  averageLikes    Int?     @map("average_likes")
-  averageComments Int?     @map("average_comments")
-  createdAt       DateTime @default(now()) @map("created_at")
-
-  kol KolProfile @relation(fields: [kolId], references: [id])
-
-  @@map("kol_platform_accounts")
-}
-
-model KolServicePackage {
-  id             Int            @id @default(autoincrement())
-  kolId          Int            @map("kol_id")
-  packageName    String         @map("package_name")
-  serviceType    ServiceType    @map("service_type")
-  description    String?
-  deliverables   String?
-  deliveryTime   String?        @map("delivery_time")
-  revisionPolicy String?        @map("revision_policy")
-  price          Decimal
-  status         TemplateStatus @default(active)
-  createdAt      DateTime       @default(now()) @map("created_at")
-  updatedAt      DateTime       @default(now()) @updatedAt @map("updated_at")
-
-  kol      KolProfile   @relation(fields: [kolId], references: [id])
-  bookings KolBooking[]
-
-  @@map("kol_service_packages")
-}
-
-model KolAvailabilitySlot {
-  id            Int      @id @default(autoincrement())
-  kolId         Int      @map("kol_id")
-  availableDate DateTime @map("available_date") @db.Date
-  startTime     String?  @map("start_time")
-  endTime       String?  @map("end_time")
-  isAvailable   Boolean  @default(true) @map("is_available")
-  createdAt     DateTime @default(now()) @map("created_at")
-
-  kol KolProfile @relation(fields: [kolId], references: [id])
-
-  @@map("kol_availability_slots")
-}
-
-enum KolBookingStatus {
-  INVITATION_SENT
-  NEGOTIATING
-  ACCEPTED
-  COMPLETED
-  CANCELLED
-}
-
-model KolBooking {
-  id                  Int               @id @default(autoincrement())
-  userId              Int               @map("user_id")
-  kolId               Int?              @map("kol_id")
-  packageId           Int?              @map("package_id")
-  assignedStaffId     Int?              @map("assigned_staff_id")
-  campaignName        String            @default("Chiến dịch tiếp thị") @map("campaign_name")
-  campaignGoal        String?           @map("campaign_goal")
-  productName         String?           @map("product_name")
-  productDescription  String?           @map("product_description")
-  productCategory     String?           @map("product_category")
-  targetCustomer      String?           @map("target_customer")
-  campaignPlatform    String?           @map("campaign_platform")
-  campaignDate        DateTime?         @map("campaign_date") @db.Date
-  budget              Decimal?
-  contentRequirements String?           @map("content_requirements")
-  doAndDontNotes      String?           @map("do_and_dont_notes")
-  deliveryAddress     String?           @map("delivery_address")
-  referenceLink       String?           @map("reference_link")
-  productImages       String?           @map("product_images")
-  status              BookingStatus     @default(pending)
-  
-  // Custom KOL Invite & Booking Tracking Fields
-  kolName             String?           @map("kol_name")
-  kolPlatform         String?           @map("kol_platform")
-  kolContactLink      String?           @map("kol_contact_link")
-  scheduledDate       DateTime?         @map("scheduled_date")
-  note                String?
-  kolStatus           KolBookingStatus  @default(INVITATION_SENT) @map("kol_status")
-
-  createdAt           DateTime          @default(now()) @map("created_at")
-  updatedAt           DateTime          @default(now()) @updatedAt @map("updated_at")
-
-  user          User               @relation("UserBookings", fields: [userId], references: [id])
-  kol           KolProfile?        @relation(fields: [kolId], references: [id])
-  package       KolServicePackage? @relation(fields: [packageId], references: [id])
-  assignedStaff User?              @relation("StaffBookings", fields: [assignedStaffId], references: [id])
-  reviews       BookingReview[]
-
-  @@map("kol_bookings")
-}
-
-model BookingReview {
-  id        Int      @id @default(autoincrement())
-  bookingId Int      @map("booking_id")
-  userId    Int      @map("user_id")
-  kolId     Int      @map("kol_id")
-  rating    Decimal
-  comment   String?
-  createdAt DateTime @default(now()) @map("created_at")
-
-  booking KolBooking @relation(fields: [bookingId], references: [id])
-  user    User       @relation(fields: [userId], references: [id])
-  kol     KolProfile @relation(fields: [kolId], references: [id])
-
-  @@map("booking_reviews")
-}
-
 model SupportTicket {
   id              Int            @id @default(autoincrement())
   userId          Int            @map("user_id")
@@ -403,11 +183,11 @@ model SupportTicket {
 }
 
 model KnowledgeBase {
-  id        String                       @id @default(uuid()) @db.Uuid
-  content   String                       @db.Text
+  id        String                      @id @default(uuid()) @db.Uuid
+  content   String                      @db.Text
   metadata  Json?
   embedding Unsupported("vector(768)")?
-  createdAt DateTime                     @default(now()) @map("created_at")
+  createdAt DateTime                    @default(now()) @map("created_at")
 
   @@map("knowledge_base")
 }
@@ -427,83 +207,23 @@ model Notification {
 }
 
 model SocialPlatform {
-  id                String          @id @default(uuid()) @db.Uuid
-  userId            Int             @map("user_id")
-  platform          String          // 'tiktok', 'facebook', 'shopee', etc.
-  platformType      String?         @default("social") @map("platform_type") // 'social', 'ecommerce', 'custom'
+  id                String   @id @default(uuid()) @db.Uuid
+  userId            Int      @map("user_id")
+  platform          String // 'tiktok', 'facebook', 'shopee', etc.
+  platformType      String?  @default("social") @map("platform_type") // 'social', 'ecommerce', 'custom'
   url               String
-  followersCount    Int             @map("followers_count")
-  engagementRate    Float           @map("engagement_rate")
-  metrics           Json?           @default("[]")
-  aiInsight         String?         @map("ai_insight") @db.Text
-  businessProfileId Int             @map("business_profile_id")
-  createdAt         DateTime        @default(now()) @map("created_at")
-  updatedAt         DateTime        @default(now()) @updatedAt @map("updated_at")
+  followersCount    Int      @map("followers_count")
+  engagementRate    Float    @map("engagement_rate")
+  metrics           Json?    @default("[]")
+  aiInsight         String?  @map("ai_insight") @db.Text
+  businessProfileId Int      @map("business_profile_id")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @default(now()) @updatedAt @map("updated_at")
 
   user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   businessProfile BusinessProfile @relation(fields: [businessProfileId], references: [id], onDelete: Cascade)
 
   @@map("social_platforms")
-}
-
-model CampaignApplication {
-  id           Int               @id @default(autoincrement())
-  campaignId   Int               @map("campaign_id")
-  kolProfileId Int               @map("kol_profile_id")
-  status       ApplicationStatus @default(pending)
-  coverLetter  String?           @map("cover_letter") @db.Text
-  createdAt    DateTime          @default(now()) @map("created_at")
-  updatedAt    DateTime          @default(now()) @updatedAt @map("updated_at")
-
-  campaign   MarketingPlan @relation(fields: [campaignId], references: [id], onDelete: Cascade)
-  kolProfile KolProfile    @relation(fields: [kolProfileId], references: [id], onDelete: Cascade)
-
-  @@unique([campaignId, kolProfileId])
-  @@map("campaign_applications")
-}
-
-model KolMedia {
-  id           Int       @id @default(autoincrement())
-  kolProfileId Int       @map("kol_profile_id")
-  mediaUrl     String    @map("media_url")
-  mediaType    MediaType @map("media_type")
-  isFullBody   Boolean   @default(false) @map("is_full_body")
-  createdAt    DateTime  @default(now()) @map("created_at")
-  updatedAt    DateTime  @default(now()) @updatedAt @map("updated_at")
-
-  kolProfile KolProfile @relation(fields: [kolProfileId], references: [id], onDelete: Cascade)
-
-  @@map("kol_media")
-}
-
-model KolReview {
-  id           Int      @id @default(autoincrement())
-  kolProfileId Int      @map("kol_profile_id")
-  smeId        Int      @map("sme_id")
-  rating       Int
-  content      String   @db.Text
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @default(now()) @updatedAt @map("updated_at")
-
-  kolProfile KolProfile @relation(fields: [kolProfileId], references: [id], onDelete: Cascade)
-  sme        User       @relation("SmeKolReviews", fields: [smeId], references: [id], onDelete: Cascade)
-
-  @@map("kol_reviews")
-}
-
-model KolPerformance {
-  id             Int      @id @default(autoincrement())
-  kolProfileId   Int      @map("kol_profile_id")
-  postUrl        String   @map("post_url")
-  engagementRate Float    @map("engagement_rate")
-  conversions    Int      @default(0)
-  platform       String
-  createdAt      DateTime @default(now()) @map("created_at")
-  updatedAt      DateTime @default(now()) @updatedAt @map("updated_at")
-
-  kolProfile KolProfile @relation(fields: [kolProfileId], references: [id], onDelete: Cascade)
-
-  @@map("kol_performance")
 }
 
 enum PostStatus {
@@ -519,7 +239,7 @@ model ScheduledPost {
   businessProfileId Int?       @map("business_profile_id")
   title             String
   content           String     @db.Text
-  platform          String     // 'Facebook', 'TikTok', 'Instagram', 'Zalo', etc.
+  platform          String // 'Facebook', 'TikTok', 'Instagram', 'Zalo', etc.
   scheduledTime     DateTime?  @map("scheduled_time")
   status            PostStatus @default(pending_approval)
   isGoldenTime      Boolean    @default(false) @map("is_golden_time")
@@ -547,15 +267,20 @@ model MediaAsset {
 }
 
 model Expense {
-  id              Int          @id @default(autoincrement())
-  marketingPlanId Int          @map("marketing_plan_id")
-  expenseType     String       @map("expense_type")
+  id              Int         @id @default(autoincrement())
+  marketingPlanId Int         @map("marketing_plan_id")
+  expenseType     ExpenseType @map("expense_type")
   amount          Decimal
   note            String?
-  date            DateTime     @default(now())
-  createdAt       DateTime     @default(now()) @map("created_at")
+  date            DateTime    @default(now())
+  createdAt       DateTime    @default(now()) @map("created_at")
 
   marketingPlan MarketingPlan @relation(fields: [marketingPlanId], references: [id], onDelete: Cascade)
 
   @@map("expenses")
+}
+
+enum ExpenseType {
+  Ads
+  Custom
 }
