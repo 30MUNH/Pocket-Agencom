@@ -11,6 +11,7 @@ import {
   Globe
 } from 'lucide-react';
 import { socialApi } from '../../api/socialApi';
+import { toast } from '../../store/toastStore';
 
 function FacebookIcon({ className }) {
   return (
@@ -97,7 +98,7 @@ export default function SocialLinkManager() {
       });
       setUrl('');
       await fetchPlatforms();
-      alert('Phân tích và liên kết tài khoản thành công!');
+      toast.success('Phân tích và liên kết tài khoản thành công!');
     } catch (err) {
       console.error('Error adding platform:', err);
       setError(err.response?.data?.error?.message || 'Có lỗi xảy ra khi phân tích profile.');
@@ -112,9 +113,10 @@ export default function SocialLinkManager() {
     try {
       await socialApi.deletePlatform(id);
       setPlatforms(prev => prev.filter(p => p.id !== id));
+      toast.success('Đã ngắt kết nối tài khoản mạng xã hội.');
     } catch (err) {
       console.error('Error deleting platform:', err);
-      alert('Không thể ngắt kết nối tài khoản.');
+      toast.error('Không thể ngắt kết nối tài khoản.');
     }
   };
 
@@ -123,10 +125,10 @@ export default function SocialLinkManager() {
     try {
       await socialApi.analyzePlatform(id);
       await fetchPlatforms();
-      alert('Cập nhật phân tích tài khoản thành công!');
+      toast.success('Cập nhật phân tích tài khoản thành công!');
     } catch (err) {
       console.error('Error re-analyzing platform:', err);
-      alert('Có lỗi xảy ra khi cập nhật phân tích.');
+      toast.error('Có lỗi xảy ra khi cập nhật phân tích.');
     } finally {
       setAnalyzingId(null);
     }

@@ -469,6 +469,74 @@ export default function MarketingResult() {
     }
   };
 
+  const handleExportPlan = () => {
+    if (!plan) return;
+    try {
+      const title = plan.goal || 'Kế hoạch Marketing';
+      const campaign = typeof plan.playbook === 'string' ? plan.playbook : plan.campaignType || '';
+
+      let md = `# KẾ HOẠCH MARKETING: ${title}\n\n`;
+      if (campaign) md += `> **Chiến dịch:** ${campaign}\n\n`;
+      md += `*Thời gian tạo: ${new Date().toLocaleString('vi-VN')}*\n\n`;
+      md += `---\n\n`;
+
+      if (contentIdeas?.length) {
+        md += `## 1. Ý tưởng Nội dung (${contentIdeas.length})\n\n`;
+        contentIdeas.forEach((idea, i) => {
+          md += `### ${i + 1}. ${idea.title || 'Ý tưởng'}\n`;
+          if (idea.channel) md += `- **Kênh triển khai:** ${idea.channel}\n`;
+          if (idea.description) md += `- **Mô tả:** ${idea.description}\n`;
+          if (idea.rationale) md += `- **Lý do lựa chọn:** ${idea.rationale}\n`;
+          md += `\n`;
+        });
+      }
+
+      if (videoScripts?.length) {
+        md += `## 2. Kịch bản Video ngắn (${videoScripts.length})\n\n`;
+        videoScripts.forEach((vs, i) => {
+          md += `### ${i + 1}. ${vs.title || 'Kịch bản'}\n`;
+          if (vs.duration) md += `- **Thời lượng:** ${vs.duration}\n`;
+          if (vs.hook) md += `- **Hook mở đầu:** ${vs.hook}\n`;
+          if (vs.script) md += `- **Nội dung:**\n\n${vs.script}\n\n`;
+          if (vs.callToAction) md += `- **Kêu gọi hành động (CTA):** ${vs.callToAction}\n`;
+          md += `\n`;
+        });
+      }
+
+      if (seoKeywords?.length) {
+        md += `## 3. Bộ từ khóa SEO gợi ý\n\n`;
+        md += seoKeywords.map(kw => `- ${kw}`).join('\n') + '\n\n';
+      }
+
+      if (checklist?.length) {
+        md += `## 4. Checklist triển khai chiến dịch\n\n`;
+        checklist.forEach((item) => {
+          const checked = item.checked ? '[x]' : '[ ]';
+          md += `- ${checked} ${item.title || item}\n`;
+        });
+        md += `\n`;
+      }
+
+      const blob = new Blob([md], { type: 'text/markdown;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      const sanitizedName = (title || 'ke_hoach_marketing')
+        .toLowerCase()
+        .replace(/[^a-z0-9]/gi, '_')
+        .slice(0, 50);
+      link.download = `${sanitizedName}.md`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      toast.success('Đã xuất file kế hoạch (.md) thành công!');
+    } catch (err) {
+      toast.error('Lỗi khi xuất kế hoạch: ' + (err.message || 'Thử lại sau'));
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-20 gap-2 text-on-surface-variant">
@@ -531,7 +599,7 @@ export default function MarketingResult() {
             Tạo lại
           </Link>}
           <button
-            onClick={() => alert('Xuất kế hoạch thành công!')}
+            onClick={handleExportPlan}
             className="px-5 py-3 rounded-full text-label-sm font-label-sm text-primary dark:text-inverse-primary bg-surface-container-lowest dark:bg-tertiary-container border border-outline-variant hover:border-primary dark:hover:border-primary-fixed transition-colors shadow-sm flex items-center gap-2"
           >
             <Download size={14} />

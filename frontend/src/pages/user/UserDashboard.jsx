@@ -264,7 +264,7 @@ export default function UserDashboard() {
           <div className="bg-surface-container-lowest rounded-3xl shadow-ambient p-6">
             <div className="grid grid-cols-2 gap-4">
               {RECOMMENDED_TEMPLATES.map((tmpl) => (
-                <div key={tmpl.id} className="group cursor-pointer">
+                <Link to="/templates" key={tmpl.id} className="group cursor-pointer block">
                   <div className="aspect-square rounded-2xl overflow-hidden mb-3 relative">
                     <img
                       alt={tmpl.name}
@@ -275,10 +275,10 @@ export default function UserDashboard() {
                       <Eye className="text-white" size={24} />
                     </div>
                   </div>
-                  <h4 className="text-label-sm font-label-sm text-primary truncate">
+                  <h4 className="text-label-sm font-label-sm text-primary dark:text-inverse-primary truncate">
                     {tmpl.name}
                   </h4>
-                </div>
+                </Link>
               ))}
             </div>
             <Link

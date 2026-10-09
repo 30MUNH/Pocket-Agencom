@@ -16,6 +16,7 @@ import {
   Award
 } from 'lucide-react';
 import { authApi } from '../../api/authApi';
+import { toast } from '../../store/toastStore';
 import SocialLinksManager from '../../components/ui/SocialLinksManager';
 import CumulativeMediaAnalytics from '../../components/analytics/CumulativeMediaAnalytics';
 
@@ -148,10 +149,10 @@ export default function BusinessProfile() {
       setProfile(updatedProfile);
       setIsEditing(false);
       await fetchProfile();
-      alert('Cập nhật hồ sơ doanh nghiệp thành công!');
+      toast.success('Cập nhật hồ sơ doanh nghiệp thành công!');
     } catch (err) {
       console.error('Failed to update business profile:', err);
-      alert('Có lỗi xảy ra khi lưu thay đổi.');
+      toast.error('Có lỗi xảy ra khi lưu thay đổi.');
     } finally {
       setIsSaving(false);
     }

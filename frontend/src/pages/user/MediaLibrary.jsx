@@ -15,7 +15,9 @@ import {
   RefreshCw,
   Search,
   Filter,
-  X
+  X,
+  Eye,
+  Download
 } from 'lucide-react';
 import { mediaApi } from '../../api/mediaApi';
 import { uploadApi } from '../../api/uploadApi';
@@ -28,6 +30,7 @@ export default function MediaLibrary() {
   const [filterType, setFilterType] = useState('all'); // 'all', 'image', 'video'
   const [searchQuery, setSearchQuery] = useState('');
   const [copiedId, setCopiedId] = useState(null);
+  const [previewAsset, setPreviewAsset] = useState(null);
   
   // New Asset Upload Form State
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
@@ -274,7 +277,11 @@ export default function MediaLibrary() {
               className="group relative overflow-hidden rounded-3xl border border-surface-variant/40 bg-surface-container-lowest dark:bg-tertiary-container p-4 shadow-ambient hover:shadow-ambient-hover transition-all duration-300 hover:-translate-y-1"
             >
               {/* Media Thumbnail */}
-              <div className="relative aspect-video w-full overflow-hidden rounded-2xl bg-surface-container-high">
+              <div
+                onClick={() => setPreviewAsset(asset)}
+                className="relative aspect-video w-full overflow-hidden rounded-2xl bg-surface-container-high cursor-pointer group/thumb"
+                title="Nhấp để xem trước kích thước lớn"
+              >
                 {asset.fileType === 'video' ? (
                   <div className="relative h-full w-full">
                     <img src={asset.url} alt={asset.name} className="h-full w-full object-cover opacity-80" />
@@ -289,6 +296,12 @@ export default function MediaLibrary() {
                     className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                   />
                 )}
+
+                <div className="absolute inset-0 bg-primary/30 opacity-0 group-hover/thumb:opacity-100 flex items-center justify-center transition-opacity">
+                  <span className="p-2 rounded-full bg-white/80 dark:bg-black/60 text-primary dark:text-white shadow-sm">
+                    <Eye size={18} />
+                  </span>
+                </div>
 
                 <span className="absolute left-2.5 top-2.5 rounded-full bg-primary/80 px-2.5 py-0.5 text-[10px] font-bold text-on-primary uppercase">
                   {asset.fileType}
@@ -410,6 +423,77 @@ export default function MediaLibrary() {
           fetchAssets();
         }}
       />
+
+      {/* Media Lightbox Preview Modal */}
+      {previewAsset && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-primary/60 backdrop-blur-md animate-fade-in">
+          <div className="relative w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-[2.5rem] border border-surface-variant/40 bg-surface-container-lowest dark:bg-tertiary-container p-6 sm:p-8 shadow-ambient text-primary dark:text-inverse-primary animate-scale-in">
+            
+            <div className="flex items-center justify-between pb-4 border-b border-surface-variant/30 mb-4">
+              <div>
+                <span className="inline-block bg-secondary-container text-on-secondary-container px-3 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider mb-1">
+                  {previewAsset.fileType}
+                </span>
+                <h3 className="text-lg font-bold text-primary dark:text-inverse-primary truncate max-w-md sm:max-w-lg">
+                  {previewAsset.name}
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setPreviewAsset(null)}
+                className="rounded-full p-2 text-on-surface-variant hover:bg-surface-container-high transition-colors"
+                aria-label="Đóng"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Preview Display */}
+            <div className="rounded-2xl overflow-hidden bg-black/5 dark:bg-black/40 border border-surface-variant/30 flex items-center justify-center min-h-[300px] max-h-[500px] mb-4">
+              {previewAsset.fileType === 'video' ? (
+                <video src={previewAsset.url} controls className="max-h-[480px] w-full rounded-2xl" autoPlay />
+              ) : (
+                <img
+                  src={previewAsset.url}
+                  alt={previewAsset.name}
+                  className="max-h-[480px] w-auto max-w-full object-contain rounded-2xl"
+                />
+              )}
+            </div>
+
+            {/* Details & Actions */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-2 border-t border-surface-variant/30">
+              <div className="text-xs text-on-surface-variant space-y-0.5">
+                <p>Kích thước: <strong>{((previewAsset.sizeBytes || 0) / (1024 * 1024)).toFixed(2)} MB</strong></p>
+                <p>Ngày tải lên: <strong>{new Date(previewAsset.createdAt).toLocaleString('vi-VN')}</strong></p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleCopyUrl(previewAsset.id, previewAsset.url)}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-surface-variant/40 bg-secondary-container px-4 py-2 text-xs font-bold text-secondary hover:bg-secondary-container/80 transition-colors"
+                >
+                  {copiedId === previewAsset.id ? <Check size={14} className="text-emerald-600" /> : <Copy size={14} />}
+                  <span>{copiedId === previewAsset.id ? 'Đã copy URL' : 'Sao chép URL'}</span>
+                </button>
+
+                <a
+                  href={previewAsset.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  download={previewAsset.name}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-primary text-on-primary hover:opacity-90 px-4 py-2 text-xs font-bold shadow-sm transition-opacity"
+                >
+                  <Download size={14} />
+                  <span>Tải xuống</span>
+                </a>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      )}
     </div>
   );
 }

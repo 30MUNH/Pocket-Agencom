@@ -212,6 +212,33 @@ async function updateProfile(userId, data) {
   return user;
 }
 
+async function changePassword(userId, currentPassword, newPassword) {
+  if (!currentPassword) {
+    throw new AppError('Vui lòng nhập mật khẩu hiện tại', 400);
+  }
+  if (!newPassword || newPassword.length < 6) {
+    throw new AppError('Mật khẩu mới phải có ít nhất 6 ký tự', 400);
+  }
+
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) {
+    throw new AppError('User not found', 404);
+  }
+
+  const valid = await bcrypt.compare(currentPassword, user.passwordHash);
+  if (!valid) {
+    throw new AppError('Mật khẩu hiện tại không chính xác', 400);
+  }
+
+  const newHash = await bcrypt.hash(newPassword, SALT_ROUNDS);
+  await prisma.user.update({
+    where: { id: userId },
+    data: { passwordHash: newHash },
+  });
+
+  return { message: 'Mật khẩu đã được thay đổi thành công' };
+}
+
 module.exports = {
   register,
   login,
@@ -219,5 +246,6 @@ module.exports = {
   getMe,
   updateBusinessProfile,
   updateProfile,
+  changePassword,
   MANAGED_SOCIAL_PLATFORMS,
 };

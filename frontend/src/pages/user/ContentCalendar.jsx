@@ -19,7 +19,8 @@ import {
   LayoutGrid,
   List,
   Eye,
-  CheckSquare
+  CheckSquare,
+  Edit2
 } from 'lucide-react';
 import { scheduledPostApi } from '../../api/scheduledPostApi';
 import PostSuccessModal from '../../components/social/PostSuccessModal';
@@ -67,6 +68,21 @@ export default function ContentCalendar() {
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [shareModalPost, setShareModalPost] = useState(null);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+
+  // Create / Edit Post Modal State
+  const [isFormModalOpen, setIsFormModalOpen] = useState(false);
+  const [formMode, setFormMode] = useState('create'); // 'create' | 'edit'
+  const [editingPostId, setEditingPostId] = useState(null);
+  const [isSubmittingForm, setIsSubmittingForm] = useState(false);
+  const [formData, setFormData] = useState({
+    title: '',
+    content: '',
+    platform: 'Facebook',
+    scheduledTime: '',
+    imageUrl: '',
+    status: 'pending_approval',
+    isGoldenTime: false,
+  });
 
   // Mock Notification Banner State
   const [activeNotification, setActiveNotification] = useState(null);
@@ -152,6 +168,107 @@ export default function ContentCalendar() {
       url: window.location.href
     });
     setIsShareModalOpen(true);
+  };
+
+  const handleOpenCreateModal = () => {
+    const defaultTime = new Date();
+    defaultTime.setHours(19, 30, 0, 0);
+    if (new Date().getHours() >= 19) {
+      defaultTime.setDate(defaultTime.getDate() + 1);
+    }
+    const tzOffset = defaultTime.getTimezoneOffset() * 60000;
+    const localISOTime = new Date(defaultTime.getTime() - tzOffset).toISOString().slice(0, 16);
+
+    setFormData({
+      title: '',
+      content: '',
+      platform: 'Facebook',
+      scheduledTime: localISOTime,
+      imageUrl: '',
+      status: 'pending_approval',
+      isGoldenTime: true,
+    });
+    setFormMode('create');
+    setEditingPostId(null);
+    setIsFormModalOpen(true);
+  };
+
+  const handleOpenEditModal = (post) => {
+    let localISOTime = '';
+    if (post.scheduledTime) {
+      const d = new Date(post.scheduledTime);
+      const tzOffset = d.getTimezoneOffset() * 60000;
+      localISOTime = new Date(d.getTime() - tzOffset).toISOString().slice(0, 16);
+    }
+
+    setFormData({
+      title: post.title || '',
+      content: post.content || '',
+      platform: post.platform || 'Facebook',
+      scheduledTime: localISOTime,
+      imageUrl: post.imageUrl || '',
+      status: post.status || 'pending_approval',
+      isGoldenTime: !!post.isGoldenTime,
+    });
+    setFormMode('edit');
+    setEditingPostId(post.id);
+    setIsDetailModalOpen(false);
+    setIsFormModalOpen(true);
+  };
+
+  const handleDeletePost = async (postId) => {
+    if (!confirm('Bạn có chắc chắn muốn xóa bài viết này không?')) return;
+    try {
+      await scheduledPostApi.deletePost(postId);
+      toast.success('Đã xóa bài viết thành công.');
+      setPosts(prev => prev.filter(p => p.id !== postId));
+      setIsDetailModalOpen(false);
+      setSelectedPost(null);
+    } catch (err) {
+      toast.error('Không thể xóa bài viết.');
+    }
+  };
+
+  const handleSaveForm = async (e) => {
+    e.preventDefault();
+    if (!formData.title.trim()) {
+      toast.error('Vui lòng nhập tiêu đề bài viết.');
+      return;
+    }
+    if (!formData.content.trim()) {
+      toast.error('Vui lòng nhập nội dung bài viết.');
+      return;
+    }
+
+    try {
+      setIsSubmittingForm(true);
+      const payload = {
+        title: formData.title.trim(),
+        content: formData.content.trim(),
+        platform: formData.platform,
+        scheduledTime: formData.scheduledTime ? new Date(formData.scheduledTime).toISOString() : new Date().toISOString(),
+        imageUrl: formData.imageUrl.trim() || undefined,
+        status: formData.status,
+        isGoldenTime: formData.isGoldenTime,
+      };
+
+      if (formMode === 'create') {
+        const created = await scheduledPostApi.createPost(payload);
+        setPosts(prev => [created, ...prev]);
+        toast.success('✨ Đã tạo và lên lịch bài viết mới thành công!');
+      } else {
+        const updated = await scheduledPostApi.updatePost(editingPostId, payload);
+        setPosts(prev => prev.map(p => p.id === editingPostId ? (updated || { ...p, ...payload }) : p));
+        toast.success('Đã cập nhật bài viết thành công!');
+      }
+
+      setIsFormModalOpen(false);
+    } catch (err) {
+      console.error('[Save Post Error]', err);
+      toast.error('Có lỗi xảy ra khi lưu bài viết.');
+    } finally {
+      setIsSubmittingForm(false);
+    }
   };
 
   // Generate Days Grid for Current Month View
@@ -269,6 +386,12 @@ export default function ContentCalendar() {
             className="inline-flex items-center gap-2 rounded-full border border-surface-variant/40 bg-surface-container-lowest dark:bg-tertiary-container px-4 py-2 text-xs font-bold text-primary dark:text-inverse-primary hover:bg-surface-container-high transition-colors shadow-sm"
           >
             <RefreshCw size={14} /> Tải lại
+          </button>
+          <button
+            onClick={handleOpenCreateModal}
+            className="inline-flex items-center gap-2 rounded-full bg-primary text-on-primary hover:opacity-90 px-5 py-2 text-xs font-bold shadow-sm transition-all"
+          >
+            <Plus size={16} /> Tạo bài viết mới
           </button>
         </div>
       </div>
@@ -563,31 +686,195 @@ export default function ContentCalendar() {
             </div>
 
             {/* Approval Toggle & Action Row */}
-            <div className="mt-6 flex flex-col sm:flex-row gap-3 pt-2">
+            <div className="mt-6 flex flex-wrap gap-2.5 pt-2">
               <button
+                type="button"
                 onClick={() => handleToggleApproval(selectedPost.id, selectedPost.status)}
-                className={`flex-1 py-3 px-4 rounded-full text-xs font-bold flex items-center justify-center gap-2 border transition-all ${
+                className={`flex-1 py-2.5 px-4 rounded-full text-xs font-bold flex items-center justify-center gap-1.5 border transition-all ${
                   selectedPost.status === 'approved'
                     ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300 border-emerald-300'
                     : 'bg-secondary-container text-secondary border-secondary-container/60 hover:bg-secondary-container/80'
                 }`}
               >
                 <CheckSquare size={16} />
-                <span>{selectedPost.status === 'approved' ? '✓ Bài viết đã duyệt' : 'Duyệt bài đăng'}</span>
+                <span>{selectedPost.status === 'approved' ? '✓ Đã duyệt' : 'Duyệt bài'}</span>
               </button>
 
               <button
+                type="button"
+                onClick={() => handleOpenEditModal(selectedPost)}
+                className="py-2.5 px-4 rounded-full border border-surface-variant/40 hover:bg-surface-container-high text-xs font-bold flex items-center justify-center gap-1.5 transition-colors text-primary dark:text-inverse-primary"
+              >
+                <Edit2 size={15} />
+                <span>Sửa</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleDeletePost(selectedPost.id)}
+                className="py-2.5 px-3 rounded-full text-error hover:bg-error-container/30 text-xs font-bold flex items-center justify-center transition-colors"
+                title="Xóa bài viết"
+              >
+                <Trash2 size={16} />
+              </button>
+
+              <button
+                type="button"
                 onClick={() => {
                   setIsDetailModalOpen(false);
                   handleTriggerShare(selectedPost);
                 }}
-                className="flex-1 py-3 px-4 rounded-full bg-primary text-on-primary hover:opacity-90 text-xs font-bold flex items-center justify-center gap-2 shadow-sm transition-opacity"
+                className="flex-1 py-2.5 px-4 rounded-full bg-primary text-on-primary hover:opacity-90 text-xs font-bold flex items-center justify-center gap-1.5 shadow-sm transition-opacity"
               >
-                <Share2 size={16} />
-                <span>Đăng bài ngay</span>
+                <Share2 size={15} />
+                <span>Đăng ngay</span>
               </button>
             </div>
 
+          </div>
+        </div>
+      )}
+
+      {/* Create / Edit Post Modal */}
+      {isFormModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-primary/40 backdrop-blur-sm animate-fade-in">
+          <div className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-[2.5rem] border border-surface-variant/40 bg-surface-container-lowest dark:bg-tertiary-container p-6 sm:p-8 shadow-ambient text-primary dark:text-inverse-primary">
+            
+            <div className="flex items-center justify-between pb-4 border-b border-surface-variant/30 mb-5">
+              <h3 className="text-xl font-bold text-primary dark:text-inverse-primary flex items-center gap-2">
+                <Sparkles size={18} className="text-secondary" />
+                {formMode === 'create' ? 'Tạo bài viết mới' : 'Chỉnh sửa bài viết'}
+              </h3>
+              <button
+                type="button"
+                onClick={() => setIsFormModalOpen(false)}
+                className="rounded-full p-1.5 text-on-surface-variant hover:bg-surface-container-high transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveForm} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold uppercase text-on-surface-variant mb-1">Tiêu đề bài viết</label>
+                <input
+                  type="text"
+                  placeholder="Ví dụ: Giới thiệu sản phẩm mới hè 2026..."
+                  value={formData.title}
+                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                  className="w-full rounded-2xl border border-surface-variant/40 bg-surface-container-low dark:bg-surface-variant/20 p-3 text-xs text-primary dark:text-inverse-primary focus:outline-none focus:ring-2 focus:ring-secondary/40"
+                  required
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold uppercase text-on-surface-variant mb-1">Nền tảng</label>
+                  <select
+                    value={formData.platform}
+                    onChange={(e) => setFormData({ ...formData, platform: e.target.value })}
+                    className="w-full rounded-2xl border border-surface-variant/40 bg-surface-container-low dark:bg-surface-variant/20 p-3 text-xs text-primary dark:text-inverse-primary focus:outline-none focus:ring-2 focus:ring-secondary/40"
+                  >
+                    <option value="Facebook">Facebook</option>
+                    <option value="TikTok">TikTok</option>
+                    <option value="Instagram">Instagram</option>
+                    <option value="Zalo">Zalo</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold uppercase text-on-surface-variant mb-1">Trạng thái</label>
+                  <select
+                    value={formData.status}
+                    onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                    className="w-full rounded-2xl border border-surface-variant/40 bg-surface-container-low dark:bg-surface-variant/20 p-3 text-xs text-primary dark:text-inverse-primary focus:outline-none focus:ring-2 focus:ring-secondary/40"
+                  >
+                    <option value="pending_approval">Chờ duyệt</option>
+                    <option value="approved">Đã duyệt</option>
+                    <option value="draft">Bản nháp</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-bold uppercase text-on-surface-variant">Thời gian đăng bài</label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const d = new Date();
+                      d.setHours(19, 30, 0, 0);
+                      if (new Date().getHours() >= 19) d.setDate(d.getDate() + 1);
+                      const tzOffset = d.getTimezoneOffset() * 60000;
+                      const timeStr = new Date(d.getTime() - tzOffset).toISOString().slice(0, 16);
+                      setFormData({ ...formData, scheduledTime: timeStr, isGoldenTime: true });
+                    }}
+                    className="text-[11px] font-bold text-secondary hover:underline flex items-center gap-1"
+                  >
+                    <Sparkles size={12} /> Đặt Giờ Vàng 19:30
+                  </button>
+                </div>
+                <input
+                  type="datetime-local"
+                  value={formData.scheduledTime}
+                  onChange={(e) => setFormData({ ...formData, scheduledTime: e.target.value })}
+                  className="w-full rounded-2xl border border-surface-variant/40 bg-surface-container-low dark:bg-surface-variant/20 p-3 text-xs text-primary dark:text-inverse-primary focus:outline-none focus:ring-2 focus:ring-secondary/40"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold uppercase text-on-surface-variant mb-1">URL Hình ảnh (tùy chọn)</label>
+                <input
+                  type="url"
+                  placeholder="https://..."
+                  value={formData.imageUrl}
+                  onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
+                  className="w-full rounded-2xl border border-surface-variant/40 bg-surface-container-low dark:bg-surface-variant/20 p-3 text-xs text-primary dark:text-inverse-primary focus:outline-none focus:ring-2 focus:ring-secondary/40"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold uppercase text-on-surface-variant mb-1">Nội dung bài viết</label>
+                <textarea
+                  rows={4}
+                  placeholder="Nhập nội dung bài đăng, hashtag, thông điệp kêu gọi hành động..."
+                  value={formData.content}
+                  onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+                  className="w-full rounded-2xl border border-surface-variant/40 bg-surface-container-low dark:bg-surface-variant/20 p-3 text-xs text-primary dark:text-inverse-primary focus:outline-none focus:ring-2 focus:ring-secondary/40 resize-none leading-relaxed"
+                  required
+                />
+              </div>
+
+              <div className="flex items-center gap-2 pt-1">
+                <input
+                  type="checkbox"
+                  id="isGoldenTime"
+                  checked={formData.isGoldenTime}
+                  onChange={(e) => setFormData({ ...formData, isGoldenTime: e.target.checked })}
+                  className="rounded text-secondary focus:ring-secondary/40 h-4 w-4"
+                />
+                <label htmlFor="isGoldenTime" className="text-xs font-medium text-on-surface-variant cursor-pointer select-none">
+                  Đánh dấu là khung Giờ Vàng AI tương tác cao
+                </label>
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-surface-variant/30">
+                <button
+                  type="button"
+                  onClick={() => setIsFormModalOpen(false)}
+                  className="rounded-full px-5 py-2.5 text-xs font-bold text-on-surface-variant hover:bg-surface-container-high transition-colors"
+                >
+                  Hủy
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmittingForm}
+                  className="rounded-full bg-primary text-on-primary hover:opacity-90 px-6 py-2.5 text-xs font-bold shadow-sm transition-all disabled:opacity-50"
+                >
+                  {isSubmittingForm ? 'Đang lưu...' : (formMode === 'create' ? 'Tạo bài viết' : 'Lưu thay đổi')}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

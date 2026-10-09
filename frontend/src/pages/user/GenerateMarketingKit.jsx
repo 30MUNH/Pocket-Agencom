@@ -61,43 +61,6 @@ export default function GenerateMarketingKit() {
 
   const isProfileIncomplete = !profileData || !profileData.usp || !profileData.brandVoice;
 
-  if (isProfileIncomplete) {
-    return (
-      <div className="flex-1 w-full space-y-8 animate-fade-in">
-        <div>
-          <h2 className="text-display-lg-mobile md:text-display-lg font-display-lg text-primary dark:text-inverse-primary mb-2">
-            Tạo Bộ công cụ Marketing
-          </h2>
-          <p className="text-body-lg text-on-surface-variant max-w-2xl">
-            AI của chúng tôi thiết lập một chiến lược tiếp thị thống nhất phù hợp chính xác với thương hiệu của bạn.
-          </p>
-        </div>
-
-        <div className="max-w-2xl mx-auto mt-12 bg-surface-container-lowest dark:bg-tertiary-container rounded-[2rem] p-8 md:p-10 shadow-ambient border border-amber-200/50 dark:border-amber-500/20 text-center space-y-6 relative overflow-hidden">
-          <div className="absolute -right-16 -top-16 w-48 h-48 bg-amber-500/10 rounded-full blur-2xl pointer-events-none" />
-          <div className="w-20 h-20 bg-amber-500/10 text-amber-600 dark:text-amber-400 rounded-full flex items-center justify-center mx-auto ring-8 ring-amber-500/5">
-            <Sparkles size={36} className="animate-pulse" />
-          </div>
-          <div className="space-y-3">
-            <h3 className="text-headline-md font-bold text-primary">Cần Bổ sung Thông tin Thương hiệu</h3>
-            <p className="text-body-md text-on-surface-variant leading-relaxed max-w-md mx-auto">
-              AI cần hiểu rõ thương hiệu của bạn để tạo ra chiến dịch xuất sắc nhất. Vui lòng hoàn thiện Hồ sơ Doanh nghiệp trước khi tiếp tục.
-            </p>
-          </div>
-          <div className="pt-4 flex flex-col sm:flex-row gap-4 justify-center">
-            <button
-              onClick={() => navigate('/business-profile')}
-              className="bg-secondary text-on-secondary hover:bg-secondary/95 px-8 py-3.5 rounded-full text-label-sm font-bold shadow-md hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center justify-center gap-2 uppercase tracking-wider"
-            >
-              Hoàn thiện Hồ sơ ngay
-              <ArrowRight size={16} />
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (budget !== '' && Number(budget) === 0) {
@@ -137,6 +100,25 @@ export default function GenerateMarketingKit() {
           Xác định các thông số chiến dịch của bạn bên dưới. AI của chúng tôi sẽ thiết lập một chiến lược tiếp thị thống nhất phù hợp chính xác với nhu cầu của bạn chỉ trong vài giây.
         </p>
       </div>
+
+      {/* Non-blocking Brand Profile Notice Banner */}
+      {isProfileIncomplete && (
+        <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-300/60 dark:border-amber-700/40 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs sm:text-sm text-amber-900 dark:text-amber-200">
+          <div className="flex items-center gap-2.5">
+            <Sparkles className="text-amber-600 dark:text-amber-400 shrink-0" size={18} />
+            <span>
+              <strong>Gợi ý:</strong> Bạn chưa thiết lập đầy đủ USP hoặc Brand Voice. Bạn vẫn có thể tạo chiến dịch ngay bây giờ, nhưng hoàn thiện hồ sơ sẽ giúp AI tối ưu ngôn phong và định vị chuẩn xác hơn.
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => navigate('/business-profile')}
+            className="whitespace-nowrap px-4 py-1.5 rounded-full bg-amber-200 dark:bg-amber-900/60 hover:bg-amber-300 text-amber-950 dark:text-amber-100 font-bold text-xs transition-colors shrink-0"
+          >
+            Bổ sung hồ sơ →
+          </button>
+        </div>
+      )}
 
       {/* Stepper tracker */}
       <div className="mb-12 flex items-center justify-between relative max-w-3xl mx-auto py-4">

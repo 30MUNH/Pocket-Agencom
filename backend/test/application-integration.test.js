@@ -94,6 +94,13 @@ const mockPrisma = {
       return newUser;
     },
     findMany: async () => usersDb,
+    update: async ({ where, data }) => {
+      const u = usersDb.find((item) => item.id === where.id);
+      if (!u) throw new Error('User not found');
+      Object.assign(u, data);
+      return u;
+    },
+    count: async () => usersDb.length,
   },
   businessProfile: {
     findUnique: async ({ where }) => {
@@ -503,4 +510,79 @@ test('HTTP: removed marketplace namespaces return standard 404 contract across m
       error: { message: 'Route not found' },
     });
   }
+});
+
+// ── 6. Admin User Management & Password Change ───────────────────
+
+test('HTTP: admin user management enforces admin role and updates user status and role', async () => {
+  // Non-admin user gets 403
+  const forbiddenRes = await request(app)
+    .get('/api/admin/users')
+    .set('Authorization', `Bearer ${userToken}`);
+  assert.equal(forbiddenRes.status, 403);
+
+  // Admin user gets 200 and list of users
+  const adminRes = await request(app)
+    .get('/api/admin/users')
+    .set('Authorization', `Bearer ${adminToken}`);
+  assert.equal(adminRes.status, 200);
+  assert.equal(adminRes.body.success, true);
+  assert.ok(Array.isArray(adminRes.body.data.users));
+  assert.ok(adminRes.body.data.total >= 1);
+
+  // Admin cannot self-deactivate
+  const selfDeactivateRes = await request(app)
+    .patch('/api/admin/users/4/status')
+    .set('Authorization', `Bearer ${adminToken}`)
+    .send({ status: 'inactive' });
+  assert.equal(selfDeactivateRes.status, 400);
+
+  // Admin updates normal user status to inactive
+  const statusRes = await request(app)
+    .patch('/api/admin/users/1/status')
+    .set('Authorization', `Bearer ${adminToken}`)
+    .send({ status: 'inactive' });
+  assert.equal(statusRes.status, 200);
+  assert.equal(statusRes.body.data.status, 'inactive');
+
+  // Admin updates user role
+  const roleRes = await request(app)
+    .patch('/api/admin/users/1/role')
+    .set('Authorization', `Bearer ${adminToken}`)
+    .send({ role: 'staff' });
+  assert.equal(roleRes.status, 200);
+  assert.equal(roleRes.body.data.role, 'staff');
+
+  // Reset back to active user
+  await request(app)
+    .patch('/api/admin/users/1/status')
+    .set('Authorization', `Bearer ${adminToken}`)
+    .send({ status: 'active' });
+  await request(app)
+    .patch('/api/admin/users/1/role')
+    .set('Authorization', `Bearer ${adminToken}`)
+    .send({ role: 'user' });
+});
+
+test('HTTP: password change requires valid current password and updates password', async () => {
+  // Incorrect current password
+  const badPassRes = await request(app)
+    .put('/api/auth/change-password')
+    .set('Authorization', `Bearer ${userToken}`)
+    .send({ currentPassword: 'wrongPassword', newPassword: 'newSecretPassword123' });
+  assert.equal(badPassRes.status, 400);
+
+  // Correct current password
+  const goodPassRes = await request(app)
+    .put('/api/auth/change-password')
+    .set('Authorization', `Bearer ${userToken}`)
+    .send({ currentPassword: 'password123', newPassword: 'newSecretPassword123' });
+  assert.equal(goodPassRes.status, 200);
+  assert.equal(goodPassRes.body.success, true);
+
+  // Reset password back for other tests
+  await request(app)
+    .put('/api/auth/change-password')
+    .set('Authorization', `Bearer ${userToken}`)
+    .send({ currentPassword: 'newSecretPassword123', newPassword: 'password123' });
 });
