@@ -6,6 +6,7 @@ import { authApi } from '../../api/authApi';
 import { scheduledPostApi } from '../../api/scheduledPostApi';
 import { toast } from '../../store/toastStore';
 import PostSuccessModal from '../../components/social/PostSuccessModal';
+import SocialImageGeneratorModal from '../../components/media/SocialImageGeneratorModal';
 
 export default function QuickEditor() {
   const location = useLocation();
@@ -20,6 +21,8 @@ export default function QuickEditor() {
   const [generatedContent, setGeneratedContent] = useState('');
   const [copied, setCopied] = useState(false);
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
+  const [isImageModalOpen, setIsImageModalOpen] = useState(false);
+  const [attachedImage, setAttachedImage] = useState(null);
 
   const handlePublishAndShare = () => {
     if (!generatedContent) {
@@ -49,7 +52,8 @@ export default function QuickEditor() {
         scheduledTime: goldenTime.toISOString(),
         status: 'pending_approval',
         isGoldenTime: true,
-        businessProfileId: profileData?.id
+        businessProfileId: profileData?.id,
+        imageUrl: attachedImage?.imageUrl,
       });
 
       const formattedTime = goldenTime.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
@@ -298,25 +302,71 @@ export default function QuickEditor() {
             </div>
 
             {/* AI Generator Action Row */}
-            <div className="pt-2">
+            <div className="pt-2 grid grid-cols-1 sm:grid-cols-2 gap-3">
               <button
                 onClick={handleGenerateContent}
                 disabled={generatePostMutation.isPending}
-                className="w-full bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 active:scale-[0.98] text-white py-4 rounded-2xl font-bold text-sm shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 disabled:opacity-60"
+                className="w-full bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 active:scale-[0.98] text-white py-3.5 rounded-2xl font-bold text-xs shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 disabled:opacity-60"
               >
                 {generatePostMutation.isPending ? (
                   <>
-                    <Loader2 size={18} className="animate-spin" />
-                    <span>AI đang phân tích và biên soạn...</span>
+                    <Loader2 size={16} className="animate-spin" />
+                    <span>AI đang biên soạn...</span>
                   </>
                 ) : (
                   <>
-                    <Wand2 size={18} />
+                    <Wand2 size={16} />
                     <span>Bắt trend với AI</span>
                   </>
                 )}
               </button>
+
+              <button
+                type="button"
+                onClick={() => setIsImageModalOpen(true)}
+                className="w-full bg-secondary-container hover:bg-secondary-container/80 text-secondary active:scale-[0.98] py-3.5 rounded-2xl font-bold text-xs border border-secondary/30 transition-all flex items-center justify-center gap-2"
+              >
+                <Sparkles size={16} />
+                <span>Tạo ảnh AI minh họa</span>
+              </button>
             </div>
+
+            {/* Attached AI Image Preview (if generated) */}
+            {attachedImage && (
+              <div className="p-3 rounded-2xl bg-surface-container/60 border border-secondary-container/40 flex items-center justify-between gap-3 animate-fade-in">
+                <div className="flex items-center gap-3 min-w-0">
+                  <img
+                    src={attachedImage.imageUrl}
+                    alt="AI Visual"
+                    className="w-12 h-12 rounded-xl object-cover border border-outline-variant/30 shrink-0"
+                  />
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold text-primary dark:text-inverse-primary truncate">
+                      Ảnh AI ({attachedImage.aspectRatio || '1:1'}) đã đính kèm
+                    </p>
+                    <p className="text-[11px] text-secondary font-medium truncate">
+                      Đã đồng bộ lên Media Library
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setIsImageModalOpen(true)}
+                    className="text-xs text-primary font-bold hover:underline"
+                  >
+                    Đổi ảnh
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setAttachedImage(null)}
+                    className="text-xs text-on-surface-variant hover:text-error transition-colors"
+                  >
+                    Gỡ
+                  </button>
+                </div>
+              </div>
+            )}
 
             {/* Editor Textarea with Loading State */}
             <div className="flex-1 flex flex-col space-y-2 relative min-h-[300px]">
@@ -388,8 +438,19 @@ export default function QuickEditor() {
           title: trend?.title || 'Bài viết bắt trend xu hướng',
           content: generatedContent,
           platform: platform,
-          url: window.location.href
+          url: attachedImage?.imageUrl || window.location.href,
         }}
+      />
+
+      {/* Social AI Image Generation Studio */}
+      <SocialImageGeneratorModal
+        isOpen={isImageModalOpen}
+        onClose={() => setIsImageModalOpen(false)}
+        initialContent={generatedContent || trend?.teaser || trend?.title || ''}
+        platform={platform}
+        businessProfileId={profileData?.id}
+        ideaTitle={trend?.title || ''}
+        onAttach={(result) => setAttachedImage(result)}
       />
     </div>
   );

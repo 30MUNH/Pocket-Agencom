@@ -59,3 +59,33 @@ export function useGeneratePostWithImage() {
     mutationFn: marketingPlanApi.generatePostWithImage,
   });
 }
+
+export function useRefinePlan() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, instruction }) => marketingPlanApi.refine(id, { instruction }),
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['marketing-plans'] });
+      if (variables?.id) {
+        queryClient.invalidateQueries({ queryKey: ['marketing-plans', String(variables.id)] });
+      }
+    },
+  });
+}
+
+export function useGenerateImagePrompt() {
+  return useMutation({
+    mutationFn: marketingPlanApi.generateImagePrompt,
+  });
+}
+
+export function useGenerateSocialImage() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: marketingPlanApi.generateImage,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['media-assets'] });
+    },
+  });
+}
+

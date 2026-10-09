@@ -7,6 +7,7 @@ import { toast } from '../../store/toastStore';
 import BudgetBreakdownCard from '../../components/marketing/BudgetBreakdownCard';
 import RevisionChatPanel from '../../components/marketing/RevisionChatPanel';
 import CampaignBudgetTracker from '../../components/marketing/CampaignBudgetTracker';
+import SocialImageGeneratorModal from '../../components/media/SocialImageGeneratorModal';
 import { normalizePlanContent } from '../../utils/planContent';
 
 /**
@@ -61,6 +62,8 @@ function IdeaCard({ idea, index, totalLength, businessProfileId, existingResourc
   const [designTips, setDesignTips] = useState('');
   const [uploadedImageUrl, setUploadedImageUrl] = useState('');
   const [copied, setCopied] = useState(false);
+  const [isImageModalOpen, setIsImageModalOpen] = useState(false);
+  const [generatedAiImage, setGeneratedAiImage] = useState(null);
 
   // AI Advisor image upload state
   const [selectedFile, setSelectedFile] = useState(null);
@@ -232,47 +235,56 @@ function IdeaCard({ idea, index, totalLength, businessProfileId, existingResourc
                 </div>
               )}
 
-              {/* Image Gallery Grid — user's uploaded image takes the first slot */}
-              <div className="grid grid-cols-3 gap-2 mt-6">
-                <div className="aspect-square rounded-xl bg-gradient-to-tr from-pink-500/20 to-purple-500/20 dark:from-pink-500/10 dark:to-purple-500/10 border border-secondary-container/20 overflow-hidden relative group">
-                  {previewUrl || uploadedImageUrl ? (
-                    <>
-                      <img
-                        src={previewUrl || uploadedImageUrl}
-                        alt="Ảnh của bạn"
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      />
-                      <span className="absolute bottom-1.5 left-1.5 bg-black/60 text-white text-[10px] font-bold px-2 py-0.5 rounded-full backdrop-blur-sm">
-                        Ảnh của bạn
+              {/* Media Section: Displays real user upload OR AI Generated Social Media Image */}
+              <div className="mt-6 space-y-3">
+                {generatedAiImage || previewUrl || uploadedImageUrl ? (
+                  <div className="rounded-2xl border border-secondary-container/40 overflow-hidden bg-surface-container-low dark:bg-surface-variant/20 p-3 space-y-2">
+                    <div className="flex items-center justify-between text-xs font-bold text-on-surface-variant px-1">
+                      <span className="flex items-center gap-1.5 text-secondary">
+                        <Sparkles size={13} />
+                        {generatedAiImage ? `Ảnh AI (${generatedAiImage.aspectRatio || 'Social'})` : 'Ảnh đính kèm'}
                       </span>
-                    </>
-                  ) : (
-                    <img
-                      src="https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?auto=format&fit=crop&w=200&q=80"
-                      alt="Mockup 1"
-                      className="w-full h-full object-cover opacity-85 group-hover:scale-105 transition-transform duration-300"
-                    />
-                  )}
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors pointer-events-none" />
-                </div>
-                <div className="aspect-square rounded-xl bg-gradient-to-tr from-pink-500/20 to-purple-500/20 dark:from-pink-500/10 dark:to-purple-500/10 border border-secondary-container/20 overflow-hidden relative group">
-                  <img 
-                    src="https://images.unsplash.com/photo-1611162616305-c69b3fa7fbe0?auto=format&fit=crop&w=200&q=80" 
-                    alt="Mockup 2" 
-                    className="w-full h-full object-cover opacity-85 group-hover:scale-105 transition-transform duration-300"
-                  />
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
-                </div>
-                <div className="aspect-square rounded-xl bg-gradient-to-tr from-pink-500/20 to-purple-500/20 dark:from-pink-500/10 dark:to-purple-500/10 border border-secondary-container/20 overflow-hidden relative group cursor-pointer">
-                  <img 
-                    src="https://images.unsplash.com/photo-1611606063065-ee7946f0787a?auto=format&fit=crop&w=200&q=80" 
-                    alt="Mockup 3" 
-                    className="w-full h-full object-cover opacity-85 group-hover:scale-105 transition-transform duration-300"
-                  />
-                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center backdrop-blur-[2px] group-hover:bg-black/55 transition-colors">
-                    <span className="text-white text-xs font-bold font-display">+6 ảnh</span>
+                      <button
+                        type="button"
+                        onClick={() => setIsImageModalOpen(true)}
+                        className="text-xs text-primary hover:underline font-semibold"
+                      >
+                        Đổi / Tạo ảnh khác
+                      </button>
+                    </div>
+                    <div className="relative max-h-60 rounded-xl overflow-hidden bg-black/5 dark:bg-black/20 flex items-center justify-center">
+                      <img
+                        src={generatedAiImage?.imageUrl || previewUrl || uploadedImageUrl}
+                        alt="Ảnh bài đăng"
+                        className="max-h-60 w-full object-contain rounded-xl"
+                      />
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  <div className="rounded-2xl border border-dashed border-secondary-container/60 bg-secondary-container/10 p-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-secondary-container text-secondary flex items-center justify-center shrink-0">
+                        <Sparkles size={18} />
+                      </div>
+                      <div>
+                        <h5 className="text-xs font-bold text-primary dark:text-inverse-primary">
+                          Tạo ảnh truyền thông AI cho bài viết này
+                        </h5>
+                        <p className="text-[11px] text-on-surface-variant">
+                          Chuẩn tỉ lệ 1:1, 4:5, 9:16 hoặc 16:9, tự động lưu trữ Media Library.
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setIsImageModalOpen(true)}
+                      className="py-2 px-4 rounded-xl bg-secondary text-on-secondary hover:bg-secondary/90 text-xs font-bold whitespace-nowrap transition-colors flex items-center gap-1.5 shadow-sm"
+                    >
+                      <Sparkles size={13} />
+                      Studio Tạo ảnh AI
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           ) : (
@@ -295,20 +307,28 @@ function IdeaCard({ idea, index, totalLength, businessProfileId, existingResourc
           </div>
 
           {isExpanded ? (
-            <div className="grid grid-cols-2 gap-3 mt-6 pt-4 border-t border-surface-variant/30 animate-fade-in">
+            <div className="grid grid-cols-3 gap-2 mt-6 pt-4 border-t border-surface-variant/30 animate-fade-in">
               <button
                 onClick={handleCopyPost}
-                className="py-2.5 px-4 rounded-xl bg-surface-container hover:bg-surface-container-high active:scale-[0.98] text-xs font-bold text-primary flex items-center justify-center gap-1.5 transition-all"
+                className="py-2.5 px-3 rounded-xl bg-surface-container hover:bg-surface-container-high active:scale-[0.98] text-xs font-bold text-primary flex items-center justify-center gap-1.5 transition-all"
               >
                 {copied ? <Check size={14} className="text-emerald-500" /> : <Copy size={14} />}
-                {copied ? 'Đã sao chép!' : 'Sao chép'}
+                {copied ? 'Đã chép' : 'Sao chép'}
               </button>
               <button
                 onClick={handleGeneratePost}
-                className="py-2.5 px-4 rounded-xl bg-secondary-container/30 hover:bg-secondary-container/50 active:scale-[0.98] text-xs font-bold text-secondary flex items-center justify-center gap-1.5 transition-all"
+                className="py-2.5 px-3 rounded-xl bg-surface-container hover:bg-surface-container-high active:scale-[0.98] text-xs font-bold text-on-surface-variant flex items-center justify-center gap-1.5 transition-all"
               >
                 <RefreshCw size={14} />
                 Tạo lại
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsImageModalOpen(true)}
+                className="py-2.5 px-3 rounded-xl bg-secondary-container/60 hover:bg-secondary-container active:scale-[0.98] text-xs font-bold text-secondary flex items-center justify-center gap-1.5 transition-all"
+              >
+                <Sparkles size={14} />
+                Tạo ảnh AI
               </button>
             </div>
           ) : (
@@ -385,6 +405,16 @@ function IdeaCard({ idea, index, totalLength, businessProfileId, existingResourc
           )}
         </div>
       </div>
+
+      <SocialImageGeneratorModal
+        isOpen={isImageModalOpen}
+        onClose={() => setIsImageModalOpen(false)}
+        initialContent={detailedContent || idea.description}
+        platform={idea.channel || 'Facebook'}
+        businessProfileId={businessProfileId}
+        ideaTitle={idea.title}
+        onAttach={(result) => setGeneratedAiImage(result)}
+      />
     </div>
   );
 }
@@ -837,8 +867,8 @@ export default function MarketingResult() {
         <CampaignBudgetTracker campaignId={plan?.id || 1} />
       </section>
 
-          {/* Revision workflow */}
-          {!plan.hasLegacyContent && <RevisionChatPanel />}
+      {/* Revision workflow */}
+      {!plan.hasLegacyContent && <RevisionChatPanel planId={plan.id} />}
     </div>
   );
 }

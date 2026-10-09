@@ -61,27 +61,12 @@ export default function CampaignBudgetTracker({ campaignId = 1, initialData = nu
     }
   };
 
-  // Simulated Mock Sync for Ads Spend
+  // External Ads API Sync Status Handler
   const handleSyncAdsSpend = async () => {
-    try {
-      setIsSyncingAds(true);
-      await new Promise(r => setTimeout(r, 1200));
-
-      const mockAdSpendAmount = Math.floor(Math.random() * 3000000) + 1500000;
-      await budgetApi.addExpense({
-        marketingPlanId: campaignId,
-        expenseType: 'Ads',
-        amount: mockAdSpendAmount,
-        note: 'Tự động đồng bộ chi phí Quảng cáo Meta/TikTok Ads'
-      });
-
-      toast.success(`Đã tự động đồng bộ chi phí Quảng cáo mới: +${mockAdSpendAmount.toLocaleString('vi-VN')} ₫!`);
-      fetchBudget();
-    } catch (err) {
-      toast.error('Đồng bộ chi phí Ads thất bại.');
-    } finally {
-      setIsSyncingAds(false);
-    }
+    setIsSyncingAds(true);
+    await new Promise(r => setTimeout(r, 600));
+    setIsSyncingAds(false);
+    toast.info('Chưa có kết nối tài khoản Quảng cáo (Meta Ads / TikTok Ads API). Vui lòng ghi nhận chi phí thực tế bằng biểu mẫu bên dưới.');
   };
 
   if (loading) {

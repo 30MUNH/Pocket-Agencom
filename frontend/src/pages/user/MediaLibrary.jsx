@@ -20,6 +20,7 @@ import {
 import { mediaApi } from '../../api/mediaApi';
 import { uploadApi } from '../../api/uploadApi';
 import { toast } from '../../store/toastStore';
+import SocialImageGeneratorModal from '../../components/media/SocialImageGeneratorModal';
 
 export default function MediaLibrary() {
   const [assets, setAssets] = useState([]);
@@ -34,6 +35,7 @@ export default function MediaLibrary() {
   const [assetUrl, setAssetUrl] = useState('');
   const [assetType, setAssetType] = useState('image');
   const [isUploading, setIsUploading] = useState(false);
+  const [isAiModalOpen, setIsAiModalOpen] = useState(false);
 
   const fetchAssets = async () => {
     try {
@@ -157,7 +159,13 @@ export default function MediaLibrary() {
           </div>
 
           <div className="flex items-center gap-3 shrink-0">
-            <label className="cursor-pointer inline-flex items-center justify-center gap-2 rounded-full bg-primary text-on-primary hover:opacity-90 px-5 py-2.5 text-xs font-bold shadow-sm transition-opacity">
+            <button
+              onClick={() => setIsAiModalOpen(true)}
+              className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 px-4 py-2.5 text-xs font-bold text-white shadow-sm transition-opacity"
+            >
+              <Sparkles size={16} /> Tạo ảnh AI
+            </button>
+            <label className="cursor-pointer inline-flex items-center justify-center gap-2 rounded-full bg-primary text-on-primary hover:opacity-90 px-4 py-2.5 text-xs font-bold shadow-sm transition-opacity">
               <Upload size={16} /> Tải tập tin lên
               <input type="file" onChange={handleDirectUpload} className="hidden" accept="image/*,video/*" />
             </label>
@@ -391,6 +399,17 @@ export default function MediaLibrary() {
         </div>
       )}
 
+      {/* AI Image Generation Studio Modal */}
+      <SocialImageGeneratorModal
+        isOpen={isAiModalOpen}
+        onClose={() => {
+          setIsAiModalOpen(false);
+          fetchAssets();
+        }}
+        onAttach={() => {
+          fetchAssets();
+        }}
+      />
     </div>
   );
 }
