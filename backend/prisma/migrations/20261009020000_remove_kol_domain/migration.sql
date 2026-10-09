@@ -1,5 +1,3 @@
-BEGIN;
-
 CREATE SCHEMA "legacy_kol_archive";
 REVOKE ALL ON SCHEMA "legacy_kol_archive" FROM PUBLIC;
 
@@ -142,9 +140,11 @@ ALTER TABLE "public"."users"
     ALTER COLUMN "role" TYPE "public"."UserRole_new"
         USING (CASE WHEN "role"::TEXT = 'kol' THEN 'user' ELSE "role"::TEXT END)::"public"."UserRole_new",
     ALTER COLUMN "status" TYPE "public"."AccountStatus_new"
-        USING (CASE WHEN "role"::TEXT = 'kol' OR "id" IN (
-            SELECT "id" FROM "legacy_kol_archive"."former_accounts"
-        ) THEN 'archived' ELSE "status"::TEXT END)::"public"."AccountStatus_new";
+        USING (CASE WHEN "role"::TEXT = 'kol' THEN 'archived' ELSE "status"::TEXT END)::"public"."AccountStatus_new";
+
+UPDATE "public"."users"
+SET "status" = 'archived'
+WHERE "id" IN (SELECT "id" FROM "legacy_kol_archive"."former_accounts");
 DROP TYPE "public"."UserRole";
 DROP TYPE "public"."AccountStatus";
 ALTER TYPE "public"."UserRole_new" RENAME TO "UserRole";
@@ -268,5 +268,3 @@ BEGIN
 END $$;
 
 ALTER TABLE "public"."marketing_plans" DROP COLUMN "is_looking_for_kol";
-
-COMMIT;
