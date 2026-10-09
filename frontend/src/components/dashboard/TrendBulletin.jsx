@@ -1,6 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { TrendingUp, Sparkles, Flame, Zap, Award, ArrowRight, X } from 'lucide-react';
+import { TrendingUp, Sparkles, Flame, Zap, Award, ArrowRight, X, RefreshCw } from 'lucide-react';
+import { marketingPlanApi } from '../../api/marketingPlanApi';
+import { toast } from '../../store/toastStore';
 
 const TRENDS = [
   {
@@ -10,7 +12,7 @@ const TRENDS = [
     trendScope: "SIMPLE_POST",
     image: "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=600&q=80",
     teaser: "Lô hàng 12 tấn KitKat biến mất và cách các thương hiệu lớn 'mượn cớ' thông báo thất lạc để giật spotlight. Shop của bạn có gì để báo 'mất tích' không?",
-    icon: Flame,
+    iconName: "Flame",
     iconColor: "text-amber-500 bg-amber-50 dark:bg-amber-950/30",
     badgeColor: "bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300",
     prefill: {
@@ -27,7 +29,7 @@ const TRENDS = [
     trendScope: "CAMPAIGN",
     image: "https://images.unsplash.com/photo-1513151233558-d860c5398176?auto=format&fit=crop&w=600&q=80",
     teaser: "Sức hút từ cảm giác hồi hộp khi tự tay bóc hộp đồ chơi, mỹ phẩm hay phụ kiện ngẫu nhiên. Áp dụng ngay hình thức 'Blind Box' để x3 doanh số bán hàng.",
-    icon: Zap,
+    iconName: "Zap",
     iconColor: "text-purple-500 bg-purple-50 dark:bg-purple-950/30",
     badgeColor: "bg-purple-100 text-purple-800 dark:bg-purple-950/50 dark:text-purple-300",
     prefill: {
@@ -44,7 +46,7 @@ const TRENDS = [
     trendScope: "SIMPLE_POST",
     image: "https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=600&q=80",
     teaser: "Tạo dựng lòng tin tuyệt đối bằng cách ghi lại hành trình thay đổi rõ rệt trước và sau khi sử dụng sản phẩm. Phù hợp nhất cho thời trang, mỹ phẩm và sức khỏe.",
-    icon: Award,
+    iconName: "Award",
     iconColor: "text-emerald-500 bg-emerald-50 dark:bg-emerald-950/30",
     badgeColor: "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300",
     prefill: {
@@ -56,9 +58,58 @@ const TRENDS = [
   }
 ];
 
+function getTrendIcon(iconName) {
+  switch (iconName) {
+    case 'Zap':
+      return Zap;
+    case 'Award':
+      return Award;
+    case 'Flame':
+    default:
+      return Flame;
+  }
+}
+
 export default function TrendBulletin() {
   const navigate = useNavigate();
+  const [trendsList, setTrendsList] = useState(TRENDS);
   const [selectedTrend, setSelectedTrend] = useState(null);
+  const [isLoadingTrends, setIsLoadingTrends] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+    async function loadTrends() {
+      try {
+        setIsLoadingTrends(true);
+        const data = await marketingPlanApi.getTrends();
+        if (mounted && Array.isArray(data) && data.length > 0) {
+          setTrendsList(data);
+        }
+      } catch (err) {
+        console.warn('Could not load dynamic trends, using curated defaults:', err.message);
+      } finally {
+        if (mounted) setIsLoadingTrends(false);
+      }
+    }
+    loadTrends();
+    return () => { mounted = false; };
+  }, []);
+
+  const handleRefreshTrends = async () => {
+    try {
+      setIsRefreshing(true);
+      const data = await marketingPlanApi.refreshTrends();
+      if (Array.isArray(data) && data.length > 0) {
+        setTrendsList(data);
+        toast.success('✨ Đã làm mới các trào lưu tiếp thị AI thành công!');
+      }
+    } catch (err) {
+      toast.error('Không thể làm mới trào lưu: ' + (err.message || 'Lỗi kết nối'));
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   const handleCreateScript = (trend) => {
     if (trend.trendScope === 'SIMPLE_POST') {
@@ -76,11 +127,11 @@ export default function TrendBulletin() {
     }
   };
 
-  const ActiveIcon = selectedTrend ? selectedTrend.icon : null;
+  const ActiveIcon = selectedTrend ? (selectedTrend.icon || getTrendIcon(selectedTrend.iconName)) : null;
 
   return (
     <section className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center text-primary">
             <TrendingUp size={20} />
@@ -94,11 +145,21 @@ export default function TrendBulletin() {
             </p>
           </div>
         </div>
+
+        <button
+          type="button"
+          onClick={handleRefreshTrends}
+          disabled={isRefreshing || isLoadingTrends}
+          className="flex items-center gap-2 px-4 py-2.5 rounded-full border border-secondary/30 bg-surface-container-low hover:bg-secondary-container/40 text-secondary text-xs font-bold transition-all shadow-sm active:scale-95 self-start sm:self-auto disabled:opacity-50 cursor-pointer"
+        >
+          <RefreshCw size={14} className={isRefreshing ? "animate-spin" : ""} />
+          <span>{isRefreshing ? "AI đang săn trend..." : "Làm mới trào lưu AI"}</span>
+        </button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {TRENDS.map((trend) => {
-          const IconComponent = trend.icon;
+        {trendsList.map((trend) => {
+          const IconComponent = trend.icon || getTrendIcon(trend.iconName);
           return (
             <div
               key={trend.id}

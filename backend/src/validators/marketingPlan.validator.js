@@ -25,7 +25,7 @@ const generatePostSchema = z.object({
   ideaTitle: z.string().min(1, 'Idea title is required'),
   ideaDescription: z.string().min(1, 'Idea description is required'),
   platform: z.string().min(1, 'Platform is required'),
-  businessProfileId: z.preprocess((val) => Number(val), z.number().int().positive('Business profile ID is required')),
+  businessProfileId: z.preprocess((val) => (val ? Number(val) : undefined), z.number().int().positive().optional()),
   existingResources: z.string().optional(),
   campaignReason: z.string().optional(),
 });

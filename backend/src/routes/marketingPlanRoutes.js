@@ -17,6 +17,8 @@ const router = express.Router();
 router.use(authMiddleware);
 
 router.get('/', marketingPlanController.list);
+router.get('/trends', marketingPlanController.getTrends);
+router.post('/trends/refresh', requireRole('user', 'admin'), marketingPlanController.refreshTrends);
 router.get('/:id', marketingPlanController.getById);
 router.post(
   '/generate',

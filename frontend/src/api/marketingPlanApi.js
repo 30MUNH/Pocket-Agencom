@@ -25,4 +25,6 @@ export const marketingPlanApi = {
   generateImage: (data) => axiosClient.post('/marketing-plans/generate-image', data),
   review: (id, data) => axiosClient.patch(`/marketing-plans/${id}/review`, data),
   remove: (id) => axiosClient.delete(`/marketing-plans/${id}`),
+  getTrends: () => axiosClient.get('/marketing-plans/trends'),
+  refreshTrends: () => axiosClient.post('/marketing-plans/trends/refresh'),
 };

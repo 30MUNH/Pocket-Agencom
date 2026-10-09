@@ -866,7 +866,144 @@ ${postContent.slice(0, 1000)}`;
       postProcessed: Boolean(generatedImageResult.postProcessed),
     };
   }
+
+  /**
+   * Generates or fetches current viral marketing trends in Vietnam,
+   * cached in memory to save user quota, with instant refresh capability.
+   */
+  async getTrendingBulletin({ forceRefresh = false } = {}) {
+    const now = Date.now();
+    if (!forceRefresh && cachedTrends && now - lastTrendsFetchTime < TRENDS_CACHE_TTL_MS) {
+      return cachedTrends;
+    }
+
+    const SYSTEM_PROMPT = `Bạn là Chuyên gia Khám phá Trào lưu Mạng Xã hội (Social Trends Scout) hàng đầu tại Việt Nam.
+Nhiệm vụ của bạn là tổng hợp 3 trào lưu marketing nóng hổi, sáng tạo và cực kỳ dễ áp dụng cho các chủ shop kinh doanh và SME tại Việt Nam trên TikTok, Facebook, Instagram và Threads.
+
+BẠN BẮT BUỘC PHẢI TRẢ VỀ DUY NHẤT MỘT MẢNG JSON HỢP LỆ GỒM 3 ĐỐI TƯỢNG VỚI CẤU TRÚC SAU:
+[
+  {
+    "id": 1,
+    "title": "Tiêu đề trào lưu hấp dẫn (VD: Trend '...': ...)",
+    "tags": ["#Tag1", "#Tag2", "#Tag3"],
+    "trendScope": "SIMPLE_POST",
+    "image": "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=600&q=80",
+    "teaser": "Mô tả ngắn gọn và hấp dẫn về cách shop có thể mượn trào lưu này để viral",
+    "iconName": "Flame",
+    "prefill": {
+      "campaignType": "awareness",
+      "description": "Chi tiết kịch bản áp dụng thực tế cho cửa hàng",
+      "primaryGoal": "Mục tiêu cụ thể",
+      "customerProfile": "Khách hàng mục tiêu phù hợp"
+    }
+  }
+]
+trendScope có thể là "SIMPLE_POST" (cho 2 trào lưu) hoặc "CAMPAIGN" (cho 1 trào lưu).
+iconName có thể là: "Flame", "Zap", hoặc "Award".
+Tuyệt đối KHÔNG trả về markdown ngoài mảng JSON.`;
+
+    const prompt = 'Hãy tổng hợp 3 trào lưu marketing thực tế, mới mẻ và dễ áp dụng nhất tuần này tại Việt Nam.';
+
+    try {
+      const result = await this.generateStructuredContent({
+        prompt,
+        systemPrompt: SYSTEM_PROMPT,
+        validatorFn: (parsed) => {
+          if (!Array.isArray(parsed) || parsed.length === 0) {
+            throw new Error('AI did not return an array of trends');
+          }
+          return parsed.map((item, idx) => ({
+            id: idx + 1,
+            title: item.title || `Trào lưu tiếp thị hot #${idx + 1}`,
+            tags: Array.isArray(item.tags) ? item.tags : ['#Viral', '#XuHướng'],
+            trendScope: item.trendScope === 'CAMPAIGN' ? 'CAMPAIGN' : 'SIMPLE_POST',
+            image: item.image || CURATED_DEFAULT_TRENDS[idx % CURATED_DEFAULT_TRENDS.length].image,
+            teaser: item.teaser || item.description || 'Trào lưu đang thu hút lượng tương tác lớn trên mạng xã hội.',
+            iconName: item.iconName || (idx === 0 ? 'Flame' : idx === 1 ? 'Zap' : 'Award'),
+            iconColor: idx === 0 ? 'text-amber-500 bg-amber-50 dark:bg-amber-950/30' : idx === 1 ? 'text-purple-500 bg-purple-50 dark:bg-purple-950/30' : 'text-emerald-500 bg-emerald-50 dark:bg-emerald-950/30',
+            badgeColor: idx === 0 ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300' : idx === 1 ? 'bg-purple-100 text-purple-800 dark:bg-purple-950/50 dark:text-purple-300' : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300',
+            prefill: {
+              campaignType: item.prefill?.campaignType || (idx === 1 ? 'sales' : 'awareness'),
+              description: item.prefill?.description || item.teaser || 'Chiến dịch tiếp thị theo xu hướng',
+              primaryGoal: item.prefill?.primaryGoal || 'Tăng nhận diện thương hiệu và tương tác',
+              customerProfile: item.prefill?.customerProfile || 'Khách hàng trẻ trung yêu thích mạng xã hội',
+            },
+          }));
+        },
+      });
+
+      if (result.data && result.data.length > 0) {
+        cachedTrends = result.data;
+        lastTrendsFetchTime = Date.now();
+        return cachedTrends;
+      }
+    } catch (err) {
+      console.warn('[AI Trend Scout Notice] Using curated default trends fallback:', err.message);
+    }
+
+    cachedTrends = CURATED_DEFAULT_TRENDS;
+    lastTrendsFetchTime = Date.now();
+    return cachedTrends;
+  }
 }
+
+const CURATED_DEFAULT_TRENDS = [
+  {
+    id: 1,
+    title: "Trend 'Thông báo mất tích': Biến sự cố thành Content triệu view!",
+    tags: ["#Fastvertising", "#HàiHước", "#Viral"],
+    trendScope: "SIMPLE_POST",
+    image: "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=600&q=80",
+    teaser: "Lô hàng 12 tấn KitKat biến mất và cách các thương hiệu lớn 'mượn cớ' thông báo thất lạc để giật spotlight. Shop của bạn có gì để báo 'mất tích' không?",
+    iconName: "Flame",
+    iconColor: "text-amber-500 bg-amber-50 dark:bg-amber-950/30",
+    badgeColor: "bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300",
+    prefill: {
+      campaignType: "awareness",
+      description: "Chiến dịch bắt trend 'Thông báo mất tích' - mượn cớ thông báo thất lạc sản phẩm hoặc dịch vụ độc đáo của cửa hàng để tạo sự tò mò, hài hước và thu hút sự chú ý cực lớn từ khách hàng.",
+      primaryGoal: "Tạo nội dung viral thu hút trên 10,000 tương tác và tăng nhận diện thương hiệu",
+      customerProfile: "Khách hàng trẻ trung, thích theo dõi xu hướng mạng xã hội (Facebook, TikTok, Instagram) và thích nội dung hài hước.",
+    }
+  },
+  {
+    id: 2,
+    title: "Trend 'Unboxing Hộp Mù (Blind Box)': Cơn sốt bóc quà kích thích tò mò!",
+    tags: ["#XuHướngTiêuDùng", "#KíchThíchTòMò", "#DễÁpDụng"],
+    trendScope: "CAMPAIGN",
+    image: "https://images.unsplash.com/photo-1513151233558-d860c5398176?auto=format&fit=crop&w=600&q=80",
+    teaser: "Sức hút từ cảm giác hồi hộp khi tự tay bóc hộp đồ chơi, mỹ phẩm hay phụ kiện ngẫu nhiên. Áp dụng ngay hình thức 'Blind Box' để x3 doanh số bán hàng.",
+    iconName: "Zap",
+    iconColor: "text-purple-500 bg-purple-50 dark:bg-purple-950/30",
+    badgeColor: "bg-purple-100 text-purple-800 dark:bg-purple-950/50 dark:text-purple-300",
+    prefill: {
+      campaignType: "sales",
+      description: "Bắt trend 'Unboxing Blind Box' - Đóng gói các sản phẩm bán chạy hoặc các combo của cửa hàng dưới dạng hộp mù ngẫu nhiên kèm theo một số quà tặng giới hạn bất ngờ.",
+      primaryGoal: "Thúc đẩy doanh số bán hàng tăng gấp đôi trong tháng và giới thiệu dòng sản phẩm mới.",
+      customerProfile: "Khách hàng thích sự bất ngờ, đam mê sưu tầm, đặc biệt là nhóm đối tượng học sinh, sinh viên và nhân viên văn phòng trẻ tuổi.",
+    }
+  },
+  {
+    id: 3,
+    title: "Trend 'Thử thách 7 ngày lột xác': Kể câu chuyện hành trình đầy cảm xúc!",
+    tags: ["#Storytelling", "#TrựcQuan", "#ĐángTinCậy"],
+    trendScope: "SIMPLE_POST",
+    image: "https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=600&q=80",
+    teaser: "Tạo dựng lòng tin tuyệt đối bằng cách ghi lại hành trình thay đổi rõ rệt trước và sau khi sử dụng sản phẩm. Phù hợp nhất cho thời trang, mỹ phẩm và sức khỏe.",
+    iconName: "Award",
+    iconColor: "text-emerald-500 bg-emerald-50 dark:bg-emerald-950/30",
+    badgeColor: "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300",
+    prefill: {
+      campaignType: "retention",
+      description: "Chiến dịch kể chuyện (Storytelling) ghi lại hành trình thực tế 'Thử thách 7 ngày lột xác' của khách hàng/người trải nghiệm khi sử dụng sản phẩm chăm sóc/sức khỏe/thời trang.",
+      primaryGoal: "Tăng niềm tin vào sản phẩm thông qua minh chứng trực quan, nâng tỷ lệ giữ chân khách hàng cũ lên 25%.",
+      customerProfile: "Khách hàng quan tâm sâu sắc tới kết quả thực tế, chú trọng chất lượng, hiệu quả lâu dài và giá trị thực sự của sản phẩm.",
+    }
+  }
+];
+
+let cachedTrends = null;
+let lastTrendsFetchTime = 0;
+const TRENDS_CACHE_TTL_MS = 2 * 60 * 60 * 1000;
 
 const aiService = new AIService();
 aiService.isTransientError = isTransientError;
@@ -876,4 +1013,5 @@ aiService.checkAndIncrementUserQuotaSync = checkAndIncrementUserQuotaSync;
 aiService.getUserQuotaStatus = getUserQuotaStatus;
 aiService.getUserQuotaStatusSync = getUserQuotaStatusSync;
 aiService.marketingPlanOutputSchema = marketingPlanOutputSchema;
+aiService.CURATED_DEFAULT_TRENDS = CURATED_DEFAULT_TRENDS;
 module.exports = aiService;

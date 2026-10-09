@@ -127,6 +127,24 @@ async function generateSocialImage(req, res, next) {
   }
 }
 
+async function getTrends(req, res, next) {
+  try {
+    const trends = await marketingPlanService.getTrendingBulletin(false);
+    return success(res, trends);
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function refreshTrends(req, res, next) {
+  try {
+    const trends = await marketingPlanService.getTrendingBulletin(true);
+    return success(res, trends);
+  } catch (err) {
+    next(err);
+  }
+}
+
 module.exports = {
   generate,
   list,
@@ -139,4 +157,6 @@ module.exports = {
   refine,
   generateImagePrompt,
   generateSocialImage,
+  getTrends,
+  refreshTrends,
 };

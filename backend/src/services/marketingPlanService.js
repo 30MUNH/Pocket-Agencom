@@ -264,25 +264,33 @@ async function deletePlan(id, userId) {
 }
 
 async function generateDetailedPost(user, { ideaTitle, ideaDescription, platform, businessProfileId, existingResources, campaignReason }) {
-  const profile = await prisma.businessProfile.findUnique({
-    where: { id: Number(businessProfileId) },
-  });
+  let profile = null;
+  if (businessProfileId) {
+    profile = await prisma.businessProfile.findUnique({
+      where: { id: Number(businessProfileId) },
+    });
+    // Ensure user owns this profile unless they are staff/admin
+    if (profile && user.role === 'user' && profile.userId !== user.id) {
+      throw new AppError('Access denied', 403);
+    }
+  }
 
   if (!profile) {
-    throw new AppError('Business profile not found', 404);
+    profile = await prisma.businessProfile.findUnique({
+      where: { userId: user.id },
+    });
   }
 
-  // Ensure user owns this profile unless they are staff/admin
-  if (user.role === 'user' && profile.userId !== user.id) {
-    throw new AppError('Access denied', 403);
-  }
+  // Graceful fallback defaults if user has not completed their business profile yet
+  const brandVoice = profile?.brandVoice || 'Chuyên nghiệp, tin cậy, gần gũi và hài hước phù hợp với mạng xã hội Việt Nam';
+  const usp = profile?.usp || 'Sản phẩm/dịch vụ chất lượng cao, giá thành hợp lý, phục vụ tận tâm';
 
   return aiService.generateDetailedPost({
     ideaTitle,
     ideaDescription,
     platform,
-    brandVoice: profile.brandVoice,
-    usp: profile.usp,
+    brandVoice,
+    usp,
     resources: existingResources,
     reason: campaignReason,
   });
@@ -390,6 +398,13 @@ async function generateSocialImage(userId, { prompt, aspectRatio, platform, busi
   });
 }
 
+/**
+  * Fetches trending bulletin topics (AI generated or curated)
+  */
+async function getTrendingBulletin(forceRefresh = false) {
+  return aiService.getTrendingBulletin({ forceRefresh });
+}
+
 module.exports = {
   formatPlan,
   generatePlan,
@@ -403,4 +418,5 @@ module.exports = {
   refinePlan,
   generateImagePrompt,
   generateSocialImage,
+  getTrendingBulletin,
 };

@@ -8,6 +8,7 @@ const analyticsService = require('../src/services/analyticsService');
 const socialService = require('../src/services/socialService');
 const scheduledPostService = require('../src/services/scheduledPostService');
 const mediaService = require('../src/services/mediaService');
+const marketingPlanService = require('../src/services/marketingPlanService');
 const CloudflareProvider = require('../src/services/ai/providers/cloudflareProvider');
 const FalProvider = require('../src/services/ai/providers/falProvider');
 const GroqProvider = require('../src/services/ai/providers/groqProvider');
@@ -417,5 +418,19 @@ test('Ownership & Security: scheduled posts and media library prevent cross-user
   // User A can delete their own asset
   const deletedAsset = await mediaService.deleteMediaAsset(userA, assetA.id);
   assert.equal(deletedAsset.deleted, true);
+});
+
+test('Trend Bulletin: aiService provides trending topics and marketingPlanService delegates gracefully', async () => {
+  const trends = await aiService.getTrendingBulletin({ forceRefresh: false });
+  assert.ok(Array.isArray(trends));
+  assert.equal(trends.length, 3);
+  assert.ok(trends[0].title);
+  assert.ok(trends[0].tags.length > 0);
+  assert.ok(trends[0].teaser);
+  assert.ok(trends[0].prefill);
+
+  // marketingPlanService.getTrendingBulletin returns valid trends
+  const serviceTrends = await marketingPlanService.getTrendingBulletin(false);
+  assert.equal(serviceTrends.length, 3);
 });
 
