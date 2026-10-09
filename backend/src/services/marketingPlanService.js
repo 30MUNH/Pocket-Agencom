@@ -34,7 +34,7 @@ function formatPlan(plan) {
 async function generatePlan(userId, data) {
   let profile = await prisma.businessProfile.findUnique({ where: { userId } });
   
-  const aiContent = await generateAIContent(data, profile);
+  const aiContent = await generateAIContent(data, profile, userId);
 
   const plan = await prisma.$transaction(async (tx) => {
     let profileTx = await tx.businessProfile.findUnique({ where: { userId } });

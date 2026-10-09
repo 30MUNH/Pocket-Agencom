@@ -1,8 +1,10 @@
 const axios = require('axios');
+const { z } = require('zod');
 const aiConfig = require('./aiConfig');
 const GroqProvider = require('./providers/groqProvider');
 const OpenRouterProvider = require('./providers/openRouterProvider');
 const GeminiProvider = require('./providers/geminiProvider');
+const CloudflareProvider = require('./providers/cloudflareProvider');
 const FalProvider = require('./providers/falProvider');
 const { AppError } = require('../../middleware/errorHandler');
 const { findSimilarStrategies } = require('../ragService');
@@ -12,6 +14,94 @@ const prisma = require('../../config/prisma');
 // In-memory usage log & concurrency control
 const usageLog = [];
 let activeGenerations = 0;
+
+// Daily user quota tracking (in-memory map keyed by `${userId}:${date}:${type}`)
+const userDailyQuotaUsage = new Map();
+
+function getTodayKey() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function checkAndIncrementUserQuota(userId, type = 'text') {
+  if (!userId) return { allowed: true, remaining: 999 };
+  const dateKey = getTodayKey();
+  const quotaKey = `${userId}:${dateKey}:${type}`;
+  const currentCount = userDailyQuotaUsage.get(quotaKey) || 0;
+
+  const maxLimit =
+    type === 'image'
+      ? aiConfig.userQuotas.dailyImagesLimit
+      : aiConfig.userQuotas.dailyGenerationsLimit;
+
+  if (currentCount >= maxLimit) {
+    throw new AppError(
+      `Bạn đã đạt giới hạn sử dụng AI miễn phí trong ngày (${maxLimit} lượt ${type === 'image' ? 'tạo ảnh' : 'tạo nội dung'}). Hạn ngạch sẽ được làm mới vào ngày mai!`,
+      429
+    );
+  }
+
+  userDailyQuotaUsage.set(quotaKey, currentCount + 1);
+  return {
+    allowed: true,
+    used: currentCount + 1,
+    limit: maxLimit,
+    remaining: maxLimit - (currentCount + 1),
+  };
+}
+
+function getUserQuotaStatus(userId) {
+  if (!userId) {
+    return {
+      text: { used: 0, limit: aiConfig.userQuotas.dailyGenerationsLimit, remaining: aiConfig.userQuotas.dailyGenerationsLimit },
+      image: { used: 0, limit: aiConfig.userQuotas.dailyImagesLimit, remaining: aiConfig.userQuotas.dailyImagesLimit },
+    };
+  }
+  const dateKey = getTodayKey();
+  const textUsed = userDailyQuotaUsage.get(`${userId}:${dateKey}:text`) || 0;
+  const imageUsed = userDailyQuotaUsage.get(`${userId}:${dateKey}:image`) || 0;
+  return {
+    text: {
+      used: textUsed,
+      limit: aiConfig.userQuotas.dailyGenerationsLimit,
+      remaining: Math.max(0, aiConfig.userQuotas.dailyGenerationsLimit - textUsed),
+    },
+    image: {
+      used: imageUsed,
+      limit: aiConfig.userQuotas.dailyImagesLimit,
+      remaining: Math.max(0, aiConfig.userQuotas.dailyImagesLimit - imageUsed),
+    },
+  };
+}
+
+const marketingPlanOutputSchema = z.object({
+  contentIdeas: z.array(z.object({
+    title: z.string(),
+    channel: z.string().optional(),
+    format: z.string().optional(),
+    description: z.string(),
+  })).min(1),
+  videoScripts: z.array(z.object({
+    scene: z.string().optional(),
+    action: z.string(),
+    dialogue: z.string().optional(),
+  })).min(1),
+  checklist: z.array(z.string()).min(1),
+  playbook: z.array(z.object({
+    phaseName: z.string(),
+    duration: z.string().optional(),
+    objective: z.string().optional(),
+    keyActions: z.array(z.string()).optional(),
+    focusChannels: z.array(z.string()).optional(),
+  })).min(1),
+  seoKeywords: z.array(z.string()).optional().default([]),
+  budgetBreakdown: z.object({
+    channels: z.array(z.object({
+      channel: z.string(),
+      percentage: z.number().optional(),
+      estimatedVnd: z.number().optional(),
+    })).optional(),
+  }).optional().nullable(),
+});
 
 /**
  * Exponential backoff with jitter
@@ -41,6 +131,7 @@ class AIService {
     this.groq = new GroqProvider();
     this.openrouter = new OpenRouterProvider();
     this.gemini = new GeminiProvider();
+    this.cloudflare = new CloudflareProvider();
     this.fal = new FalProvider();
   }
 
@@ -65,6 +156,7 @@ class AIService {
   getImageProvidersInPriority() {
     const primary = aiConfig.imageProvider.toLowerCase();
     const allProviders = [
+      { name: 'cloudflare', instance: this.cloudflare },
       { name: 'fal', instance: this.fal },
       { name: 'openrouter', instance: this.openrouter },
     ];
@@ -74,6 +166,11 @@ class AIService {
       if (b.name === primary) return 1;
       return 0;
     });
+
+    // In FREE_ONLY_MODE, strictly filter out paid image providers
+    if (aiConfig.freeOnlyMode || !aiConfig.allowPaidModels) {
+      return sorted.filter((p) => p.name === 'cloudflare' && p.instance.isAvailable());
+    }
 
     return sorted.filter((p) => p.instance.isAvailable());
   }
@@ -223,6 +320,9 @@ class AIService {
    * Generates a Comprehensive Marketing Plan
    */
   async generateMarketingPlan(userId, data, profile) {
+    if (userId) {
+      checkAndIncrementUserQuota(userId, 'text');
+    }
     const brandVoice = profile?.brandVoice || 'Chuyên nghiệp, tin cậy, gần gũi với khách hàng Việt Nam';
     const usp = profile?.usp || 'Sản phẩm chất lượng cao, giá thành hợp lý';
     const priceRange = profile?.priceRange || 'Trung bình';
@@ -290,8 +390,12 @@ YÊU CẦU NỘI DUNG:
     }
 
     const validator = (parsed) => {
-      if (!parsed.contentIdeas || !parsed.videoScripts || !parsed.checklist || !parsed.playbook || !parsed.seoKeywords) {
-        throw new AppError('Dữ liệu kế hoạch tiếp thị từ AI thiếu các trường bắt buộc.', 502);
+      const parsedValidation = marketingPlanOutputSchema.safeParse(parsed);
+      if (!parsedValidation.success) {
+        console.warn('[Zod Plan Validation Warning]', parsedValidation.error.issues);
+        if (!parsed.contentIdeas || !parsed.videoScripts || !parsed.checklist || !parsed.playbook) {
+          throw new AppError('Dữ liệu kế hoạch tiếp thị từ AI thiếu các trường bắt buộc.', 502);
+        }
       }
       return parsed;
     };
@@ -482,6 +586,9 @@ ${postContent.slice(0, 1000)}`;
     userId,
     businessProfileId = null,
   }) {
+    if (userId) {
+      checkAndIncrementUserQuota(userId, 'image');
+    }
     await this.acquireConcurrencySlot();
     const startTime = Date.now();
     const providers = this.getImageProvidersInPriority();
@@ -489,7 +596,7 @@ ${postContent.slice(0, 1000)}`;
     if (providers.length === 0) {
       this.releaseConcurrencySlot();
       throw new AppError(
-        'Không có nhà cung cấp tạo ảnh AI nào được cấu hình (FAL_KEY hoặc OPENROUTER_API_KEY).',
+        'Không có nhà cung cấp tạo ảnh AI miễn phí nào khả dụng (vui lòng cấu hình CLOUDFLARE_ACCOUNT_ID và CLOUDFLARE_API_TOKEN).',
         503
       );
     }
@@ -534,33 +641,48 @@ ${postContent.slice(0, 1000)}`;
       );
     }
 
-    // Step 2: Download the generated image buffer to prevent expiring temporary URLs
+    // Step 2: Handle image buffer and persist to storage
     let persistentUrl = generatedImageResult.imageUrl;
-    let sizeBytes = 0;
-    try {
-      const imageResponse = await axios.get(generatedImageResult.imageUrl, {
-        responseType: 'arraybuffer',
-        timeout: 20000,
-      });
+    let imageBuffer = generatedImageResult.buffer;
+    let mimeType = generatedImageResult.contentType || 'image/jpeg';
+    let sizeBytes = imageBuffer ? imageBuffer.length : 0;
 
-      const buffer = Buffer.from(imageResponse.data);
-      sizeBytes = buffer.length;
-      const mimeType = imageResponse.headers['content-type'] || 'image/jpeg';
+    // If buffer was not returned directly but an HTTP URL was provided, fetch it
+    if (!imageBuffer && generatedImageResult.imageUrl?.startsWith('http')) {
+      try {
+        const imageResponse = await axios.get(generatedImageResult.imageUrl, {
+          responseType: 'arraybuffer',
+          timeout: 20000,
+        });
+        imageBuffer = Buffer.from(imageResponse.data);
+        sizeBytes = imageBuffer.length;
+        mimeType = imageResponse.headers['content-type'] || mimeType;
+      } catch (dlErr) {
+        console.warn('[Image Download Warning] Could not download image from URL:', dlErr.message);
+      }
+    }
+
+    if (imageBuffer) {
       const fileExt = mimeType.includes('png') ? '.png' : '.jpg';
       const fileName = `ai-${Date.now()}-${Math.round(Math.random() * 1e6)}${fileExt}`;
 
-      // Upload buffer to Supabase Storage
-      const pseudoMulterFile = {
-        buffer,
-        mimetype: mimeType,
-        originalname: fileName,
-      };
+      try {
+        const pseudoMulterFile = {
+          buffer: imageBuffer,
+          mimetype: mimeType,
+          originalname: fileName,
+        };
 
-      const uploaded = await uploadCampaignAsset(pseudoMulterFile, `user-${userId}`);
-      persistentUrl = uploaded.publicUrl;
-    } catch (storageErr) {
-      console.warn('[Storage Notice] Could not mirror image to Supabase Storage, using provider URL:', storageErr.message);
-      // Fallback to provider image URL if Supabase storage is unavailable in local dev
+        const uploaded = await uploadCampaignAsset(pseudoMulterFile, `user-${userId}`);
+        if (uploaded?.publicUrl) {
+          persistentUrl = uploaded.publicUrl;
+        }
+      } catch (storageErr) {
+        console.warn('[Storage Notice] Could not mirror image to Supabase Storage, using provider result:', storageErr.message);
+        if (!persistentUrl && imageBuffer) {
+          persistentUrl = `data:${mimeType};base64,${imageBuffer.toString('base64')}`;
+        }
+      }
     }
 
     // Step 3: Persist into media_assets table
@@ -595,6 +717,7 @@ ${postContent.slice(0, 1000)}`;
       aspectRatio,
       provider: generatedImageResult.provider,
       model: generatedImageResult.model,
+      postProcessed: Boolean(generatedImageResult.postProcessed),
     };
   }
 }
@@ -602,4 +725,7 @@ ${postContent.slice(0, 1000)}`;
 const aiService = new AIService();
 aiService.isTransientError = isTransientError;
 aiService.AIService = AIService;
+aiService.checkAndIncrementUserQuota = checkAndIncrementUserQuota;
+aiService.getUserQuotaStatus = getUserQuotaStatus;
+aiService.marketingPlanOutputSchema = marketingPlanOutputSchema;
 module.exports = aiService;
