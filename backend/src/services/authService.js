@@ -17,8 +17,6 @@ async function register(data) {
   }
 
   const passwordHash = await bcrypt.hash(data.password, SALT_ROUNDS);
-  const isKol = data.role === 'kol';
-
   const user = await prisma.$transaction(async (tx) => {
     const newUser = await tx.user.create({
       data: {
@@ -26,34 +24,19 @@ async function register(data) {
         email: data.email,
         passwordHash,
         phone: data.phone,
-        role: isKol ? 'kol' : 'user',
+        role: 'user',
         status: 'active',
       },
     });
 
-    if (isKol) {
-      // Create an empty KOL profile linked to the user
-      await tx.kolProfile.create({
-        data: {
-          userId: newUser.id,
-          name: data.name,
-          bio: '',
-          categories: [],
-          platforms: {},
-          isPublic: false,
-        },
-      });
-    } else {
-      // Create a business profile for brand users
-      await tx.businessProfile.create({
-        data: {
-          userId: newUser.id,
-          businessType: data.businessType || 'General',
-          productDescription: data.productDescription || 'Pending profile setup',
-          targetCustomer: data.targetCustomer || 'General audience',
-        },
-      });
-    }
+    await tx.businessProfile.create({
+      data: {
+        userId: newUser.id,
+        businessType: data.businessType || 'General',
+        productDescription: data.productDescription || 'Pending profile setup',
+        targetCustomer: data.targetCustomer || 'General audience',
+      },
+    });
 
     return newUser;
   });
@@ -63,7 +46,11 @@ async function register(data) {
 }
 
 async function login(email, password) {
-  const user = await prisma.user.findUnique({ where: { email } });
+  return loginWithPrisma(prisma, email, password);
+}
+
+async function loginWithPrisma(prismaClient, email, password) {
+  const user = await prismaClient.user.findUnique({ where: { email } });
   if (!user) {
     throw new AppError('Invalid email or password', 401);
   }
@@ -98,7 +85,6 @@ async function getMe(userId) {
           socialPlatforms: true,
         },
       },
-      kolProfile: true,
     },
   });
 
@@ -217,11 +203,17 @@ async function updateProfile(userId, data) {
           socialPlatforms: true,
         },
       },
-      kolProfile: true,
     },
   });
 
   return user;
 }
 
-module.exports = { register, login, getMe, updateBusinessProfile, updateProfile };
+module.exports = {
+  register,
+  login,
+  loginWithPrisma,
+  getMe,
+  updateBusinessProfile,
+  updateProfile,
+};

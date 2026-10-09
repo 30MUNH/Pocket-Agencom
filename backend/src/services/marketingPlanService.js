@@ -25,14 +25,14 @@ const geminiTextModel = genAI.getGenerativeModel({
 });
 
 const SYSTEM_PROMPT = `Bạn là một Chuyên gia Chiến lược Marketing hàng đầu chuyên về Doanh nghiệp Siêu nhỏ và Nhỏ (Micro-SME) tại Việt Nam.
-Bạn có kiến thức sâu rộng về thị trường Việt Nam, hành vi người tiêu dùng Việt, các nền tảng mạng xã hội phổ biến (TikTok, Facebook, Instagram, YouTube Shorts), và xu hướng marketing KOL/KOC tại Việt Nam.
+Bạn có kiến thức sâu rộng về thị trường Việt Nam, hành vi người tiêu dùng Việt và các kênh tiếp thị phổ biến (TikTok, Facebook, Instagram, YouTube Shorts, email và thương mại điện tử).
 
 NHIỆM VỤ: Dựa trên thông tin chiến dịch do người dùng cung cấp, hãy tạo ra một bản kế hoạch marketing chi tiết, sáng tạo, thực tế và hoàn toàn bằng tiếng Việt.
 
 QUY TẮC BẮT BUỘC:
 1. Toàn bộ nội dung PHẢI được viết bằng tiếng Việt tự nhiên, phù hợp với văn hóa và thị hiếu người Việt.
 2. Ý tưởng nội dung phải sáng tạo, bắt trend và phù hợp với ngân sách của doanh nghiệp nhỏ.
-3. Kịch bản video phải chi tiết, có phân cảnh rõ ràng với thời gian cụ thể, lời thoại tự nhiên như KOL Việt Nam thực sự.
+3. Kịch bản video phải chi tiết, có phân cảnh rõ ràng với thời gian cụ thể và lời thoại tự nhiên, đúng giọng thương hiệu.
 4. Checklist phải có tối thiểu 5 mục, mỗi mục là một hành động cụ thể và khả thi.
 5. Playbook phải là một mảng chứa các giai đoạn chiến dịch cụ thể, được tổ chức tuần tự từ lúc bắt đầu chuẩn bị đến khi đo lường kết quả. Mỗi hành động quan trọng trong keyActions bắt buộc phải dùng định dạng markdown **bold** cho các keywords quan trọng.
 6. seoKeywords phải là một danh sách chứa từ 8-12 từ khóa chuẩn SEO và từ khóa đấu thầu quảng cáo (ad-bidding keywords) tiềm năng và có tỷ lệ chuyển đổi cao nhất cho chiến dịch này tại Việt Nam.
@@ -185,8 +185,8 @@ ${similar.map((s, i) => `--- Case study ${i + 1} ---\n${s.content}`).join('\n\n'
         { scene: '50-60s', action: 'CTA kèm ưu đãi độc quyền', dialogue: `Link ở bio nhé! Đừng bỏ lỡ ưu đãi đặc biệt chỉ có hôm nay!` },
       ],
       checklist: [
-        'Chuẩn bị mẫu sản phẩm gửi cho KOL/KOC trước ngày quay 3 ngày',
-        'Duyệt kịch bản nháp từ đối tác KOL',
+        'Chuẩn bị sản phẩm, bối cảnh và đạo cụ trước ngày quay 3 ngày',
+        'Duyệt kịch bản nháp với đội ngũ nội dung',
         'Thiết lập link tracking và mã giảm giá riêng cho chiến dịch',
         'Lên lịch đăng bài vào khung giờ vàng tương tác',
         'Theo dõi số liệu và điều chỉnh chiến lược hàng tuần',
@@ -195,10 +195,10 @@ ${similar.map((s, i) => `--- Case study ${i + 1} ---\n${s.content}`).join('\n\n'
         {
           phaseName: 'Giai đoạn 1: Chuẩn bị & Lên kế hoạch',
           duration: 'Ngày 1 - Ngày 5',
-          objective: 'Xây dựng thông điệp chiến dịch và tuyển chọn đối tác KOL/KOC phù hợp.',
+          objective: 'Xây dựng thông điệp chiến dịch và kế hoạch nội dung phù hợp.',
           keyActions: [
             'Xác định rõ **thông điệp cốt lõi** và **lợi ích độc đáo** của sản phẩm.',
-            'Lập danh sách **tối thiểu 5 KOC** trong ngành hàng để gửi lời mời hợp tác.',
+            'Lập danh sách **tối thiểu 5 chủ đề nội dung** bám sát nhu cầu khách hàng.',
             'Chuẩn bị **mẫu sản phẩm thử** để gửi đi đúng hạn.'
           ],
           focusChannels: ['Facebook', 'TikTok']
@@ -208,7 +208,7 @@ ${similar.map((s, i) => `--- Case study ${i + 1} ---\n${s.content}`).join('\n\n'
           duration: 'Ngày 6 - Ngày 15',
           objective: 'Sản xuất các nội dung chất lượng cao và phủ sóng thương hiệu rộng rãi.',
           keyActions: [
-            'Duyệt **kịch bản video ngắn** từ đối tác KOC trước khi họ bấm máy.',
+            'Duyệt **kịch bản video ngắn** với đội ngũ nội dung trước khi bấm máy.',
             'Đăng bài **theo khung giờ vàng** (11h30 trưa và 20h tối) để tiếp cận nhiều khách hàng nhất.',
             'Chạy **quảng cáo tăng cường** (Facebook Ads/TikTok Spark Ads) cho các bài viết có tương tác tự nhiên tốt.'
           ],
@@ -666,6 +666,7 @@ async function generateDetailedPostWithImage(user, { ideaTitle, ideaDescription,
 }
 
 module.exports = {
+  formatPlan,
   generatePlan,
   getPlans,
   getPlanById,

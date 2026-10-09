@@ -5,7 +5,7 @@ const registerSchema = z.object({
   email: z.string().email('Invalid email address'),
   password: z.string().min(8, 'Password must be at least 8 characters'),
   phone: z.string().optional(),
-  role: z.enum(['user', 'kol']).optional(),
+  role: z.literal('user').optional(),
   businessType: z.string().optional(),
   productDescription: z.string().optional(),
   targetCustomer: z.string().optional(),

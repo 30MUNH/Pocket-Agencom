@@ -3,8 +3,9 @@ const { verifyToken } = require('../utils/jwt');
 const { fail } = require('../utils/response');
 const { AppError } = require('./errorHandler');
 
-async function authMiddleware(req, res, next) {
-  try {
+function createAuthMiddleware(prismaClient = prisma) {
+  return async function authMiddleware(req, res, next) {
+    try {
     const authHeader = req.headers.authorization;
     if (!authHeader?.startsWith('Bearer ')) {
       return fail(res, 'Authentication required', 401);
@@ -13,7 +14,7 @@ async function authMiddleware(req, res, next) {
     const token = authHeader.slice(7);
     const decoded = verifyToken(token);
 
-    const user = await prisma.user.findUnique({
+    const user = await prismaClient.user.findUnique({
       where: { id: decoded.userId },
       select: {
         id: true,
@@ -32,10 +33,13 @@ async function authMiddleware(req, res, next) {
 
     req.user = user;
     next();
-  } catch (err) {
-    next(err);
-  }
+    } catch (err) {
+      next(err);
+    }
+  };
 }
+
+const authMiddleware = createAuthMiddleware();
 
 function requireRole(...roles) {
   return (req, res, next) => {
@@ -49,4 +53,4 @@ function requireRole(...roles) {
   };
 }
 
-module.exports = { authMiddleware, requireRole, AppError };
+module.exports = { authMiddleware, createAuthMiddleware, requireRole, AppError };
