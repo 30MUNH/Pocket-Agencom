@@ -1,5 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const sharp = require('sharp');
 const { generateSocialImageSchema, generateImagePromptSchema, refinePlanSchema } = require('../src/validators/marketingPlan.validator');
 const aiConfig = require('../src/services/ai/aiConfig');
 const aiService = require('../src/services/ai/aiService');
@@ -7,6 +8,9 @@ const analyticsService = require('../src/services/analyticsService');
 const socialService = require('../src/services/socialService');
 const scheduledPostService = require('../src/services/scheduledPostService');
 const mediaService = require('../src/services/mediaService');
+const CloudflareProvider = require('../src/services/ai/providers/cloudflareProvider');
+const FalProvider = require('../src/services/ai/providers/falProvider');
+const GroqProvider = require('../src/services/ai/providers/groqProvider');
 
 // Use minimal backoff delay for fast test execution
 aiConfig.limits.backoffBaseMs = 1;
@@ -191,3 +195,151 @@ test('Honest Data Layer: social metrics does not hallucinate follower numbers wh
   assert.ok(Array.isArray(res.strengths));
   assert.ok(Array.isArray(res.areasToImprove));
 });
+
+test('Zero-Cost Free Tier: model whitelist verifies zero-cost models and rejects paid ones', () => {
+  // Groq verified free
+  assert.equal(aiConfig.isModelFree('groq', 'openai/gpt-oss-120b'), true);
+  // Groq deprecated or unverified
+  assert.equal(aiConfig.isModelFree('groq', 'llama-3.3-70b-versatile'), false);
+  assert.equal(aiConfig.isModelFree('groq', 'unknown/model'), false);
+
+  // OpenRouter verified free
+  assert.equal(aiConfig.isModelFree('openrouter', 'openrouter/free'), true);
+  assert.equal(aiConfig.isModelFree('openrouter', 'meta-llama/llama-3.3-70b-instruct:free'), true);
+  // OpenRouter paid models
+  assert.equal(aiConfig.isModelFree('openrouter', 'openai/gpt-4o'), false);
+  assert.equal(aiConfig.isModelFree('openrouter', 'anthropic/claude-3.5-sonnet'), false);
+
+  // Gemini verified free
+  assert.equal(aiConfig.isModelFree('gemini', 'gemini-2.0-flash'), true);
+  assert.equal(aiConfig.isModelFree('gemini', 'gemini-2.5-flash'), true);
+  assert.equal(aiConfig.isModelFree('gemini', 'gemini-1.5-pro'), false);
+
+  // Cloudflare Workers AI free tier
+  assert.equal(aiConfig.isModelFree('cloudflare', '@cf/black-forest-labs/flux-1-schnell'), true);
+
+  // fal.ai is always paid
+  assert.equal(aiConfig.isModelFree('fal', 'fal-ai/flux/schnell'), false);
+});
+
+test('Zero-Cost Free Tier: fal.ai provider is disabled in FREE_ONLY_MODE', async () => {
+  const fal = new FalProvider('mock-fal-key');
+  assert.equal(fal.isAvailable(), false, 'fal.ai must not be available in free-only mode');
+
+  await assert.rejects(
+    async () => {
+      await fal.generateImage({ prompt: 'A cup of coffee' });
+    },
+    (err) => {
+      assert.equal(err.status, 403);
+      assert.match(err.message, /FREE_ONLY_MODE/);
+      return true;
+    }
+  );
+});
+
+test('Zero-Cost Free Tier: GroqProvider rejects unverified or paid models in FREE_ONLY_MODE', async () => {
+  const groq = new GroqProvider('mock-groq-key', 'unverified-paid-model');
+  assert.equal(groq.isAvailable(), false);
+
+  await assert.rejects(
+    async () => {
+      await groq.generateText({ prompt: 'Hello', model: 'unverified-paid-model' });
+    },
+    (err) => {
+      assert.equal(err.status, 403);
+      assert.match(err.message, /not in the verified free-tier whitelist/);
+      return true;
+    }
+  );
+});
+
+test('Zero-Cost Free Tier: Cloudflare Workers AI sharp center-crop produces accurate aspect ratios', async () => {
+  const cf = new CloudflareProvider('mock-account', 'mock-token');
+
+  // Create a 1024x1024 test PNG/JPEG buffer with sharp
+  const testSquareBuffer = await sharp({
+    create: {
+      width: 1024,
+      height: 1024,
+      channels: 3,
+      background: { r: 50, g: 100, b: 150 },
+    },
+  }).jpeg().toBuffer();
+
+  // Test 1:1 (Square - no crop needed)
+  const result1x1 = await cf.postProcessImageWithSharp(testSquareBuffer, '1:1');
+  const meta1x1 = await sharp(result1x1.buffer).metadata();
+  assert.equal(meta1x1.width, 1024);
+  assert.equal(meta1x1.height, 1024);
+  assert.equal(result1x1.postProcessed, false);
+
+  // Test 4:5 (Instagram / Facebook feed)
+  const result4x5 = await cf.postProcessImageWithSharp(testSquareBuffer, '4:5');
+  const meta4x5 = await sharp(result4x5.buffer).metadata();
+  assert.equal(meta4x5.width, 896);
+  assert.equal(meta4x5.height, 1120);
+  assert.equal(result4x5.postProcessed, true);
+
+  // Test 9:16 (TikTok / Reels / Story)
+  const result9x16 = await cf.postProcessImageWithSharp(testSquareBuffer, '9:16');
+  const meta9x16 = await sharp(result9x16.buffer).metadata();
+  assert.equal(meta9x16.width, 768);
+  assert.equal(meta9x16.height, 1344);
+  assert.equal(result9x16.postProcessed, true);
+
+  // Test 16:9 (YouTube / Blog / Cover)
+  const result16x9 = await cf.postProcessImageWithSharp(testSquareBuffer, '16:9');
+  const meta16x9 = await sharp(result16x9.buffer).metadata();
+  assert.equal(meta16x9.width, 1344);
+  assert.equal(meta16x9.height, 768);
+  assert.equal(result16x9.postProcessed, true);
+});
+
+test('Zero-Cost Free Tier: user daily quotas enforce limits and reject requests when exhausted', () => {
+  const testUserId = 99991;
+
+  // Consume text quota up to limit
+  for (let i = 0; i < aiConfig.userQuotas.dailyGenerationsLimit; i++) {
+    const res = aiService.checkAndIncrementUserQuota(testUserId, 'text');
+    assert.equal(res.allowed, true);
+  }
+
+  // Next text generation attempt must throw 429
+  assert.throws(
+    () => {
+      aiService.checkAndIncrementUserQuota(testUserId, 'text');
+    },
+    (err) => {
+      assert.equal(err.statusCode, 429);
+      assert.match(err.message, /đạt giới hạn sử dụng AI miễn phí trong ngày/);
+      return true;
+    }
+  );
+
+  // Check quota status reporting
+  const status = aiService.getUserQuotaStatus(testUserId);
+  assert.equal(status.text.used, aiConfig.userQuotas.dailyGenerationsLimit);
+  assert.equal(status.text.remaining, 0);
+  assert.equal(status.image.remaining, aiConfig.userQuotas.dailyImagesLimit);
+});
+
+test('Persistence: scheduled post format extracts embedded image URLs without schema drift', () => {
+  const rawPost = {
+    id: 101,
+    title: 'Bài viết quảng cáo cà phê',
+    content: 'Thưởng thức cà phê nguyên chất mỗi sáng!\n\n[IMAGE_URL: https://storage.pocket-agencom.com/ai-123.jpg]',
+  };
+
+  const formatted = scheduledPostService.formatPostWithImage(rawPost);
+  assert.equal(formatted.title, 'Bài viết quảng cáo cà phê');
+  assert.equal(formatted.content, 'Thưởng thức cà phê nguyên chất mỗi sáng!');
+  assert.equal(formatted.imageUrl, 'https://storage.pocket-agencom.com/ai-123.jpg');
+
+  // Post without image should remain untouched
+  const noImagePost = { id: 102, title: 'Bài viết thường', content: 'Chỉ có văn bản thuần.' };
+  const formattedNoImg = scheduledPostService.formatPostWithImage(noImagePost);
+  assert.equal(formattedNoImg.content, 'Chỉ có văn bản thuần.');
+  assert.equal(formattedNoImg.imageUrl, null);
+});
+

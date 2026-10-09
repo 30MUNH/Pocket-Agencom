@@ -5,6 +5,29 @@ const { AppError } = require('../middleware/errorHandler');
 let demoScheduledPostsStore = [];
 
 /**
+ * Formats a scheduled post to extract embedded image URLs without schema drift.
+ */
+function formatPostWithImage(post) {
+  if (!post) return post;
+  const rawContent = post.content || '';
+  const match = rawContent.match(/\n\n\[IMAGE_URL:\s*([^\s\]]+)\]/);
+  if (match) {
+    const imageUrl = match[1];
+    const cleanContent = rawContent.replace(/\n\n\[IMAGE_URL:\s*[^\s\]]+\]/, '').trim();
+    return {
+      ...post,
+      content: cleanContent,
+      imageUrl,
+      rawContent,
+    };
+  }
+  return {
+    ...post,
+    imageUrl: post.imageUrl || null,
+  };
+}
+
+/**
  * Calculates an AI Golden Time recommendation (e.g. 19:30 or 20:00 tonight/tomorrow).
  */
 function calculateGoldenTime() {
@@ -22,6 +45,7 @@ function calculateGoldenTime() {
 
 /**
  * Creates a new scheduled post.
+ * Embeds imageUrl into content text so it persists without PostgreSQL schema drift.
  */
 async function createScheduledPost(userId, postData) {
   const {
@@ -31,11 +55,17 @@ async function createScheduledPost(userId, postData) {
     scheduledTime,
     status = 'pending_approval',
     isGoldenTime = true,
-    businessProfileId
+    businessProfileId,
+    imageUrl,
   } = postData;
 
   if (!title || !content) {
     throw new AppError('Tiêu đề và nội dung bài viết là bắt buộc.', 400);
+  }
+
+  let enrichedContent = content;
+  if (imageUrl && !content.includes(imageUrl)) {
+    enrichedContent = `${content}\n\n[IMAGE_URL: ${imageUrl}]`;
   }
 
   const finalScheduledTime = scheduledTime ? new Date(scheduledTime) : calculateGoldenTime();
@@ -46,14 +76,14 @@ async function createScheduledPost(userId, postData) {
         userId,
         businessProfileId: businessProfileId ? Number(businessProfileId) : null,
         title,
-        content,
+        content: enrichedContent,
         platform,
         scheduledTime: finalScheduledTime,
         status,
         isGoldenTime,
-      }
+      },
     });
-    return newPost;
+    return formatPostWithImage(newPost);
   } catch (err) {
     console.warn('[Prisma Fallback] ScheduledPost model fallback to memory store:', err.message);
     const newPost = {
@@ -61,15 +91,15 @@ async function createScheduledPost(userId, postData) {
       userId,
       businessProfileId: businessProfileId ? Number(businessProfileId) : null,
       title,
-      content,
+      content: enrichedContent,
       platform,
       scheduledTime: finalScheduledTime.toISOString(),
       status,
       isGoldenTime,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
     };
     demoScheduledPostsStore.unshift(newPost);
-    return newPost;
+    return formatPostWithImage(newPost);
   }
 }
 
@@ -82,7 +112,7 @@ async function getScheduledPosts(userId) {
       where: { userId },
       orderBy: { scheduledTime: 'asc' },
     });
-    return posts || [];
+    return (posts || []).map(formatPostWithImage);
   } catch (err) {
     console.warn('[Prisma Warning] Could not retrieve scheduled posts:', err.message);
     return [];
@@ -98,15 +128,15 @@ async function updateScheduledPostStatus(userId, postId, status) {
   try {
     const updated = await prisma.scheduledPost.update({
       where: { id: idNum },
-      data: { status }
+      data: { status },
     });
-    return updated;
+    return formatPostWithImage(updated);
   } catch (err) {
     console.warn('[Prisma Fallback] Updating post status in memory store:', err.message);
-    const target = demoScheduledPostsStore.find(p => p.id === idNum);
+    const target = demoScheduledPostsStore.find((p) => p.id === idNum);
     if (target) {
       target.status = status;
-      return target;
+      return formatPostWithImage(target);
     }
     throw new AppError('Không tìm thấy bài viết lên lịch.', 404);
   }
@@ -120,12 +150,12 @@ async function deleteScheduledPost(userId, postId) {
 
   try {
     await prisma.scheduledPost.delete({
-      where: { id: idNum }
+      where: { id: idNum },
     });
     return { deleted: true };
   } catch (err) {
     console.warn('[Prisma Fallback] Deleting post in memory store:', err.message);
-    demoScheduledPostsStore = demoScheduledPostsStore.filter(p => p.id !== idNum);
+    demoScheduledPostsStore = demoScheduledPostsStore.filter((p) => p.id !== idNum);
     return { deleted: true };
   }
 }
@@ -135,5 +165,7 @@ module.exports = {
   createScheduledPost,
   getScheduledPosts,
   updateScheduledPostStatus,
-  deleteScheduledPost
+  deleteScheduledPost,
+  formatPostWithImage,
 };
+
