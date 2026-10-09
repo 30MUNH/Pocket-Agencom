@@ -1,15 +1,18 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Calendar, ArrowRight, Edit3, Trash2, ChevronDown, Loader2, Users } from 'lucide-react';
+import { Calendar, ArrowRight, Trash2, Loader2, ShieldCheck } from 'lucide-react';
 import { useMarketingPlans, useDeletePlan } from '../../hooks/useMarketingPlans';
 import { PLAN_STATUS_LABELS, formatDate } from '../../utils/statusLabels';
 import { toast } from '../../store/toastStore';
+import { useAuthStore } from '../../store/authStore';
 
 export default function MyPlans() {
   const navigate = useNavigate();
   const { data: plans = [], isLoading, error } = useMarketingPlans();
   const deletePlan = useDeletePlan();
-  const [selectedType, setSelectedType] = useState('Tất cả Loại hình');
+  const user = useAuthStore((state) => state.user);
+  const canReview = user?.role === 'staff' || user?.role === 'admin';
+  const [selectedType] = useState('Tất cả Loại hình');
 
   const handleDelete = async (id) => {
     if (!window.confirm('Xóa kế hoạch này?')) return;
@@ -30,15 +33,17 @@ export default function MyPlans() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
         <div>
           <h2 className="text-display-lg-mobile md:text-display-lg font-display-lg-mobile md:font-display-lg text-primary mb-2">
-            Kế hoạch của tôi
+            {canReview ? 'Duyệt kế hoạch' : 'Kế hoạch của tôi'}
           </h2>
           <p className="text-body-lg font-body-lg text-on-surface-variant">
             Quản lý và xem lại các chiến lược tiếp thị của bạn.
           </p>
         </div>
-        <Link to="/marketing-kit" className="px-6 py-3 bg-secondary-container text-on-secondary-container rounded-full font-bold text-sm flex items-center gap-2">
-          Tạo kế hoạch mới <ArrowRight size={16} />
-        </Link>
+        {!canReview && (
+          <Link to="/marketing-kit" className="px-6 py-3 bg-secondary-container text-on-secondary-container rounded-full font-bold text-sm flex items-center gap-2">
+            Tạo kế hoạch mới <ArrowRight size={16} />
+          </Link>
+        )}
       </div>
 
       {isLoading && (
@@ -66,34 +71,25 @@ export default function MyPlans() {
                   <Calendar size={12} />
                   {formatDate(plan.createdAt)}
                 </div>
-                <div className="flex items-center justify-between gap-2 mb-4 pt-2 border-t border-surface-variant/20">
-                  <div className="flex items-center gap-1.5 text-xs">
-                    <span className={`w-2.5 h-2.5 rounded-full ${plan.isLookingForKol ? 'bg-emerald-500 animate-pulse' : 'bg-surface-variant'}`} />
-                    <span className="text-on-surface-variant font-medium">
-                      {plan.isLookingForKol ? 'Đang mở tuyển KOL' : 'Tắt tuyển KOL'}
-                    </span>
+                {plan.hasLegacyContent && (
+                  <div className="mb-4 pt-2 border-t border-surface-variant/20 text-xs font-bold text-on-surface-variant">
+                    Kế hoạch lịch sử
                   </div>
-                  <Link
-                    to={`/campaigns/${plan.id}/applications`}
-                    className="px-3 py-1 bg-primary/10 hover:bg-primary/20 text-primary text-xs font-bold rounded-full transition-colors flex items-center gap-1"
-                  >
-                    <Users size={12} /> Ứng viên
-                  </Link>
-                </div>
+                )}
                 <div className="flex gap-2">
                   <button
-                    onClick={() => navigate(`/marketing-kit/result?planId=${plan.id}`)}
+                    onClick={() => navigate(canReview ? `/staff/plan-review/${plan.id}` : `/marketing-kit/result?planId=${plan.id}`)}
                     className="flex-1 py-2 rounded-full bg-secondary-container/30 text-primary text-xs font-bold hover:bg-secondary-container/50"
                   >
-                    Xem chi tiết
+                    {canReview ? <><ShieldCheck size={14} className="inline mr-1" /> Duyệt</> : 'Xem chi tiết'}
                   </button>
-                  <button
+                  {!canReview && <button
                     onClick={() => handleDelete(plan.id)}
                     disabled={deletePlan.isPending}
                     className="p-2 rounded-full text-error hover:bg-error-container/20"
                   >
                     <Trash2 size={16} />
-                  </button>
+                  </button>}
                 </div>
               </div>
             );

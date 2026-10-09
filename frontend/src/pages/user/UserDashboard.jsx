@@ -233,7 +233,7 @@ export default function UserDashboard() {
                   </div>
                   <div className="flex items-center gap-3">
                     <span className={`px-3 py-1 font-label-sm text-[11px] rounded-full font-bold ${getStatusBg(plan.status)}`}>
-                      {getStatusLabel(plan.status)}
+                      {plan.hasLegacyContent ? 'Kế hoạch lịch sử' : getStatusLabel(plan.status)}
                     </span>
                     <Link
                       to={`/marketing-kit/result?planId=${plan.id}`}

@@ -16,30 +16,23 @@ export default function DashboardLayout() {
     const path = location.pathname;
     if (userRole === 'admin') {
       const isAdminPath =
-        path === '/dashboard' || path.startsWith('/admin') || path === '/help' || path === '/settings';
+        path === '/dashboard' || path.startsWith('/admin') || path === '/plans' ||
+        path.startsWith('/staff/plan-review/') || path === '/help' || path === '/settings';
       if (!isAdminPath) {
         navigate('/dashboard');
       }
     } else if (userRole === 'staff') {
       const isStaffPath =
         path === '/dashboard' ||
-        path.startsWith('/staff') ||
+        path === '/plans' ||
+        path.startsWith('/staff/plan-review/') ||
         path === '/help' ||
         path === '/settings';
       if (!isStaffPath) {
         navigate('/dashboard');
       }
-    } else if (userRole === 'kol') {
-      const isKolPath =
-        path === '/dashboard' ||
-        path.startsWith('/kol/') ||
-        path === '/help' ||
-        path === '/settings';
-      if (!isKolPath) {
-        navigate('/dashboard');
-      }
     } else {
-      const isRestrictedPath = path.startsWith('/admin') || path.startsWith('/staff') || path.startsWith('/kol/');
+      const isRestrictedPath = path.startsWith('/admin') || path.startsWith('/staff');
       if (isRestrictedPath) {
         navigate('/dashboard');
       }

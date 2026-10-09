@@ -12,6 +12,8 @@ import {
   ChevronDown,
   Calendar,
   MessageSquare,
+  Eye,
+  Heart,
 } from 'lucide-react';
 import { useMarketingPlan, useReviewPlan } from '../../hooks/useMarketingPlans';
 import { PLAN_STATUS_LABELS } from '../../utils/statusLabels';

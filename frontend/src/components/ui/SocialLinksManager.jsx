@@ -103,9 +103,10 @@ export const PLATFORM_VALIDATION_RULES = {
   },
 };
 
-// Platform Configurations per Role
-const SME_PLATFORMS = ['shopee', 'lazada', 'tiki', 'tiktok_shop', 'chotot', 'threads'];
-const KOL_PLATFORMS = ['facebook', 'instagram', 'tiktok', 'youtube', 'threads'];
+const BUSINESS_PLATFORMS = [
+  'facebook', 'instagram', 'tiktok', 'youtube', 'threads',
+  'shopee', 'lazada', 'tiki', 'tiktok_shop', 'chotot',
+];
 
 /**
  * Utility function to validate URL based on platform
@@ -132,10 +133,8 @@ export function validateSocialUrl(platformKey, url) {
   };
 }
 
-export default function SocialLinksManager({ userRole = 'SME', initialLinks = [], onChange }) {
-  // Normalize userRole
-  const isKOL = (userRole || '').toUpperCase() === 'KOL';
-  const availablePlatformKeys = isKOL ? KOL_PLATFORMS : SME_PLATFORMS;
+export default function SocialLinksManager({ initialLinks = [], onChange }) {
+  const availablePlatformKeys = BUSINESS_PLATFORMS;
 
   const [selectedPlatform, setSelectedPlatform] = useState(availablePlatformKeys[0]);
   const [urlInput, setUrlInput] = useState('');
@@ -218,13 +217,11 @@ export default function SocialLinksManager({ userRole = 'SME', initialLinks = []
         <div className="flex items-center gap-2 mb-1">
           <LinkIcon size={18} className="text-primary" />
           <h3 className="font-bold text-base text-primary">
-            {isKOL ? 'Liên kết Mạng Xã Hội' : 'Kênh Bán Hàng & Thương Mại Điện Tử'}
+            Kênh Tiếp thị & Thương mại Điện tử
           </h3>
         </div>
         <p className="text-xs text-on-surface-variant">
-          {isKOL
-            ? 'Quản lý danh sách kênh mạng xã hội chính thức (Facebook, Instagram, TikTok, YouTube, Threads).'
-            : 'Quản lý các gian hàng Shopee, Lazada, Tiki, TikTok Shop, Chợ Tốt và Threads của doanh nghiệp.'}
+          Quản lý các kênh mạng xã hội và gian hàng thương mại điện tử của doanh nghiệp.
         </p>
       </div>
 
@@ -234,7 +231,7 @@ export default function SocialLinksManager({ userRole = 'SME', initialLinks = []
           {/* Platform Selector */}
           <div>
             <label className="block text-xs font-bold uppercase text-on-surface-variant mb-1.5">
-              Nền tảng {isKOL ? '(KOL)' : '(SME)'}
+              Nền tảng
             </label>
             <select
               value={selectedPlatform}

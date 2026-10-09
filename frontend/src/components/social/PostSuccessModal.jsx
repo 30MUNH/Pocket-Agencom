@@ -14,9 +14,9 @@ import {
 import { toast } from '../../store/toastStore';
 
 export default function PostSuccessModal({ isOpen, onClose, post = null }) {
-  if (!isOpen) return null;
-
   const [copiedText, setCopiedText] = useState(false);
+
+  if (!isOpen) return null;
 
   const postTitle = post?.title || 'Bài viết đã được tạo thành công';
   const postContent = post?.content || '';

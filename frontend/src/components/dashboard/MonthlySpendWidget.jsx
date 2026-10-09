@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Wallet, TrendingUp, RefreshCw, PieChart, ArrowUpRight } from 'lucide-react';
+import { Wallet, RefreshCw } from 'lucide-react';
 import { budgetApi } from '../../api/budgetApi';
 
 export default function MonthlySpendWidget() {
@@ -36,7 +36,7 @@ export default function MonthlySpendWidget() {
     totalMonthlySpend = 0,
     monthlyBudgetGoal = 50000000,
     budgetUtilization = 0,
-    breakdown = { kolSpend: 0, adsSpend: 0, customSpend: 0 }
+    breakdown = { adsSpend: 0, otherSpend: 0 }
   } = data || {};
 
   return (
@@ -77,14 +77,7 @@ export default function MonthlySpendWidget() {
       </div>
 
       {/* Breakdown Cards Grid */}
-      <div className="mt-5 grid grid-cols-3 gap-2.5 pt-4 border-t border-surface-variant/20 relative z-10">
-        <div className="bg-surface-container-low dark:bg-surface-variant/20 rounded-2xl p-2.5 text-center border border-surface-variant/30">
-          <span className="text-[10px] font-bold uppercase text-on-surface-variant block">KOL Booking</span>
-          <span className="text-xs font-bold text-primary dark:text-inverse-primary mt-1 block truncate">
-            {(breakdown.kolSpend || 0).toLocaleString('vi-VN')} ₫
-          </span>
-        </div>
-
+      <div className="mt-5 grid grid-cols-2 gap-2.5 pt-4 border-t border-surface-variant/20 relative z-10">
         <div className="bg-surface-container-low dark:bg-surface-variant/20 rounded-2xl p-2.5 text-center border border-surface-variant/30">
           <span className="text-[10px] font-bold uppercase text-on-surface-variant block">Quảng cáo Ads</span>
           <span className="text-xs font-bold text-primary dark:text-inverse-primary mt-1 block truncate">
@@ -95,7 +88,7 @@ export default function MonthlySpendWidget() {
         <div className="bg-surface-container-low dark:bg-surface-variant/20 rounded-2xl p-2.5 text-center border border-surface-variant/30">
           <span className="text-[10px] font-bold uppercase text-on-surface-variant block">Khác</span>
           <span className="text-xs font-bold text-primary dark:text-inverse-primary mt-1 block truncate">
-            {(breakdown.customSpend || 0).toLocaleString('vi-VN')} ₫
+            {(breakdown.otherSpend || 0).toLocaleString('vi-VN')} ₫
           </span>
         </div>
       </div>

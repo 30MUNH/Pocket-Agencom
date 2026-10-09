@@ -12,41 +12,7 @@ import {
   Rocket,
   Star,
   ChevronDown,
-  Compass,
 } from 'lucide-react';
-
-const CREATORS = [
-  {
-    name: 'Alex Nguyen',
-    niche: 'Công nghệ & Lối sống',
-    nicheLabel: 'Công nghệ & Lối sống',
-    platform: 'TikTok & Instagram',
-    followers: '125K',
-    engRate: '5.2%',
-    price: 'Từ 1.200.000 VND',
-    avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuB2AXLHUYI6lGAhgl98vSsR0b3qBrhWeQ_AoX1rcOinmyRQFYG-WqKaSGkn_SzDLT7NUBnaKeKkEQQucy9I5skRgCrWXLLtrFq6r79FgiyiHI_D1qAxZawffb8Wi6p_s86oCciR6mqFypn3Ud9W2NaiQ56AOirvc06PJauhY_fNznnDF_3NlU7qSJSOn7OEFLN_ARa0OSwfaTGy6OBafVFMHV3DTBQLgMdNgHHWsSSERrS5bU0g497vcc0whUvCvv4gTtZ2sUMy4q8',
-  },
-  {
-    name: 'Thùy Tiên',
-    niche: 'Làm đẹp & Chăm sóc da',
-    nicheLabel: 'Làm đẹp & Chăm sóc da',
-    platform: 'Instagram & Lemon8',
-    followers: '48K',
-    engRate: '7.8%',
-    price: 'Từ 800.000 VND',
-    avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCu-SeW1r71ZPolsvXxxI6_5n11xzfCG-C3oB6lPwzxY2mNfcNSQHyGs-_MOSR7r6uVR2ROJbC6oOzkTWDMwA8oHQYEYSZ9BOxBgR-6_JzDIkwVU0KSk3iVYjCvXkzfFP-Hzoh4M5FjGWx9gyf0u7StgxMAy66ixm4KtwfZSMQkIxGSNCkxPWcT2D6fwViDGM-9x-WFEy2TqaKXJ80ZMj9g77twqevEyZSrLJwupQDXwQBAk5z0ea6YDdLvil96QjV62ZmBJAbeE3s',
-  },
-  {
-    name: 'Minh Hà',
-    niche: 'Ẩm thực & F&B',
-    nicheLabel: 'Ẩm thực & F&B',
-    platform: 'Facebook & Reels',
-    followers: '82K',
-    engRate: '4.5%',
-    price: 'Từ 1.500.000 VND',
-    avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuD6KMU4Q0ILqv5ZhmUYKaiRS1HtruthNRjdkxlkii0YNDyUk7OYHKIxa9m8QryoaYQojl6nsPGJoIVpRYAM-Gk4KeaD--X6JkEwPRY1fP7jLI7EJ_HHvlascLB1t7dkMOm_HynEi6kSuLoKiPr9zQvTh_v59_qvHxza2BqZtVloDc3j1FNBKcYuSpbjGmdGGAOIgybRdC-0jrdTYGinLfXEGg2KXCqjXwik64xBRHbxrMbRBl7TjKUbB1R-mHydGmnGueniAlmfQZY',
-  },
-];
 
 const PRICING_PLANS = [
   {
@@ -61,7 +27,7 @@ const PRICING_PLANS = [
     name: 'Chuyên nghiệp (Pro)',
     price: '499.000 VND',
     period: '/tháng',
-    features: ['Không giới hạn Bộ công cụ', 'Kịch bản Video AI', '5 buổi Tư vấn KOL/KOC', 'Hỗ trợ Ưu tiên'],
+    features: ['Không giới hạn Bộ công cụ', 'Kịch bản Video AI', 'Phân tích hiệu quả', 'Hỗ trợ Ưu tiên'],
     isPopular: true,
     btnText: 'Chọn gói',
   },
@@ -69,7 +35,7 @@ const PRICING_PLANS = [
     name: 'Nâng cao (Advanced)',
     price: '890.000 VND',
     period: '/tháng',
-    features: ['Tất cả tính năng gói Pro', 'Lộ trình tiếp thị riêng', '15 lượt đặt Creator'],
+    features: ['Tất cả tính năng gói Pro', 'Lộ trình tiếp thị riêng', 'Quản lý nội dung đa kênh'],
     isPopular: false,
     btnText: 'Chọn gói',
   },
@@ -91,7 +57,7 @@ const TESTIMONIALS = [
     avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuC8VsQQK0-T3KtHp4yQNnGxqUZHR0gYFB48W6-N0iSIKJWT86AKdN3FB66mRCRc6T2pxo_ELz_UrACweONEoLlCZDmvEMQeeYDd9sjf8ipU6aFDAWqhcW89RX8QasjLQ-poOwtzaYWdKLgC5IdXq_gnlo71aqPhN2foWlscbwKxi71_bcVML3f00ccUKB8lZ5Q560eBvLlhgD9m0QDUCUYj2_8lsXRCToQmZ2jXgfRdKSCcFzhqsmtVmmCu_sP5NZwjuECe92afpgM',
   },
   {
-    quote: '"KOL là một bước ngoặt lớn. Chúng tôi đã đặt 3 nhà sáng tạo nội dung cho buổi khai trương quán cà phê mới và lượng khách tăng 40%."',
+    quote: '"Lịch nội dung và bảng ngân sách giúp chúng tôi triển khai khai trương quán cà phê đúng tiến độ, lượng khách tăng 40%."',
     name: 'Minh Đức',
     role: 'Chủ quán Cà phê',
     avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCRBox4HF0uPZla7hWKp6Ez1VN3ffJ9YyRFPR-7OXSKCqmKwqNAcgjpztlY2p5I2hqySmKMqdNiDiNIa3ew0hMecjkYSVP4SCpocQb3JH5xK1bkKcc_r5mFog4cFLwa1WF_YJefGS2AoXmjxo0LdREc-2pT1qyE1bUNggUblL4ELDMRrOChSrneWafzlPcQPZvahU899_VsEuAfRsynFvMLpZmoPZPOlo4Xw2FUt6M8b4jijVYUb17UpR9pNbUJAvKsT-skdqPN74s',
@@ -135,9 +101,7 @@ export default function LandingPage() {
           <a href="#features" className="text-on-surface-variant hover:text-primary dark:text-outline-variant dark:hover:text-inverse-primary text-sm font-semibold transition-colors">
             Tính năng
           </a>
-          <a href="#marketplace" className="text-on-surface-variant hover:text-primary dark:text-outline-variant dark:hover:text-inverse-primary text-sm font-semibold transition-colors">
-            KOL/KOC
-          </a>
+          <a href="#pricing" className="text-on-surface-variant hover:text-primary dark:text-outline-variant dark:hover:text-inverse-primary text-sm font-semibold transition-colors">Bảng giá</a>
           <a href="#pricing" className="text-on-surface-variant hover:text-primary dark:text-outline-variant dark:hover:text-inverse-primary text-sm font-semibold transition-colors">
             Bảng giá
           </a>
@@ -177,7 +141,7 @@ export default function LandingPage() {
               Tiếp thị Đơn giản hóa cho <span className="text-secondary dark:text-secondary-fixed-dim">Doanh nghiệp nhỏ</span>
             </h1>
             <p className="text-body-lg text-on-surface-variant max-w-xl">
-              Pocket Agencom giúp các thương hiệu bản địa và shop online nhỏ dễ dàng tạo kế hoạch marketing ăn liền, ý tưởng nội dung, kịch bản video, mẫu thiết kế, và đặt lịch KOL/KOC phù hợp cho chiến dịch thực tế.
+              Pocket Agencom giúp các thương hiệu bản địa và shop online nhỏ tạo kế hoạch marketing, ý tưởng nội dung, kịch bản video, lịch đăng và ngân sách phù hợp cho chiến dịch thực tế.
             </p>
             <div className="flex flex-wrap gap-4 pt-2">
               <button
@@ -217,7 +181,7 @@ export default function LandingPage() {
                 </div>
                 <div>
                   <p className="font-bold text-primary dark:text-inverse-primary">Sarah J.</p>
-                  <p className="text-label-sm text-secondary dark:text-secondary-fixed">KOC Đời sống</p>
+                  <p className="text-label-sm text-secondary dark:text-secondary-fixed">Nội dung Đời sống</p>
                 </div>
               </div>
               <div className="flex justify-between text-label-sm text-on-surface-variant">
@@ -357,8 +321,8 @@ export default function LandingPage() {
               <div className="w-12 h-12 bg-secondary-container dark:bg-outline/20 rounded-xl flex items-center justify-center mb-4">
                 <Users className="text-[#FF8FA3]" size={20} />
               </div>
-              <h3 className="font-bold text-xl mb-1 text-primary dark:text-inverse-primary">KOL/KOC</h3>
-              <p className="text-on-surface-variant text-sm">Tiếp cận trực tiếp các nhà sáng tạo nội dung chất lượng đã được kiểm duyệt.</p>
+              <h3 className="font-bold text-xl mb-1 text-primary dark:text-inverse-primary">Phân tích hiệu quả</h3>
+              <p className="text-on-surface-variant text-sm">Theo dõi kênh, chi tiêu và tiến độ chiến dịch trong một bảng điều khiển.</p>
             </div>
           </div>
         </section>
@@ -401,9 +365,9 @@ export default function LandingPage() {
                 <div className="w-20 h-20 bg-white dark:bg-surface rounded-full shadow-md border-4 border-secondary-container dark:border-secondary flex items-center justify-center mx-auto relative z-10 font-bold text-display-lg-mobile text-[#FF8FA3]">
                   3
                 </div>
-                <h4 className="font-bold text-lg text-primary dark:text-inverse-primary">Đặt lịch KOL/KOC</h4>
+                <h4 className="font-bold text-lg text-primary dark:text-inverse-primary">Lên lịch nội dung</h4>
                 <p className="text-on-surface-variant text-sm max-w-[200px] mx-auto">
-                  Lựa chọn từ kho KOL/KOC đã qua kiểm duyệt chất lượng.
+                  Sắp xếp nội dung theo kênh và thời điểm triển khai phù hợp.
                 </p>
               </div>
 
@@ -418,73 +382,6 @@ export default function LandingPage() {
                 </p>
               </div>
             </div>
-          </div>
-        </section>
-
-        {/* Creator spotlight Section */}
-        <section id="marketplace" className="py-20 px-6 max-w-container-max mx-auto space-y-12">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
-            <div>
-              <h2 className="text-headline-md font-bold text-primary dark:text-inverse-primary mb-2">
-                Các nhà sáng tạo hàng đầu
-              </h2>
-              <p className="text-on-surface-variant">Hợp tác với các chuyên gia có tệp khán giả phù hợp nhất với lĩnh vực của bạn.</p>
-            </div>
-            <Link
-              to="/login"
-              className="bg-primary text-on-primary px-6 py-3 rounded-full font-bold hover:opacity-90 transition-all text-sm uppercase flex items-center gap-2"
-            >
-              <Compass size={14} />
-              Khám phá KOL/KOC
-            </Link>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {CREATORS.map((c) => (
-              <div
-                key={c.name}
-                className="bg-white dark:bg-surface-variant/20 rounded-[2rem] overflow-hidden shadow-sm hover:shadow-md border border-surface-variant/50 group transition-all"
-              >
-                <div className="h-64 relative overflow-hidden bg-surface-container">
-                  <img
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    alt={c.name}
-                    src={c.avatar}
-                  />
-                  <div className="absolute top-4 right-4 bg-white/90 dark:bg-surface/90 backdrop-blur px-3 py-1 rounded-full text-xs font-bold text-secondary dark:text-secondary-fixed">
-                    {c.nicheLabel}
-                  </div>
-                </div>
-
-                <div className="p-6 space-y-4">
-                  <div>
-                    <h4 className="font-bold text-xl text-primary dark:text-inverse-primary">{c.name}</h4>
-                    <p className="text-on-surface-variant text-sm">{c.platform}</p>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="bg-secondary-container/40 dark:bg-surface/30 p-3 rounded-2xl">
-                      <p className="text-[10px] text-on-surface-variant uppercase tracking-wider mb-0.5">Người theo dõi</p>
-                      <p className="font-bold text-primary dark:text-inverse-primary text-sm">{c.followers}</p>
-                    </div>
-                    <div className="bg-secondary-container/40 dark:bg-surface/30 p-3 rounded-2xl">
-                      <p className="text-[10px] text-on-surface-variant uppercase tracking-wider mb-0.5">Tỷ lệ tương tác</p>
-                      <p className="font-bold text-secondary dark:text-secondary-fixed text-sm">{c.engRate}</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between pt-2 border-t border-surface-variant/40">
-                    <p className="font-bold text-primary dark:text-inverse-primary text-sm">{c.price}</p>
-                    <button
-                      onClick={() => navigate('/login')}
-                      className="bg-secondary-container text-secondary dark:bg-[#FF8FA3] dark:text-white px-4 py-2 rounded-full font-bold text-xs hover:opacity-90 transition-all uppercase"
-                    >
-                      Đặt lịch ngay
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
           </div>
         </section>
 
@@ -596,8 +493,8 @@ export default function LandingPage() {
                   a: 'Có, các gói tháng của chúng tôi rất linh hoạt. Bạn có thể nâng cấp, hạ cấp hoặc hủy bất cứ lúc nào từ phần cài đặt tài khoản.',
                 },
                 {
-                  q: 'Làm cách nào để liên hệ với các KOL/KOC?',
-                  a: 'Nền tảng của chúng tôi tích hợp hệ thống đặt lịch trực tiếp. Sau khi tìm thấy nhà sáng tạo ưng ý, bạn có thể gửi đề xuất hợp tác trực tiếp qua hệ thống.',
+                  q: 'Tôi có thể quản lý những kênh nào?',
+                  a: 'Bạn có thể quản lý mạng xã hội, gian hàng thương mại điện tử, lịch nội dung, tài nguyên và ngân sách chiến dịch trong cùng một nơi.',
                 },
               ].map((faq, i) => (
                 <div
@@ -670,7 +567,7 @@ export default function LandingPage() {
             </h5>
             <ul className="space-y-2 text-on-surface-variant text-sm">
               <li><a href="#features" className="hover:text-secondary transition-colors">Tính năng</a></li>
-              <li><a href="#marketplace" className="hover:text-secondary transition-colors">KOL/KOC</a></li>
+              <li><a href="#features" className="hover:text-secondary transition-colors">Tính năng</a></li>
               <li><a href="#pricing" className="hover:text-secondary transition-colors">Bảng giá</a></li>
             </ul>
           </div>

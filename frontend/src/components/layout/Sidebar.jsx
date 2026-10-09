@@ -4,17 +4,11 @@ import {
   Sparkles,
   ClipboardList,
   Library,
-  Compass,
   CalendarDays,
   HelpCircle,
   Settings,
   Users,
   Building2,
-  Star,
-  Briefcase,
-  Package,
-  MessageSquare,
-  Wallet,
   FolderKanban,
 } from 'lucide-react';
 
@@ -26,24 +20,14 @@ export default function Sidebar({ isOpen, onClose, userRole = 'user' }) {
       case 'admin':
         return [
           { path: '/dashboard', label: 'Bảng điều khiển', icon: LayoutDashboard },
-          { path: '/admin/kols', label: 'Quản lý KOL', icon: Compass },
           { path: '/admin/users', label: 'Quản lý người dùng', icon: Users },
+          { path: '/plans', label: 'Duyệt kế hoạch', icon: ClipboardList },
           { path: '/help', label: 'Trung tâm trợ giúp', icon: HelpCircle },
         ];
       case 'staff':
         return [
           { path: '/dashboard', label: 'Bảng điều khiển', icon: LayoutDashboard },
-          { path: '/staff/bookings', label: 'Bảng đặt lịch', icon: CalendarDays },
-          { path: '/help', label: 'Trung tâm trợ giúp', icon: HelpCircle },
-        ];
-      case 'kol':
-        return [
-          { path: '/dashboard', label: 'Bảng điều khiển', icon: LayoutDashboard },
-          { path: '/kol/job-board', label: 'Sàn việc làm', icon: Briefcase },
-          { path: '/kol/orders', label: 'Quản lý đơn hàng', icon: Package },
-          { path: '/kol/chat', label: 'Chat & Thương lượng', icon: MessageSquare },
-          { path: '/kol/income', label: 'Quản lý thu nhập', icon: Wallet },
-          { path: '/kol/profile', label: 'Hồ sơ KOL', icon: Star },
+          { path: '/plans', label: 'Duyệt kế hoạch', icon: ClipboardList },
           { path: '/help', label: 'Trung tâm trợ giúp', icon: HelpCircle },
         ];
       case 'user':
@@ -56,9 +40,6 @@ export default function Sidebar({ isOpen, onClose, userRole = 'user' }) {
           { path: '/calendar', label: 'Lịch đăng bài tự động', icon: CalendarDays },
           { path: '/media-library', label: 'Kho dữ liệu Media', icon: FolderKanban },
           { path: '/templates', label: 'Thư viện mẫu', icon: Library },
-          { path: '/marketplace', label: 'Khám phá KOL/KOC', icon: Compass },
-          { path: '/kol-bookings', label: 'Quản lý Lịch đặt KOL', icon: CalendarDays },
-          { path: '/chat', label: 'Chat & Thương lượng', icon: MessageSquare },
           { path: '/help', label: 'Trung tâm trợ giúp', icon: HelpCircle },
         ];
     }
@@ -106,15 +87,8 @@ export default function Sidebar({ isOpen, onClose, userRole = 'user' }) {
           <ul className="flex flex-col gap-2 px-4">
             {menuItems.map((item) => {
               const Icon = item.icon;
-              const isActive =
-                item.path === '/marketplace'
-                  ? (location.pathname === '/marketplace' || location.pathname.startsWith('/marketplace/explorer'))
-                  : item.path === '/marketing-kit'
+              const isActive = item.path === '/marketing-kit'
                   ? location.pathname.startsWith('/marketing-kit')
-                  : item.path === '/admin/kols'
-                  ? location.pathname.startsWith('/admin/kols')
-                  : item.path === '/kol/profile'
-                  ? (location.pathname === '/kol/profile' || location.pathname.startsWith('/kol/profile/'))
                   : location.pathname === item.path;
 
               return (

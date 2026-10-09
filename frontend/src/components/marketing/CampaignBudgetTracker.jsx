@@ -9,7 +9,7 @@ export default function CampaignBudgetTracker({ campaignId = 1, initialData = nu
   const [isSyncingAds, setIsSyncingAds] = useState(false);
 
   // Form states for new expense logging
-  const [expenseType, setExpenseType] = useState('');
+  const [expenseType, setExpenseType] = useState('Custom');
   const [amountInput, setAmountInput] = useState('');
   const [noteInput, setNoteInput] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -34,10 +34,6 @@ export default function CampaignBudgetTracker({ campaignId = 1, initialData = nu
 
   const handleAddExpense = async (e) => {
     e.preventDefault();
-    if (!expenseType.trim()) {
-      toast.error('Vui lòng nhập loại chi phí.');
-      return;
-    }
     const numericAmount = Number(amountInput);
     if (isNaN(numericAmount) || numericAmount <= 0) {
       toast.error('Vui lòng nhập số tiền chi tiêu hợp lệ.');
@@ -48,13 +44,13 @@ export default function CampaignBudgetTracker({ campaignId = 1, initialData = nu
       setIsSubmitting(true);
       await budgetApi.addExpense({
         marketingPlanId: campaignId,
-        expenseType: expenseType.trim(),
+        expenseType,
         amount: numericAmount,
-        note: noteInput || `Chi phí ${expenseType.trim()}`
+        note: noteInput || `Chi phí ${expenseType}`
       });
 
-      toast.success(`Đã ghi nhận chi phí "${expenseType.trim()}" (${numericAmount.toLocaleString('vi-VN')} ₫)!`);
-      setExpenseType('');
+      toast.success(`Đã ghi nhận chi phí "${expenseType}" (${numericAmount.toLocaleString('vi-VN')} ₫)!`);
+      setExpenseType('Custom');
       setAmountInput('');
       setNoteInput('');
       fetchBudget();
@@ -193,13 +189,14 @@ export default function CampaignBudgetTracker({ campaignId = 1, initialData = nu
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div>
             <label className="block text-xs font-medium text-on-surface-variant mb-1">Loại chi phí</label>
-            <input
-              type="text"
-              placeholder="Nhập loại chi phí (Ví dụ: Booking KOL, Ads, Thiết kế...)"
+            <select
               value={expenseType}
               onChange={(e) => setExpenseType(e.target.value)}
               className="w-full rounded-2xl border border-surface-variant/40 bg-surface-container-lowest dark:bg-tertiary-container p-3 text-xs text-primary dark:text-inverse-primary focus:outline-none focus:ring-2 focus:ring-secondary/40"
-            />
+            >
+              <option value="Ads">Quảng cáo</option>
+              <option value="Custom">Chi phí marketing khác</option>
+            </select>
           </div>
 
           <div>
