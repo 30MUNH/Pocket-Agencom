@@ -142,7 +142,7 @@ ALTER TABLE "public"."users"
     ALTER COLUMN "role" TYPE "public"."UserRole_new"
         USING (CASE WHEN "role"::TEXT = 'kol' THEN 'user' ELSE "role"::TEXT END)::"public"."UserRole_new",
     ALTER COLUMN "status" TYPE "public"."AccountStatus_new"
-        USING (CASE WHEN "role"::TEXT = 'user' AND "id" IN (
+        USING (CASE WHEN "role"::TEXT = 'kol' OR "id" IN (
             SELECT "id" FROM "legacy_kol_archive"."former_accounts"
         ) THEN 'archived' ELSE "status"::TEXT END)::"public"."AccountStatus_new";
 DROP TYPE "public"."UserRole";

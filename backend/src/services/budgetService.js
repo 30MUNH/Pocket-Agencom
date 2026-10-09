@@ -14,7 +14,7 @@ async function getCampaignBudget(campaignId, user, prismaClient = prisma) {
   if (!plan) throw new AppError('Không tìm thấy kế hoạch.', 404);
 
   const totalBudget = plan.budget ? Number(plan.budget) : 0;
-  const campaignExpenses = plan.expenses;
+  const campaignExpenses = plan.expenses || [];
 
   const totalSpent = campaignExpenses.reduce((sum, item) => sum + Number(item.amount || 0), 0);
   const remainingBudget = Math.max(0, totalBudget - totalSpent);
