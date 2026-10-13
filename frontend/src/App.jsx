@@ -47,6 +47,7 @@ function App() {
           <Route path="/user/quick-editor" element={<QuickEditor />} />
           <Route path="/calendar" element={<ContentCalendar />} />
           <Route path="/media-library" element={<MediaLibrary />} />
+          <Route path="/media" element={<MediaLibrary />} />
           <Route path="/plans" element={<MyPlans />} />
           <Route path="/templates" element={<TemplateLibrary />} />
           <Route path="/help" element={<HelpCenter />} />

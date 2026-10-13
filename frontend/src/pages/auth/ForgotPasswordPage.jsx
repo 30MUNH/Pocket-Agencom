@@ -1,24 +1,18 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Mail, ArrowRight, ArrowLeft, CheckCircle } from 'lucide-react';
+import { Mail, ArrowRight, ArrowLeft } from 'lucide-react';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
-  const [submitted, setSubmitted] = useState(false);
+  const [unavailable, setUnavailable] = useState(false);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // TODO: Integrate with backend password reset API
-    console.log('Password reset requested for:', email);
-    setSubmitted(true);
+    setUnavailable(true);
   };
 
   return (
     <div className="bg-surface font-body-md text-on-surface min-h-screen flex items-center justify-center relative overflow-hidden">
-      {/* Ambient glow backgrounds */}
-      <div className="ambient-glow" style={{ top: '-200px', left: '-200px' }} />
-      <div className="ambient-glow" style={{ bottom: '-200px', right: '-200px' }} />
-
       <div className="w-full max-w-md px-gutter relative z-10">
         {/* Logo and Back Link */}
         <div className="flex items-center justify-between mb-8 pb-4 border-b border-surface-container-high">
@@ -56,7 +50,7 @@ export default function ForgotPasswordPage() {
           </div>
 
           {/* Form (hidden after submit) */}
-          {!submitted && (
+          {!unavailable && (
             <form onSubmit={handleSubmit} className="flex flex-col gap-6">
               <div className="flex flex-col gap-2">
                 <label
@@ -93,14 +87,12 @@ export default function ForgotPasswordPage() {
           )}
 
           {/* Success State */}
-          {submitted && (
-            <div className="flex flex-col items-center gap-6 text-center animate-pulse">
-              <div className="w-16 h-16 bg-[#e0f2e9] rounded-full flex items-center justify-center mx-auto mb-2 shadow-ambient">
-                <CheckCircle size={32} className="text-[#2e7d32]" />
-              </div>
-              <p className="text-body-md font-body-md text-on-surface-variant">
-                Chúng tôi đã gửi liên kết đặt lại mật khẩu đến email của bạn. Vui lòng
-                kiểm tra hộp thư đến.
+          {unavailable && (
+            <div role="status" className="flex items-start gap-3 rounded-xl border border-amber-300 bg-amber-50 p-4 text-left text-sm text-amber-950">
+              <Mail size={20} aria-hidden="true" className="mt-0.5 shrink-0" />
+              <p>
+                Tính năng đặt lại mật khẩu hiện chưa khả dụng. Email chưa được gửi.
+                Vui lòng đăng nhập để đổi mật khẩu trong phần Cài đặt hoặc liên hệ bộ phận hỗ trợ.
               </p>
             </div>
           )}
@@ -124,9 +116,7 @@ export default function ForgotPasswordPage() {
         <div className="text-center mt-8">
           <p className="text-label-sm font-label-sm text-on-surface-variant/70">
             © {new Date().getFullYear()} Pocket Agencom. Cần hỗ trợ?{' '}
-            <a href="#" className="text-primary hover:underline">
-              Liên hệ Hỗ trợ
-            </a>
+            <Link to="/login" className="text-primary hover:underline">Quay lại đăng nhập</Link>
           </p>
         </div>
       </div>

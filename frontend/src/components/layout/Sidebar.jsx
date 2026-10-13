@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard,
@@ -14,6 +15,23 @@ import {
 
 export default function Sidebar({ isOpen, onClose, userRole = 'user' }) {
   const location = useLocation();
+  const [isDesktop, setIsDesktop] = useState(() => window.matchMedia('(min-width: 1024px)').matches);
+
+  useEffect(() => {
+    const media = window.matchMedia('(min-width: 1024px)');
+    const update = () => setIsDesktop(media.matches);
+    media.addEventListener('change', update);
+    return () => media.removeEventListener('change', update);
+  }, []);
+
+  useEffect(() => {
+    if (!isOpen) return undefined;
+    const closeOnEscape = (event) => {
+      if (event.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', closeOnEscape);
+    return () => window.removeEventListener('keydown', closeOnEscape);
+  }, [isOpen, onClose]);
 
   const getMenuItems = () => {
     switch (userRole) {
@@ -51,15 +69,20 @@ export default function Sidebar({ isOpen, onClose, userRole = 'user' }) {
     <>
       {/* Mobile Drawer Backdrop */}
       {isOpen && (
-        <div
-          className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40 lg:hidden"
+        <button
+          type="button"
+          aria-label="Đóng điều hướng"
+          className="fixed inset-0 z-40 cursor-default bg-slate-950/30 lg:hidden"
           onClick={onClose}
         />
       )}
 
       {/* Navigation Drawer */}
       <nav
-        className={`bg-surface-container-lowest dark:bg-tertiary-container shadow-[4px_0_24px_rgba(255,143,163,0.08)] fixed left-0 top-0 h-screen w-sidebar-width flex flex-col py-8 gap-4 z-40 transition-transform duration-300 lg:translate-x-0 ${
+        aria-label="Điều hướng chính"
+        aria-hidden={!isDesktop && !isOpen}
+        inert={!isDesktop && !isOpen}
+        className={`fixed left-0 top-0 z-50 flex h-dvh w-sidebar-width flex-col gap-4 border-r border-surface-variant bg-white py-6 shadow-xl transition-transform duration-200 motion-reduce:transition-none lg:translate-x-0 ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
@@ -73,9 +96,9 @@ export default function Sidebar({ isOpen, onClose, userRole = 'user' }) {
             />
           </div>
           <div>
-            <h1 className="text-headline-md font-headline-md font-extrabold text-primary tracking-tight">
+            <span className="text-headline-md font-headline-md font-extrabold tracking-tight text-on-surface">
               Pocket <span className="text-[#F897A8]">Agen</span>com
-            </h1>
+            </span>
             <p className="text-label-sm font-label-sm text-on-surface-variant mt-1">
               Hỗ trợ Tiếp thị
             </p>
@@ -96,17 +119,18 @@ export default function Sidebar({ isOpen, onClose, userRole = 'user' }) {
                   <Link
                     to={item.path}
                     onClick={onClose}
-                    className={`flex items-center gap-4 py-3.5 px-6 rounded-full transition-all relative ${
+                    aria-current={isActive ? 'page' : undefined}
+                    className={`relative flex min-h-11 items-center gap-4 rounded-lg px-4 py-3 transition-colors ${
                       isActive
-                        ? 'bg-secondary-container text-on-secondary-container font-semibold shadow-sm'
-                        : 'text-on-surface-variant hover:text-primary hover:bg-secondary-container/20'
+                        ? 'bg-primary-container text-primary font-semibold'
+                        : 'text-on-surface-variant hover:bg-surface-container hover:text-on-surface'
                     }`}
                   >
                     {isActive && (
                       <span className="absolute left-0 w-1.5 h-8 bg-primary rounded-r-full" />
                     )}
-                    <Icon size={20} className={isActive ? 'text-primary' : 'text-on-surface-variant'} />
-                    <span className="text-label-sm font-label-sm">{item.label}</span>
+                    <Icon size={20} aria-hidden="true" className={isActive ? 'text-primary' : 'text-on-surface-variant'} />
+                    <span className="text-sm font-medium">{item.label}</span>
                   </Link>
                 </li>
               );
@@ -119,10 +143,11 @@ export default function Sidebar({ isOpen, onClose, userRole = 'user' }) {
           <Link
             to="/settings"
             onClick={onClose}
-            className={`flex items-center gap-4 py-3.5 px-6 rounded-full transition-all relative ${
+            aria-current={location.pathname === '/settings' ? 'page' : undefined}
+            className={`relative flex min-h-11 items-center gap-4 rounded-lg px-4 py-3 transition-colors ${
               location.pathname === '/settings'
-                ? 'bg-secondary-container text-on-secondary-container font-semibold shadow-sm'
-                : 'text-on-surface-variant hover:text-primary hover:bg-secondary-container/20'
+                ? 'bg-primary-container text-primary font-semibold'
+                : 'text-on-surface-variant hover:bg-surface-container hover:text-on-surface'
             }`}
           >
             {location.pathname === '/settings' && (
@@ -130,9 +155,10 @@ export default function Sidebar({ isOpen, onClose, userRole = 'user' }) {
             )}
             <Settings
               size={20}
+              aria-hidden="true"
               className={location.pathname === '/settings' ? 'text-primary' : 'text-on-surface-variant'}
             />
-            <span className="text-label-sm font-label-sm">Cài đặt</span>
+            <span className="text-sm font-medium">Cài đặt</span>
           </Link>
         </div>
       </nav>
