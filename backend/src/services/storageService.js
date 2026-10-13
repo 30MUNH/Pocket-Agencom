@@ -10,7 +10,16 @@ const CAMPAIGN_BUCKET = 'campaign-assets';
  * @param {string} folder - folder prefix inside the bucket (e.g. `user-12`)
  * @returns {Promise<{ path: string, publicUrl: string }>}
  */
-async function uploadCampaignAsset(file, folder = 'general', bucket = CAMPAIGN_BUCKET) {
+async function uploadCampaignAsset(file, folder, bucket = CAMPAIGN_BUCKET) {
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY || !process.env.SUPABASE_URL) {
+    throw new AppError('Supabase Storage is not configured', 503);
+  }
+  if (!/^user-[1-9]\d*$/.test(folder)) {
+    throw new AppError('Storage upload requires a user scope', 400);
+  }
+  if (bucket !== CAMPAIGN_BUCKET && bucket !== 'avatars') {
+    throw new AppError('Unsupported storage bucket', 400);
+  }
   const fileExt = path.extname(file.originalname) || '.jpg';
   const fileName = `${Date.now()}-${Math.round(Math.random() * 1e9)}${fileExt}`;
   const filePath = `${folder}/${fileName}`;
@@ -24,28 +33,7 @@ async function uploadCampaignAsset(file, folder = 'general', bucket = CAMPAIGN_B
 
   if (error) {
     console.error(`[Supabase Upload Error] Failed uploading to bucket ${bucket}:`, error.message);
-    if (bucket === CAMPAIGN_BUCKET) {
-      console.log(`[Supabase Upload] Attempting fallback to 'avatars' bucket...`);
-      try {
-        return await uploadCampaignAsset(file, folder, 'avatars');
-      } catch (fallbackErr) {
-        console.error(`[Supabase Fallback Upload Error]`, fallbackErr.message);
-      }
-    }
-
-    if (error.message && error.message.toLowerCase().includes('row-level security')) {
-      throw new AppError(
-        `Lỗi bảo mật (RLS) của Supabase: Vui lòng truy cập trang quản trị Supabase, chọn mục Storage -> tab Policies của bucket "${bucket}", và thêm chính sách (Policy) cho phép INSERT/SELECT.`,
-        500
-      );
-    }
-    if (error.message && error.message.toLowerCase().includes('bucket not found')) {
-      throw new AppError(
-        `Không tìm thấy Bucket "${bucket}": Vui lòng truy cập trang quản trị Supabase -> Storage -> click "New Bucket" và tạo một public bucket tên là "${bucket}".`,
-        500
-      );
-    }
-    throw new AppError(`Lỗi tải ảnh lên Supabase Storage: ${error.message}`, 500);
+    throw new AppError(`Supabase Storage upload failed: ${error.message}`, 500);
   }
 
   const { data: urlData } = supabase.storage
