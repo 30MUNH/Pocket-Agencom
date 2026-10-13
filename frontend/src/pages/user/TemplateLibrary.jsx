@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Quote, X, Copy, ArrowRight, Check, Sparkles, Eye } from 'lucide-react';
 import { toast } from '../../store/toastStore';
@@ -82,6 +82,8 @@ export default function TemplateLibrary() {
   const [activeTab, setActiveTab] = useState('all');
   const [previewTemplate, setPreviewTemplate] = useState(null);
   const [copied, setCopied] = useState(false);
+  const previewOpenerRef = useRef(null);
+  const dialogRef = useRef(null);
 
   const filteredTemplates = TEMPLATES.filter((tmpl) => {
     if (activeTab === 'all') return true;
@@ -97,6 +99,48 @@ export default function TemplateLibrary() {
       },
     });
   };
+
+  const openPreview = (template, event) => {
+    previewOpenerRef.current = event.currentTarget;
+    setPreviewTemplate(template);
+  };
+
+  useEffect(() => {
+    if (!previewTemplate) {
+      previewOpenerRef.current?.focus();
+      return undefined;
+    }
+
+    const dialog = dialogRef.current;
+    const getFocusable = () => [...dialog.querySelectorAll(
+      'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+    )].filter((element) => element.getClientRects().length > 0);
+
+    getFocusable()[0]?.focus();
+    const handleDialogKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        setPreviewTemplate(null);
+        return;
+      }
+      if (event.key !== 'Tab') return;
+
+      const focusable = getFocusable();
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (!first || !last) return;
+      if (event.shiftKey && (document.activeElement === first || !dialog.contains(document.activeElement))) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && (document.activeElement === last || !dialog.contains(document.activeElement))) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    document.addEventListener('keydown', handleDialogKeyDown);
+    return () => document.removeEventListener('keydown', handleDialogKeyDown);
+  }, [previewTemplate]);
 
   const handleCopyContent = async (text) => {
     if (!text) return;
@@ -196,7 +240,7 @@ export default function TemplateLibrary() {
               <div className="mt-auto flex gap-3 pt-2">
                 <button
                   type="button"
-                  onClick={() => setPreviewTemplate(tmpl)}
+                  onClick={(event) => openPreview(tmpl, event)}
                   className="flex-1 bg-surface-container-low dark:bg-surface-variant/30 text-primary dark:text-inverse-primary py-2.5 rounded-full text-label-sm font-semibold hover:bg-secondary-container/50 transition-colors flex items-center justify-center gap-1.5"
                 >
                   <Eye size={15} />
@@ -219,7 +263,7 @@ export default function TemplateLibrary() {
       {/* Template Preview Modal */}
       {previewTemplate && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-primary/40 backdrop-blur-sm animate-fade-in">
-          <div role="dialog" aria-modal="true" aria-labelledby="template-preview-title" className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl border border-surface-variant bg-white p-5 sm:p-7 shadow-ambient text-primary">
+          <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="template-preview-title" className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl border border-surface-variant bg-white p-5 sm:p-7 shadow-ambient text-primary">
             
             {/* Modal Header */}
             <div className="flex items-start justify-between gap-4 mb-6 border-b border-surface-variant/30 pb-4">

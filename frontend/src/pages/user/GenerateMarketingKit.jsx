@@ -191,11 +191,12 @@ export default function GenerateMarketingKit() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <label className="block text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">
+                <label htmlFor="campaign-business-type" className="block text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">
                   Loại hình Doanh nghiệp
                 </label>
                 <div className="relative">
                   <select
+                    id="campaign-business-type"
                     value={businessType}
                     onChange={(e) => setBusinessType(e.target.value)}
                     className="w-full bg-surface-container dark:bg-surface-variant/20 border-none rounded-xl px-4 py-3.5 text-body-md text-primary dark:text-inverse-primary appearance-none cursor-pointer focus:ring-2 focus:ring-secondary focus:bg-surface-container-lowest dark:focus:bg-surface-container-lowest transition-all"
@@ -210,11 +211,12 @@ export default function GenerateMarketingKit() {
               </div>
 
               <div className="space-y-2">
-                <label className="block text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">
+                <label htmlFor="campaign-type" className="block text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">
                   Loại hình Chiến dịch
                 </label>
                 <div className="relative">
                   <select
+                    id="campaign-type"
                     value={campaignType}
                     onChange={(e) => setCampaignType(e.target.value)}
                     className="w-full bg-surface-container dark:bg-surface-variant/20 border-none rounded-xl px-4 py-3.5 text-body-md text-primary dark:text-inverse-primary appearance-none cursor-pointer focus:ring-2 focus:ring-secondary focus:bg-surface-container-lowest dark:focus:bg-surface-container-lowest transition-all"
@@ -230,10 +232,11 @@ export default function GenerateMarketingKit() {
             </div>
 
             <div className="space-y-2">
-              <label className="block text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">
+              <label htmlFor="product-description" className="block text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">
                 Mô tả Sản phẩm / Dịch vụ
               </label>
               <textarea
+                id="product-description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Mô tả ngắn gọn những gì bạn đang tiếp thị. Nêu bật các lợi ích chính hoặc điểm bán hàng độc nhất (USP)..."
@@ -251,10 +254,11 @@ export default function GenerateMarketingKit() {
             </h3>
 
             <div className="space-y-2">
-              <label className="block text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">
+              <label htmlFor="target-customer" className="block text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">
                 Chân dung Khách hàng Mục tiêu
               </label>
               <input
+                id="target-customer"
                 type="text"
                 value={customerProfile}
                 onChange={(e) => setCustomerProfile(e.target.value)}
@@ -272,10 +276,11 @@ export default function GenerateMarketingKit() {
             </h3>
 
             <div className="space-y-2">
-              <label className="block text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">
+              <label htmlFor="deployment-channels" className="block text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">
                 Kênh triển khai
               </label>
               <input
+                id="deployment-channels"
                 type="text"
                 value={channels}
                 onChange={(e) => setChannels(e.target.value)}
@@ -285,10 +290,11 @@ export default function GenerateMarketingKit() {
             </div>
 
             <div className="space-y-2">
-              <label className="block text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">
+              <label htmlFor="existing-resources" className="block text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">
                 Tài nguyên hiện có
               </label>
               <input
+                id="existing-resources"
                 type="text"
                 value={resources}
                 onChange={(e) => setResources(e.target.value)}
@@ -298,10 +304,11 @@ export default function GenerateMarketingKit() {
             </div>
 
             <div className="space-y-2">
-              <label className="block text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">
+              <label htmlFor="campaign-reason" className="block text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">
                 Lý do triển khai chiến dịch
               </label>
               <input
+                id="campaign-reason"
                 type="text"
                 value={campaignReason}
                 onChange={(e) => setCampaignReason(e.target.value)}
@@ -321,10 +328,11 @@ export default function GenerateMarketingKit() {
             </h3>
 
             <div className="space-y-2">
-              <label className="block text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">
+              <label htmlFor="primary-goal" className="block text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">
                 Mục tiêu Chính
               </label>
               <input
+                id="primary-goal"
                 type="text"
                 value={primaryGoal}
                 onChange={(e) => setPrimaryGoal(e.target.value)}
@@ -334,10 +342,11 @@ export default function GenerateMarketingKit() {
             </div>
 
             <div className="space-y-2">
-              <label className="block text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">
+              <label htmlFor="estimated-budget" className="block text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">
                 Ngân sách Ước tính (VND)
               </label>
               <MoneyInput
+                id="estimated-budget"
                 value={budget}
                 onChange={setBudget}
                 placeholder="1.000.000"

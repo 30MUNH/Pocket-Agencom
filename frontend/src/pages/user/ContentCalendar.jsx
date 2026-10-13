@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   Calendar as CalendarIcon, 
   ChevronLeft, 
@@ -65,6 +65,8 @@ export default function ContentCalendar() {
 
   // Create / Edit Post Modal State
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
+  const formModalRef = useRef(null);
+  const formModalOpenerRef = useRef(null);
   const [formMode, setFormMode] = useState('create'); // 'create' | 'edit'
   const [editingPostId, setEditingPostId] = useState(null);
   const [isSubmittingForm, setIsSubmittingForm] = useState(false);
@@ -80,6 +82,43 @@ export default function ContentCalendar() {
 
   // Mock Notification Banner State
   const [activeNotification, setActiveNotification] = useState(null);
+
+  useEffect(() => {
+    if (!isFormModalOpen) {
+      formModalOpenerRef.current?.focus();
+      return undefined;
+    }
+
+    const dialog = formModalRef.current;
+    const getFocusable = () => [...dialog.querySelectorAll(
+      'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+    )].filter((element) => element.getClientRects().length > 0);
+
+    getFocusable()[0]?.focus();
+    const handleDialogKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        setIsFormModalOpen(false);
+        return;
+      }
+      if (event.key !== 'Tab') return;
+
+      const focusable = getFocusable();
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (!first || !last) return;
+      if (event.shiftKey && (document.activeElement === first || !dialog.contains(document.activeElement))) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && (document.activeElement === last || !dialog.contains(document.activeElement))) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    document.addEventListener('keydown', handleDialogKeyDown);
+    return () => document.removeEventListener('keydown', handleDialogKeyDown);
+  }, [isFormModalOpen]);
 
   const fetchPosts = async () => {
     try {
@@ -164,7 +203,8 @@ export default function ContentCalendar() {
     setIsShareModalOpen(true);
   };
 
-  const handleOpenCreateModal = () => {
+  const handleOpenCreateModal = (event) => {
+    formModalOpenerRef.current = event.currentTarget;
     const defaultTime = new Date();
     defaultTime.setHours(19, 30, 0, 0);
     if (new Date().getHours() >= 19) {
@@ -187,7 +227,8 @@ export default function ContentCalendar() {
     setIsFormModalOpen(true);
   };
 
-  const handleOpenEditModal = (post) => {
+  const handleOpenEditModal = (post, event) => {
+    formModalOpenerRef.current = event.currentTarget;
     let localISOTime = '';
     if (post.scheduledTime) {
       const d = new Date(post.scheduledTime);
@@ -350,8 +391,10 @@ export default function ContentCalendar() {
                 <Share2 size={14} /> Đăng bài ngay
               </button>
               <button
+                type="button"
                 onClick={() => setActiveNotification(null)}
-                className="rounded-full p-2 text-on-surface-variant hover:bg-white/50"
+                aria-label="Đóng thông báo giờ vàng"
+                className="inline-flex h-11 w-11 items-center justify-center rounded-full text-on-surface-variant hover:bg-white/50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
               >
                 <X size={16} />
               </button>
@@ -397,8 +440,10 @@ export default function ContentCalendar() {
         <div className="flex items-center gap-3">
           <div className="flex items-center rounded-full border border-surface-variant/40 bg-surface-container-low dark:bg-surface-variant/20 p-1">
             <button
+              type="button"
               onClick={handlePrevMonth}
-              className="rounded-full p-2 text-on-surface-variant hover:bg-surface-container-high"
+              aria-label="Tháng trước"
+              className="inline-flex h-11 w-11 items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container-high focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
             >
               <ChevronLeft size={16} />
             </button>
@@ -409,8 +454,10 @@ export default function ContentCalendar() {
               Hôm nay
             </button>
             <button
+              type="button"
               onClick={handleNextMonth}
-              className="rounded-full p-2 text-on-surface-variant hover:bg-surface-container-high"
+              aria-label="Tháng sau"
+              className="inline-flex h-11 w-11 items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container-high focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
             >
               <ChevronRight size={16} />
             </button>
@@ -635,8 +682,10 @@ export default function ContentCalendar() {
           <div className="relative w-full max-w-lg overflow-hidden rounded-[2.5rem] border border-surface-variant/40 bg-surface-container-lowest dark:bg-tertiary-container p-6 sm:p-8 shadow-ambient text-primary dark:text-inverse-primary">
             
             <button
+              type="button"
               onClick={() => setIsDetailModalOpen(false)}
-              className="absolute right-6 top-6 rounded-full p-2 text-on-surface-variant hover:bg-surface-container-high"
+              aria-label="Đóng chi tiết bài viết"
+              className="absolute right-6 top-6 inline-flex h-11 w-11 items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container-high focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
             >
               <X size={20} />
             </button>
@@ -696,7 +745,7 @@ export default function ContentCalendar() {
 
               <button
                 type="button"
-                onClick={() => handleOpenEditModal(selectedPost)}
+                onClick={(event) => handleOpenEditModal(selectedPost, event)}
                 className="py-2.5 px-4 rounded-full border border-surface-variant/40 hover:bg-surface-container-high text-xs font-bold flex items-center justify-center gap-1.5 transition-colors text-primary dark:text-inverse-primary"
               >
                 <Edit2 size={15} />
@@ -732,7 +781,7 @@ export default function ContentCalendar() {
       {/* Create / Edit Post Modal */}
       {isFormModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-primary/40 animate-fade-in">
-          <div role="dialog" aria-modal="true" aria-labelledby="calendar-post-form-title" className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl border border-surface-variant bg-white p-5 sm:p-7 shadow-ambient text-primary">
+          <div ref={formModalRef} role="dialog" aria-modal="true" aria-labelledby="calendar-post-form-title" className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl border border-surface-variant bg-white p-5 sm:p-7 shadow-ambient text-primary">
             
             <div className="flex items-center justify-between pb-4 border-b border-surface-variant/30 mb-5">
               <h3 id="calendar-post-form-title" className="text-xl font-bold text-primary flex items-center gap-2">

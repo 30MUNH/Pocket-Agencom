@@ -647,7 +647,7 @@ export default function BusinessProfile() {
                   <p className="text-body-md text-on-surface-variant text-sm">Chưa có kênh liên kết nào hoạt động.</p>
                   <button
                     onClick={() => setIsEditing(true)}
-                    className="text-xs font-bold text-secondary hover:underline"
+                    className="inline-flex min-h-11 items-center px-2 text-xs font-bold text-secondary hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
                   >
                     Liên kết ngay
                   </button>

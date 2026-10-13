@@ -414,7 +414,7 @@ export default function QuickEditor() {
                     value={generatedContent}
                     onChange={(e) => setGeneratedContent(e.target.value)}
                     placeholder="Bấm nút 'Bắt trend với AI' ở trên để tự động biên soạn nội dung chất lượng cao bám sát thương hiệu của bạn..."
-                    className="w-full flex-1 p-5 bg-transparent border-none outline-none resize-none text-body-md text-primary dark:text-inverse-primary leading-relaxed text-sm focus:ring-0 placeholder:text-on-surface-variant/50"
+                    className="w-full flex-1 p-5 bg-transparent border-none outline-none resize-none text-base text-on-surface leading-7 focus:ring-0 placeholder:text-on-surface-variant/50"
                   />
                 )}
               </div>

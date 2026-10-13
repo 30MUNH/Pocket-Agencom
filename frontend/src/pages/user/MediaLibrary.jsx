@@ -246,7 +246,9 @@ export default function MediaLibrary() {
         {/* Search Field */}
         <div className="relative w-full sm:w-64">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-on-surface-variant/60" />
+          <label htmlFor="media-search" className="sr-only">Tìm tên tập tin media</label>
           <input
+            id="media-search"
             type="text"
             placeholder="Tìm tên tập tin..."
             value={searchQuery}

@@ -207,7 +207,7 @@ export default function HelpCenter() {
               <button
                 type="button"
                 onClick={loadTickets}
-                className="text-xs font-semibold text-secondary hover:underline"
+                className="inline-flex min-h-11 items-center px-2 text-xs font-semibold text-secondary hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
               >
                 Làm mới
               </button>
