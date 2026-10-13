@@ -9,6 +9,7 @@
     "test": "node scripts/run-safe-tests.js",
     "test:unit": "node scripts/run-safe-tests.js unit",
     "test:api": "node scripts/run-safe-tests.js api",
+    "test:e2e:realdb": "node scripts/run-real-db-e2e.js",
     "check": "node --check index.js && find src -name '*.js' -print0 | xargs -0 -n1 node --check"
   },
   "keywords": [],

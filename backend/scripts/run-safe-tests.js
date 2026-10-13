@@ -4,7 +4,7 @@ const path = require('node:path');
 
 const testsDirectory = path.resolve(__dirname, '../test');
 const allTestFiles = fs.readdirSync(testsDirectory)
-  .filter((file) => file.endsWith('.test.js'))
+  .filter((file) => file.endsWith('.test.js') && file !== 'real-db-e2e.test.js')
   .sort();
 const suites = {
   all: allTestFiles,
