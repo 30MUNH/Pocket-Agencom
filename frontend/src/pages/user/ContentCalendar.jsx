@@ -6,19 +6,13 @@ import {
   Plus, 
   Sparkles, 
   Clock, 
-  CheckCircle2, 
-  AlertCircle, 
   Share2, 
-  Filter, 
   X, 
-  Check, 
   Trash2, 
-  ExternalLink,
   Bell,
   RefreshCw,
   LayoutGrid,
   List,
-  Eye,
   CheckSquare,
   Edit2
 } from 'lucide-react';
@@ -155,7 +149,7 @@ export default function ContentCalendar() {
       if (selectedPost && selectedPost.id === postId) {
         setSelectedPost(prev => ({ ...prev, status: newStatus }));
       }
-    } catch (err) {
+    } catch {
       toast.error('Không thể cập nhật trạng thái bài viết.');
     }
   };
@@ -224,7 +218,7 @@ export default function ContentCalendar() {
       setPosts(prev => prev.filter(p => p.id !== postId));
       setIsDetailModalOpen(false);
       setSelectedPost(null);
-    } catch (err) {
+    } catch {
       toast.error('Không thể xóa bài viết.');
     }
   };
@@ -370,13 +364,13 @@ export default function ContentCalendar() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-surface-variant/30 pb-5">
         <div>
           <span className="inline-flex items-center gap-1.5 text-xs font-bold text-secondary uppercase tracking-wider mb-1 bg-secondary-container px-3 py-1 rounded-full">
-            <CalendarIcon size={14} /> Lịch nội dung Outlook / Smart Schedule
+            <CalendarIcon size={14} /> Lịch nội dung
           </span>
-          <h2 className="text-2xl font-bold tracking-tight text-primary dark:text-inverse-primary sm:text-3xl">
+          <h1 className="text-2xl font-bold tracking-tight text-primary dark:text-inverse-primary sm:text-3xl">
             Lịch đăng bài tự động
-          </h2>
+          </h1>
           <p className="text-xs sm:text-sm text-on-surface-variant mt-1">
-            Lên lịch đăng bài, đề xuất Giờ Vàng AI và quản lý quy trình duyệt nội dung.
+            Lên lịch đăng bài và quản lý quy trình duyệt nội dung. Mốc 19:30 là preset có thể chỉnh sửa.
           </p>
         </div>
 
@@ -397,7 +391,7 @@ export default function ContentCalendar() {
       </div>
 
       {/* Outlook Calendar Toolbar */}
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between rounded-[2.5rem] bg-surface-container-lowest dark:bg-tertiary-container p-4 sm:p-6 shadow-ambient border border-surface-variant/40">
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between rounded-2xl bg-surface-container-lowest dark:bg-tertiary-container p-4 sm:p-6 shadow-ambient border border-surface-variant/40">
         
         {/* Date Navigation */}
         <div className="flex items-center gap-3">
@@ -436,7 +430,7 @@ export default function ContentCalendar() {
               { id: 'pending_approval', label: '🟡 Chờ duyệt' },
               { id: 'approved', label: '🟢 Đã duyệt' },
               { id: 'published', label: '🔵 Đã đăng' },
-              { id: 'golden_time', label: '✨ Giờ Vàng' },
+              { id: 'golden_time', label: 'Preset 19:30' },
             ].map(f => (
               <button
                 key={f.id}
@@ -526,7 +520,7 @@ export default function ContentCalendar() {
                     </span>
 
                     {dayPosts.some(p => p.isGoldenTime) && (
-                      <span className="text-[10px] font-bold text-secondary flex items-center gap-0.5" title="Có bài viết thuộc Giờ Vàng AI">
+                      <span className="text-[10px] font-bold text-secondary flex items-center gap-0.5" title="Có bài viết thuộc Giờ Vàng đề xuất (19:30)">
                         <Sparkles size={12} />
                       </span>
                     )}
@@ -600,7 +594,7 @@ export default function ContentCalendar() {
                       </span>
                       {post.isGoldenTime && (
                         <span className="inline-flex items-center gap-1 text-[11px] font-bold text-secondary bg-secondary-container px-2 py-0.5 rounded-full border border-secondary-container/60">
-                          <Sparkles size={12} /> Giờ Vàng AI
+                          <Sparkles size={12} /> Giờ Vàng (19:30)
                         </span>
                       )}
                     </div>
@@ -654,7 +648,7 @@ export default function ContentCalendar() {
               </span>
               {selectedPost.isGoldenTime && (
                 <span className="inline-flex items-center gap-1 text-xs font-bold text-secondary bg-secondary-container px-2.5 py-0.5 rounded-full border border-secondary-container/60">
-                  <Sparkles size={14} /> Giờ Vàng AI
+                  <Sparkles size={14} /> Giờ Vàng (19:30)
                 </span>
               )}
             </div>
@@ -737,18 +731,19 @@ export default function ContentCalendar() {
 
       {/* Create / Edit Post Modal */}
       {isFormModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-primary/40 backdrop-blur-sm animate-fade-in">
-          <div className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-[2.5rem] border border-surface-variant/40 bg-surface-container-lowest dark:bg-tertiary-container p-6 sm:p-8 shadow-ambient text-primary dark:text-inverse-primary">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-primary/40 animate-fade-in">
+          <div role="dialog" aria-modal="true" aria-labelledby="calendar-post-form-title" className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl border border-surface-variant bg-white p-5 sm:p-7 shadow-ambient text-primary">
             
             <div className="flex items-center justify-between pb-4 border-b border-surface-variant/30 mb-5">
-              <h3 className="text-xl font-bold text-primary dark:text-inverse-primary flex items-center gap-2">
+              <h3 id="calendar-post-form-title" className="text-xl font-bold text-primary flex items-center gap-2">
                 <Sparkles size={18} className="text-secondary" />
                 {formMode === 'create' ? 'Tạo bài viết mới' : 'Chỉnh sửa bài viết'}
               </h3>
               <button
                 type="button"
                 onClick={() => setIsFormModalOpen(false)}
-                className="rounded-full p-1.5 text-on-surface-variant hover:bg-surface-container-high transition-colors"
+                aria-label="Đóng biểu mẫu"
+                className="inline-flex h-11 w-11 items-center justify-center rounded-lg text-on-surface-variant hover:bg-surface-container-high focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary transition-colors"
               >
                 <X size={20} />
               </button>
@@ -756,21 +751,23 @@ export default function ContentCalendar() {
 
             <form onSubmit={handleSaveForm} className="space-y-4">
               <div>
-                <label className="block text-xs font-bold uppercase text-on-surface-variant mb-1">Tiêu đề bài viết</label>
+                <label htmlFor="calendar-post-title" className="block text-sm font-semibold text-on-surface mb-1">Tiêu đề bài viết</label>
                 <input
+                  id="calendar-post-title"
                   type="text"
                   placeholder="Ví dụ: Giới thiệu sản phẩm mới hè 2026..."
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  className="w-full rounded-2xl border border-surface-variant/40 bg-surface-container-low dark:bg-surface-variant/20 p-3 text-xs text-primary dark:text-inverse-primary focus:outline-none focus:ring-2 focus:ring-secondary/40"
+                  className="w-full rounded-lg border border-surface-variant bg-white p-3 text-base text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
                   required
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-bold uppercase text-on-surface-variant mb-1">Nền tảng</label>
+                  <label htmlFor="calendar-post-platform" className="block text-sm font-semibold text-on-surface mb-1">Nền tảng</label>
                   <select
+                    id="calendar-post-platform"
                     value={formData.platform}
                     onChange={(e) => setFormData({ ...formData, platform: e.target.value })}
                     className="w-full rounded-2xl border border-surface-variant/40 bg-surface-container-low dark:bg-surface-variant/20 p-3 text-xs text-primary dark:text-inverse-primary focus:outline-none focus:ring-2 focus:ring-secondary/40"
@@ -783,8 +780,9 @@ export default function ContentCalendar() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold uppercase text-on-surface-variant mb-1">Trạng thái</label>
+                  <label htmlFor="calendar-post-status" className="block text-sm font-semibold text-on-surface mb-1">Trạng thái</label>
                   <select
+                    id="calendar-post-status"
                     value={formData.status}
                     onChange={(e) => setFormData({ ...formData, status: e.target.value })}
                     className="w-full rounded-2xl border border-surface-variant/40 bg-surface-container-low dark:bg-surface-variant/20 p-3 text-xs text-primary dark:text-inverse-primary focus:outline-none focus:ring-2 focus:ring-secondary/40"
@@ -798,7 +796,7 @@ export default function ContentCalendar() {
 
               <div>
                 <div className="flex items-center justify-between mb-1">
-                  <label className="block text-xs font-bold uppercase text-on-surface-variant">Thời gian đăng bài</label>
+                  <label htmlFor="calendar-post-time" className="block text-sm font-semibold text-on-surface">Thời gian đăng bài</label>
                   <button
                     type="button"
                     onClick={() => {
@@ -809,38 +807,41 @@ export default function ContentCalendar() {
                       const timeStr = new Date(d.getTime() - tzOffset).toISOString().slice(0, 16);
                       setFormData({ ...formData, scheduledTime: timeStr, isGoldenTime: true });
                     }}
-                    className="text-[11px] font-bold text-secondary hover:underline flex items-center gap-1"
+                    className="inline-flex min-h-11 items-center gap-1 text-sm font-semibold text-primary hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
                   >
-                    <Sparkles size={12} /> Đặt Giờ Vàng 19:30
+                    <Sparkles size={14} /> Dùng preset 19:30
                   </button>
                 </div>
                 <input
+                  id="calendar-post-time"
                   type="datetime-local"
                   value={formData.scheduledTime}
                   onChange={(e) => setFormData({ ...formData, scheduledTime: e.target.value })}
-                  className="w-full rounded-2xl border border-surface-variant/40 bg-surface-container-low dark:bg-surface-variant/20 p-3 text-xs text-primary dark:text-inverse-primary focus:outline-none focus:ring-2 focus:ring-secondary/40"
+                  className="w-full rounded-lg border border-surface-variant bg-white p-3 text-base text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold uppercase text-on-surface-variant mb-1">URL Hình ảnh (tùy chọn)</label>
+                <label htmlFor="calendar-post-image" className="block text-sm font-semibold text-on-surface mb-1">URL hình ảnh (tùy chọn)</label>
                 <input
+                  id="calendar-post-image"
                   type="url"
                   placeholder="https://..."
                   value={formData.imageUrl}
                   onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
-                  className="w-full rounded-2xl border border-surface-variant/40 bg-surface-container-low dark:bg-surface-variant/20 p-3 text-xs text-primary dark:text-inverse-primary focus:outline-none focus:ring-2 focus:ring-secondary/40"
+                  className="w-full rounded-lg border border-surface-variant bg-white p-3 text-base text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold uppercase text-on-surface-variant mb-1">Nội dung bài viết</label>
+                <label htmlFor="calendar-post-content" className="block text-sm font-semibold text-on-surface mb-1">Nội dung bài viết</label>
                 <textarea
+                  id="calendar-post-content"
                   rows={4}
                   placeholder="Nhập nội dung bài đăng, hashtag, thông điệp kêu gọi hành động..."
                   value={formData.content}
                   onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                  className="w-full rounded-2xl border border-surface-variant/40 bg-surface-container-low dark:bg-surface-variant/20 p-3 text-xs text-primary dark:text-inverse-primary focus:outline-none focus:ring-2 focus:ring-secondary/40 resize-none leading-relaxed"
+                  className="w-full rounded-lg border border-surface-variant bg-white p-3 text-base text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary resize-y leading-relaxed"
                   required
                 />
               </div>
@@ -854,7 +855,7 @@ export default function ContentCalendar() {
                   className="rounded text-secondary focus:ring-secondary/40 h-4 w-4"
                 />
                 <label htmlFor="isGoldenTime" className="text-xs font-medium text-on-surface-variant cursor-pointer select-none">
-                  Đánh dấu là khung Giờ Vàng AI tương tác cao
+                  Đánh dấu đang dùng preset 19:30
                 </label>
               </div>
 

@@ -214,9 +214,9 @@ export default function BusinessProfile() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-display-lg-mobile md:text-display-lg font-display-lg text-primary">
+          <h1 className="text-display-lg-mobile md:text-display-lg font-display-lg text-primary">
             Hồ sơ Doanh nghiệp
-          </h2>
+          </h1>
           <p className="text-body-lg font-body-lg text-on-surface-variant max-w-2xl mt-1">
             Quản lý định vị thương hiệu và cung cấp dữ liệu chi tiết cho thuật toán AI thiết lập chiến lược tiếp thị.
           </p>

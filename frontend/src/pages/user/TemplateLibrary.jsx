@@ -98,12 +98,16 @@ export default function TemplateLibrary() {
     });
   };
 
-  const handleCopyContent = (text) => {
+  const handleCopyContent = async (text) => {
     if (!text) return;
-    navigator.clipboard.writeText(text);
-    setCopied(true);
-    toast.success('Đã sao chép nội dung mẫu vào bộ nhớ tạm!');
-    setTimeout(() => setCopied(false), 2000);
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      toast.success('Đã sao chép nội dung mẫu vào bộ nhớ tạm!');
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast.error('Không thể sao chép nội dung mẫu. Vui lòng cấp quyền clipboard.');
+    }
   };
 
   return (
@@ -111,9 +115,9 @@ export default function TemplateLibrary() {
       {/* Header & Tabs */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
-          <h2 className="text-display-lg-mobile md:text-display-lg font-display-lg-mobile md:font-display-lg text-primary dark:text-inverse-primary mb-2">
+          <h1 className="text-display-lg-mobile md:text-display-lg font-display-lg-mobile md:font-display-lg text-primary dark:text-inverse-primary mb-2">
             Thư viện Mẫu
-          </h2>
+          </h1>
           <p className="text-body-lg font-body-lg text-on-surface-variant max-w-2xl">
             Duyệt qua bộ sưu tập các mẫu thiết kế chuyển đổi cao được tuyển chọn đặc biệt để phát triển doanh nghiệp một cách dễ dàng.
           </p>
@@ -133,6 +137,18 @@ export default function TemplateLibrary() {
               {tab.label}
             </button>
           ))}
+        </div>
+      </div>
+
+      {/* Starter Templates Advisory Banner */}
+      <div className="p-4 rounded-2xl bg-surface-container-low dark:bg-surface-variant/20 border border-surface-variant/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-on-surface-variant">
+        <div className="flex items-center gap-2.5">
+          <span className="font-bold text-secondary px-2.5 py-0.5 rounded-full bg-secondary-container text-[11px] shrink-0 border border-secondary/20">
+            Mẫu dựng sẵn
+          </span>
+          <span>
+            Mẫu khởi đầu có sẵn trong ứng dụng; nội dung bạn chỉnh sửa chỉ được lưu khi tạo bản nháp trong Quick Editor.
+          </span>
         </div>
       </div>
 
@@ -203,7 +219,7 @@ export default function TemplateLibrary() {
       {/* Template Preview Modal */}
       {previewTemplate && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-primary/40 backdrop-blur-sm animate-fade-in">
-          <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-[2.5rem] border border-surface-variant/40 bg-surface-container-lowest dark:bg-tertiary-container p-6 sm:p-8 shadow-ambient text-primary dark:text-inverse-primary">
+          <div role="dialog" aria-modal="true" aria-labelledby="template-preview-title" className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl border border-surface-variant bg-white p-5 sm:p-7 shadow-ambient text-primary">
             
             {/* Modal Header */}
             <div className="flex items-start justify-between gap-4 mb-6 border-b border-surface-variant/30 pb-4">
@@ -211,7 +227,7 @@ export default function TemplateLibrary() {
                 <span className="inline-block bg-secondary-container text-on-secondary-container px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-2">
                   {CATEGORY_MAP[previewTemplate.category] || previewTemplate.category} • {previewTemplate.platform || 'Đa kênh'}
                 </span>
-                <h3 className="text-xl sm:text-2xl font-bold text-primary dark:text-inverse-primary">
+                <h3 id="template-preview-title" className="text-xl sm:text-2xl font-bold text-primary">
                   {previewTemplate.title}
                 </h3>
                 <p className="text-xs sm:text-sm text-on-surface-variant mt-1">

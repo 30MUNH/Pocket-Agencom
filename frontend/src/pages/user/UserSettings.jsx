@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { User as UserIcon, Lock, Bell, Camera, LogOut, Share2, Loader2, Check, ShieldCheck, Eye, EyeOff, Save } from 'lucide-react';
+import { User as UserIcon, Lock, Bell, Camera, LogOut, Share2, Loader2, ShieldCheck, Eye, EyeOff, Save } from 'lucide-react';
 import SocialLinkManager from '../../components/settings/SocialLinkManager';
 import { useAuthStore } from '../../store/authStore';
 import { useUpdateProfile, useUpdateBusinessProfile } from '../../hooks/useAuth';
@@ -36,7 +36,7 @@ export default function UserSettings() {
   const [notifSettings, setNotifSettings] = useState(() => {
     const saved = localStorage.getItem('pocket_notif_settings');
     if (saved) {
-      try { return JSON.parse(saved); } catch (e) { /* ignore */ }
+      try { return JSON.parse(saved); } catch { /* ignore */ }
     }
     return {
       goldenTime: true,
@@ -467,6 +467,10 @@ export default function UserSettings() {
                 <p className="text-body-md text-on-surface-variant mt-1">
                   Tùy chỉnh các thông báo hệ thống và lời nhắc tối ưu chiến dịch marketing cho tài khoản của bạn.
                 </p>
+                <div className="mt-4 p-3.5 rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 text-amber-900 dark:text-amber-200 text-xs flex items-center gap-2">
+                  <span className="font-bold shrink-0">📌 Tùy chọn cục bộ (Local Preferences):</span>
+                  <span>Chỉ lưu trên trình duyệt này; các thông báo chưa được kết nối với hệ thống gửi.</span>
+                </div>
               </div>
 
               <div className="space-y-5">
@@ -474,22 +478,22 @@ export default function UserSettings() {
                   {
                     key: 'goldenTime',
                     title: 'Nhắc nhở Giờ Vàng (Golden Time Alert)',
-                    desc: 'Nhận thông báo nổi khi bài viết đến khung giờ vàng đăng bài có lượng tương tác cao nhất.',
+                    desc: 'Tùy chọn cục bộ; không bật thông báo hay đề xuất giờ đăng tự động.',
                   },
                   {
                     key: 'dailyTrend',
                     title: 'Cập nhật Xu hướng Hàng ngày',
-                    desc: 'Gợi ý tức thời các chủ đề và hashtag đang thịnh hành tại thị trường Việt Nam.',
+                    desc: 'Tùy chọn này chỉ lưu trên thiết bị hiện tại; thông báo xu hướng chưa được gửi.',
                   },
                   {
                     key: 'postStatus',
                     title: 'Thông báo Trạng thái Bài viết',
-                    desc: 'Nhận thông báo khi lịch trình bài đăng được duyệt thành công.',
+                    desc: 'Tùy chọn này chỉ lưu trên thiết bị hiện tại; trạng thái bài viết chưa gửi thông báo.',
                   },
                   {
                     key: 'weeklyReport',
                     title: 'Báo cáo Tổng kết Tuần',
-                    desc: 'Nhận email tổng hợp số lượng kế hoạch đã tạo và chi phí chiến dịch hàng tuần.',
+                    desc: 'Tùy chọn này chỉ lưu trên thiết bị hiện tại; báo cáo email chưa được gửi.',
                   },
                 ].map((item) => (
                   <div

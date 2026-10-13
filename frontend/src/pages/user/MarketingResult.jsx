@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
-import { Lightbulb, Heart, Mail, FileText, ClipboardCheck, Check, PlayCircle, Play, Video, Copy, BookOpen, RefreshCw, Download, Clock, Loader2, Target, Sparkles, Image as ImageIcon, Upload, X, Wand2, Users } from 'lucide-react';
+import { Lightbulb, Heart, ClipboardCheck, Check, PlayCircle, Play, Video, Copy, BookOpen, RefreshCw, Download, Clock, Loader2, Target, Sparkles, Upload, X, Wand2 } from 'lucide-react';
 import { useMarketingPlan, useSavePlan, useGeneratePost, useGeneratePostWithImage } from '../../hooks/useMarketingPlans';
 import { useAuthStore } from '../../store/authStore';
 import { toast } from '../../store/toastStore';
@@ -153,11 +153,15 @@ function IdeaCard({ idea, index, totalLength, businessProfileId, existingResourc
     }
   };
 
-  const handleCopyPost = () => {
-    navigator.clipboard.writeText(detailedContent);
-    setCopied(true);
-    toast.success('Đã sao chép bài đăng!');
-    setTimeout(() => setCopied(false), 2000);
+  const handleCopyPost = async () => {
+    try {
+      await navigator.clipboard.writeText(detailedContent);
+      setCopied(true);
+      toast.success('Đã sao chép bài đăng!');
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast.error('Không thể sao chép bài đăng. Vui lòng cấp quyền clipboard.');
+    }
   };
 
   const isGeneratingPost = generatePostMutation.isPending || generatePostWithImageMutation.isPending;
@@ -433,11 +437,15 @@ export default function MarketingResult() {
   const videoScripts = plan?.videoScripts || [];
   const seoKeywords = plan?.seoKeywords || [];
 
-  const handleCopyAllKeywords = () => {
+  const handleCopyAllKeywords = async () => {
     if (seoKeywords.length === 0) return;
     const textToCopy = seoKeywords.join(', ');
-    navigator.clipboard.writeText(textToCopy);
-    toast.success('Đã sao chép từ khóa!');
+    try {
+      await navigator.clipboard.writeText(textToCopy);
+      toast.success('Đã sao chép từ khóa!');
+    } catch {
+      toast.error('Không thể sao chép từ khóa. Vui lòng cấp quyền clipboard.');
+    }
   };
 
   const initialChecklist = useMemo(() => {
@@ -563,10 +571,15 @@ export default function MarketingResult() {
     );
   };
 
-  const copyToClipboard = (title, text) => {
-    navigator.clipboard.writeText(text);
-    setCopiedScript(title);
-    setTimeout(() => setCopiedScript(null), 2000);
+  const copyToClipboard = async (title, text) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedScript(title);
+      setTimeout(() => setCopiedScript(null), 2000);
+      toast.success('Đã sao chép nội dung!');
+    } catch {
+      toast.error('Không thể sao chép nội dung. Vui lòng cấp quyền clipboard.');
+    }
   };
 
   return (
@@ -582,9 +595,9 @@ export default function MarketingResult() {
               <Clock size={14} /> Vừa xong
             </span>
           </div>
-          <h2 className="text-display-lg-mobile md:text-display-lg font-display-lg text-primary dark:text-inverse-primary max-w-2xl leading-tight">
+          <h1 className="text-display-lg-mobile md:text-display-lg font-display-lg text-primary dark:text-inverse-primary max-w-2xl leading-tight">
             {plan.goal}
-          </h2>
+          </h1>
           <p className="text-body-lg text-on-surface-variant max-w-3xl">
             {typeof plan.playbook === 'string' ? plan.playbook : plan.campaignType}
           </p>
