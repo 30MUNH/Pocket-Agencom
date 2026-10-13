@@ -8,6 +8,7 @@ const prismaPath = require.resolve('../src/config/prisma');
 
 // In-memory database simulation for thorough application integration testing
 const passwordHash = bcrypt.hashSync('password123', 4);
+let lastAdminTransactionOptions;
 
 const usersDb = [
   { id: 1, name: 'Normal User', email: 'user@example.com', passwordHash, role: 'user', status: 'active', phone: '0901234567' },
@@ -15,6 +16,7 @@ const usersDb = [
   { id: 3, name: 'Staff Member', email: 'staff@example.com', passwordHash, role: 'staff', status: 'active', phone: '0901112222' },
   { id: 4, name: 'Admin User', email: 'admin@example.com', passwordHash, role: 'admin', status: 'active', phone: '0903334444' },
   { id: 5, name: 'Archived KOL', email: 'former@example.com', passwordHash, role: 'user', status: 'archived', phone: '0905556666' },
+  { id: 6, name: 'Second Admin', email: 'admin2@example.com', passwordHash, role: 'admin', status: 'inactive', phone: '0906667777' },
 ];
 
 const businessProfilesDb = [
@@ -75,9 +77,12 @@ const mediaAssetsDb = [
   { id: 1, userId: 1, name: 'banner.png', url: 'https://example.com/banner.png', fileType: 'image' },
 ];
 
+const supportTicketsDb = [];
+
 const mockPrisma = {
-  $transaction: async (fnOrArray) => {
+  $transaction: async (fnOrArray, options) => {
     if (typeof fnOrArray === 'function') {
+      lastAdminTransactionOptions = options;
       return fnOrArray(mockPrisma);
     }
     return Promise.all(fnOrArray);
@@ -100,7 +105,15 @@ const mockPrisma = {
       Object.assign(u, data);
       return u;
     },
-    count: async () => usersDb.length,
+    count: async ({ where } = {}) => {
+      if (where) {
+        let list = usersDb;
+        if (where.role) list = list.filter((u) => u.role === where.role);
+        if (where.status) list = list.filter((u) => u.status === where.status);
+        return list.length;
+      }
+      return usersDb.length;
+    },
   },
   businessProfile: {
     findUnique: async ({ where }) => {
@@ -192,18 +205,36 @@ const mockPrisma = {
   },
   scheduledPost: {
     findMany: async ({ where = {} }) => scheduledPostsDb.filter((p) => p.userId === where.userId),
+    findUnique: async ({ where }) => scheduledPostsDb.find((p) => p.id === where.id) || null,
     create: async ({ data }) => {
       const post = { id: scheduledPostsDb.length + 1, ...data };
       scheduledPostsDb.push(post);
       return post;
     },
+    update: async ({ where, data }) => {
+      const post = scheduledPostsDb.find((item) => item.id === where.id);
+      if (!post) throw new Error('Scheduled post not found');
+      Object.assign(post, data);
+      return post;
+    },
+    delete: async ({ where }) => {
+      const index = scheduledPostsDb.findIndex((post) => post.id === where.id);
+      if (index < 0) throw new Error('Scheduled post not found');
+      return scheduledPostsDb.splice(index, 1)[0];
+    },
   },
   mediaAsset: {
     findMany: async ({ where = {} }) => mediaAssetsDb.filter((m) => m.userId === where.userId),
+    findUnique: async ({ where }) => mediaAssetsDb.find((asset) => asset.id === where.id) || null,
     create: async ({ data }) => {
       const asset = { id: mediaAssetsDb.length + 1, ...data };
       mediaAssetsDb.push(asset);
       return asset;
+    },
+    delete: async ({ where }) => {
+      const index = mediaAssetsDb.findIndex((asset) => asset.id === where.id);
+      if (index < 0) throw new Error('Media asset not found');
+      return mediaAssetsDb.splice(index, 1)[0];
     },
   },
   notification: {
@@ -213,6 +244,25 @@ const mockPrisma = {
     deleteMany: async () => ({ count: 0 }),
     createMany: async () => ({ count: 0 }),
     findMany: async () => [],
+  },
+  supportTicket: {
+    findMany: async ({ where = {} } = {}) => {
+      let list = supportTicketsDb;
+      if (where.userId) list = list.filter((t) => t.userId === where.userId);
+      return list;
+    },
+    create: async ({ data }) => {
+      const ticket = { id: supportTicketsDb.length + 1, createdAt: new Date(), updatedAt: new Date(), ...data };
+      supportTicketsDb.unshift(ticket);
+      return ticket;
+    },
+    findUnique: async ({ where }) => supportTicketsDb.find((t) => t.id === where.id) || null,
+    update: async ({ where, data }) => {
+      const t = supportTicketsDb.find((item) => item.id === where.id);
+      if (!t) throw new Error('Ticket not found');
+      Object.assign(t, data, { updatedAt: new Date() });
+      return t;
+    },
   },
 };
 
@@ -226,6 +276,7 @@ const userToken = signToken({ userId: 1, role: 'user' });
 const intruderToken = signToken({ userId: 2, role: 'user' });
 const staffToken = signToken({ userId: 3, role: 'staff' });
 const adminToken = signToken({ userId: 4, role: 'admin' });
+const secondAdminToken = signToken({ userId: 6, role: 'admin' });
 const archivedToken = signToken({ userId: 5, role: 'user' });
 
 // ── 1. Authentication & Authorization ───────────────────────────
@@ -530,6 +581,24 @@ test('HTTP: admin user management enforces admin role and updates user status an
   assert.ok(Array.isArray(adminRes.body.data.users));
   assert.ok(adminRes.body.data.total >= 1);
 
+  const forbiddenRoleChange = await request(app)
+    .patch('/api/admin/users/1/role')
+    .set('Authorization', `Bearer ${userToken}`)
+    .send({ role: 'staff' });
+  assert.equal(forbiddenRoleChange.status, 403);
+
+  const invalidStatus = await request(app)
+    .patch('/api/admin/users/1/status')
+    .set('Authorization', `Bearer ${adminToken}`)
+    .send({ status: 'archived' });
+  assert.equal(invalidStatus.status, 400);
+
+  const invalidRole = await request(app)
+    .patch('/api/admin/users/1/role')
+    .set('Authorization', `Bearer ${adminToken}`)
+    .send({ role: 'kol' });
+  assert.equal(invalidRole.status, 400);
+
   // Admin cannot self-deactivate
   const selfDeactivateRes = await request(app)
     .patch('/api/admin/users/4/status')
@@ -553,6 +622,30 @@ test('HTTP: admin user management enforces admin role and updates user status an
   assert.equal(roleRes.status, 200);
   assert.equal(roleRes.body.data.role, 'staff');
 
+  // Admin cannot modify archived account status
+  const modifyArchivedStatus = await request(app)
+    .patch('/api/admin/users/5/status')
+    .set('Authorization', `Bearer ${adminToken}`)
+    .send({ status: 'active' });
+  assert.equal(modifyArchivedStatus.status, 400);
+  assert.match(modifyArchivedStatus.body.error.message, /archived/i);
+
+  // Admin cannot modify archived account role
+  const modifyArchivedRole = await request(app)
+    .patch('/api/admin/users/5/role')
+    .set('Authorization', `Bearer ${adminToken}`)
+    .send({ role: 'staff' });
+  assert.equal(modifyArchivedRole.status, 400);
+  assert.match(modifyArchivedRole.body.error.message, /archived/i);
+
+  // Admin cannot demote the last active admin
+  const demoteLastAdmin = await request(app)
+    .patch('/api/admin/users/4/role')
+    .set('Authorization', `Bearer ${adminToken}`)
+    .send({ role: 'staff' });
+  assert.equal(demoteLastAdmin.status, 400);
+  assert.match(demoteLastAdmin.body.error.message, /cuối cùng/i);
+
   // Reset back to active user
   await request(app)
     .patch('/api/admin/users/1/status')
@@ -562,6 +655,157 @@ test('HTTP: admin user management enforces admin role and updates user status an
     .patch('/api/admin/users/1/role')
     .set('Authorization', `Bearer ${adminToken}`)
     .send({ role: 'user' });
+});
+
+test('HTTP: admin removal checks and updates run in a serializable transaction', async () => {
+  const secondAdmin = usersDb.find((user) => user.id === 6);
+  secondAdmin.status = 'active';
+  lastAdminTransactionOptions = undefined;
+
+  try {
+    const response = await request(app)
+      .patch('/api/admin/users/4/status')
+      .set('Authorization', `Bearer ${secondAdminToken}`)
+      .send({ status: 'inactive' });
+
+    assert.equal(response.status, 200);
+    assert.deepEqual(lastAdminTransactionOptions, { isolationLevel: 'Serializable' });
+  } finally {
+    Object.assign(usersDb.find((user) => user.id === 4), { status: 'active' });
+    secondAdmin.status = 'inactive';
+  }
+});
+
+test('HTTP: support ticket lifecycle creates, lists, and secures tickets', async () => {
+  // Missing fields rejected
+  const badReq = await request(app)
+    .post('/api/support/tickets')
+    .set('Authorization', `Bearer ${userToken}`)
+    .send({ subject: '' });
+  assert.equal(badReq.status, 400);
+
+  // Valid ticket created by user
+  const createRes = await request(app)
+    .post('/api/support/tickets')
+    .set('Authorization', `Bearer ${userToken}`)
+    .send({
+      subject: 'Lỗi tải ảnh AI',
+      message: 'Tôi không thể tải ảnh ở tỷ lệ 4:5',
+      category: 'technical',
+    });
+  assert.equal(createRes.status, 201);
+  assert.equal(createRes.body.success, true);
+  assert.ok(createRes.body.data.id);
+  assert.equal(createRes.body.data.status, 'open');
+
+  // User fetches own tickets
+  const listRes = await request(app)
+    .get('/api/support/tickets')
+    .set('Authorization', `Bearer ${userToken}`);
+  assert.equal(listRes.status, 200);
+  assert.ok(Array.isArray(listRes.body.data));
+  assert.ok(listRes.body.data.some((t) => t.subject === 'Lỗi tải ảnh AI'));
+
+  // User closes own ticket
+  const ticketId = createRes.body.data.id;
+  const closeRes = await request(app)
+    .patch(`/api/support/tickets/${ticketId}/status`)
+    .set('Authorization', `Bearer ${userToken}`)
+    .send({ status: 'closed' });
+  assert.equal(closeRes.status, 200);
+  assert.equal(closeRes.body.data.status, 'closed');
+});
+
+test('HTTP: support ticket submission reports database failure instead of claiming success', async () => {
+  const originalCreate = mockPrisma.supportTicket.create;
+  mockPrisma.supportTicket.create = async () => {
+    throw new Error('database unavailable');
+  };
+
+  try {
+    const res = await request(app)
+      .post('/api/support/tickets')
+      .set('Authorization', `Bearer ${userToken}`)
+      .send({
+        subject: 'Yêu cầu cần được lưu',
+        message: 'Nội dung không được mất khi cơ sở dữ liệu gặp lỗi.',
+        category: 'technical',
+      });
+
+    assert.equal(res.status, 503);
+    assert.equal(res.body.success, false);
+  } finally {
+    mockPrisma.supportTicket.create = originalCreate;
+  }
+});
+
+test('HTTP: scheduled post operations report database failures instead of using volatile memory', async () => {
+  const originalCreate = mockPrisma.scheduledPost.create;
+  const originalFindMany = mockPrisma.scheduledPost.findMany;
+  try {
+    mockPrisma.scheduledPost.create = async () => { throw new Error('database unavailable'); };
+    const createResponse = await request(app)
+      .post('/api/scheduled-posts')
+      .set('Authorization', `Bearer ${userToken}`)
+      .send({ title: 'Test draft', content: 'A test post', status: 'draft' });
+    assert.equal(createResponse.status, 500);
+
+    mockPrisma.scheduledPost.findMany = async () => { throw new Error('database unavailable'); };
+    const listResponse = await request(app)
+      .get('/api/scheduled-posts')
+      .set('Authorization', `Bearer ${userToken}`);
+    assert.equal(listResponse.status, 500);
+  } finally {
+    mockPrisma.scheduledPost.create = originalCreate;
+    mockPrisma.scheduledPost.findMany = originalFindMany;
+  }
+});
+
+test('HTTP: scheduled post create, edit, and delete use persistent service operations', async () => {
+  const createResponse = await request(app)
+    .post('/api/scheduled-posts')
+    .set('Authorization', `Bearer ${userToken}`)
+    .send({ title: 'Calendar CRUD test', content: 'Post content', platform: 'Facebook', status: 'draft' });
+  assert.equal(createResponse.status, 201);
+  const postId = createResponse.body.data.id;
+  assert.ok(scheduledPostsDb.some((post) => post.id === postId));
+
+  const editResponse = await request(app)
+    .patch(`/api/scheduled-posts/${postId}`)
+    .set('Authorization', `Bearer ${userToken}`)
+    .send({ title: 'Calendar CRUD edited', content: 'Updated content' });
+  assert.equal(editResponse.status, 200);
+  assert.equal(editResponse.body.data.title, 'Calendar CRUD edited');
+  assert.equal(scheduledPostsDb.find((post) => post.id === postId).content, 'Updated content');
+
+  const deleteResponse = await request(app)
+    .delete(`/api/scheduled-posts/${postId}`)
+    .set('Authorization', `Bearer ${userToken}`);
+  assert.equal(deleteResponse.status, 200);
+  assert.equal(deleteResponse.body.data.deleted, true);
+  assert.equal(scheduledPostsDb.some((post) => post.id === postId), false);
+});
+
+test('HTTP: media library reports database failures instead of returning volatile or empty success', async () => {
+  const originalCreate = mockPrisma.mediaAsset.create;
+  const originalFindMany = mockPrisma.mediaAsset.findMany;
+  try {
+    mockPrisma.mediaAsset.create = async () => { throw new Error('database unavailable'); };
+    const createResponse = await request(app)
+      .post('/api/media')
+      .set('Authorization', `Bearer ${userToken}`)
+      .send({ name: 'Test.png', url: 'https://example.invalid/test.png', fileType: 'image' });
+    assert.equal(createResponse.status, 500);
+
+    mockPrisma.mediaAsset.findMany = async () => { throw new Error('database unavailable'); };
+    const listResponse = await request(app)
+      .get('/api/media')
+      .set('Authorization', `Bearer ${userToken}`);
+    assert.equal(listResponse.status, 500);
+  } finally {
+    mockPrisma.mediaAsset.create = originalCreate;
+    mockPrisma.mediaAsset.findMany = originalFindMany;
+  }
 });
 
 test('HTTP: password change requires valid current password and updates password', async () => {
