@@ -36,6 +36,7 @@ let planId;
 let postId;
 let mediaId;
 let ticketId;
+let testStaffNotificationIds = [];
 
 async function startBackend() {
   const app = createApp();
@@ -80,6 +81,10 @@ async function register(email, name) {
 }
 
 async function cleanup() {
+  if (testStaffNotificationIds.length) {
+    await prisma.notification.deleteMany({ where: { id: { in: testStaffNotificationIds } } });
+    testStaffNotificationIds = [];
+  }
   const users = await prisma.user.findMany({
     where: { email: { startsWith: runPrefix } },
     select: { id: true },
@@ -217,8 +222,18 @@ test('real PostgreSQL application workflows persist and enforce ownership', { ti
 
     const forbiddenReview = await api('PATCH', `/marketing-plans/${planId}/review`, owner.token, { action: 'reviewed' });
     assert.equal(forbiddenReview.status, 403);
+    const priorNotificationMax = await prisma.notification.aggregate({ _max: { id: true } });
     const save = await api('POST', `/marketing-plans/${planId}/save`, owner.token, {});
     assert.equal(save.status, 200);
+    const newStaffNotifications = await prisma.notification.findMany({
+      where: {
+        id: { gt: priorNotificationMax._max.id || 0 },
+        title: 'Plan ready for review',
+        message: 'Marketing plan from user requires staff review.',
+      },
+      select: { id: true },
+    });
+    testStaffNotificationIds = newStaffNotifications.map(({ id }) => id);
     stored = await prisma.marketingPlan.findUnique({ where: { id: planId } });
     assert.equal(stored.status, 'saved');
 

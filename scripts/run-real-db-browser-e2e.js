@@ -7,6 +7,7 @@ const zlib = require('node:zlib');
 const dotenv = require('../backend/node_modules/dotenv');
 const { resolveRealDbE2eTarget } = require('../backend/src/config/realDbE2eConfig');
 const { PrismaClient } = require('../backend/node_modules/@prisma/client');
+const bcrypt = require('../backend/node_modules/bcryptjs');
 const puppeteer = require('../node_modules/puppeteer-core');
 
 const optedIn = process.env.PA_REAL_DB_E2E === 'true';
@@ -16,12 +17,16 @@ let backendProcess;
 let frontendProcess;
 let browser;
 let prisma;
+let testStaffNotificationIds = [];
 let appLogs = '';
 const apiResponses = [];
 const browserErrors = [];
 const browserLifecycle = [];
 const runPrefix = `pa-realdb-browser-${Date.now()}-${crypto.randomBytes(3).toString('hex')}`;
 const email = `${runPrefix}@example.test`;
+const userPassword = `Browser-${crypto.randomBytes(10).toString('hex')}!`;
+const staffPassword = `Staff-${crypto.randomBytes(10).toString('hex')}!`;
+const adminPassword = `Admin-${crypto.randomBytes(10).toString('hex')}!`;
 
 function safe(text) {
   return String(text || '').replace(/postgres(?:ql)?:\/\/[^\s"']+/gi, '[redacted database URL]');
@@ -74,6 +79,10 @@ async function startBackend(apiPort, env, frontendOrigin) {
 
 async function cleanup() {
   if (!prisma) return;
+  if (testStaffNotificationIds.length) {
+    await prisma.notification.deleteMany({ where: { id: { in: testStaffNotificationIds } } });
+    testStaffNotificationIds = [];
+  }
   const users = await prisma.user.findMany({ where: { email: { startsWith: runPrefix } }, select: { id: true } });
   const ids = users.map(({ id }) => id);
   if (!ids.length) return;
@@ -121,6 +130,15 @@ async function replaceInput(page, selector, value) {
   await page.type(selector, value);
 }
 
+async function loginAs(page, frontUrl, accountEmail, password) {
+  await page.evaluate(() => localStorage.removeItem('pocket-agencom-auth'));
+  await page.goto(`${frontUrl}/login`, { waitUntil: 'networkidle2' });
+  await page.type('#login-email', accountEmail);
+  await page.type('#login-password', password);
+  await page.click('form button[type="submit"]');
+  await page.waitForFunction(() => location.pathname === '/dashboard', { timeout: 20000 });
+}
+
 async function main() {
   if (!optedIn) throw new Error('Real browser E2E is disabled. Set PA_REAL_DB_E2E=true explicitly.');
   const appEnv = dotenv.parse(fs.readFileSync(backendEnvPath));
@@ -150,6 +168,7 @@ async function main() {
   const frontUrl = `http://127.0.0.1:${frontPort}`;
   const outputDir = `/tmp/pocket-agencom-db-backups/browser-${Date.now()}`;
   fs.mkdirSync(outputDir, { recursive: true, mode: 0o700 });
+  prisma = new PrismaClient();
 
   try {
     await startBackend(apiPort, env, frontUrl);
@@ -177,7 +196,14 @@ async function main() {
     });
     const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
     page.on('pageerror', (error) => browserErrors.push(error.message));
-    page.on('console', (message) => { if (message.type() === 'error') browserErrors.push(message.text()); });
+    page.on('console', (message) => {
+      if (message.type() === 'error' && !message.text().startsWith('Failed to load resource:')) browserErrors.push(message.text());
+    });
+    page.on('requestfailed', (request) => {
+      if ((request.url().startsWith(frontUrl) || request.url().startsWith(apiUrl)) && request.failure()?.errorText !== 'net::ERR_ABORTED') {
+        browserErrors.push(`Local request failed: ${new URL(request.url()).pathname}`);
+      }
+    });
     page.on('close', () => browserLifecycle.push('page closed'));
     browser.on('disconnected', () => browserLifecycle.push('browser disconnected'));
     page.on('response', (response) => {
@@ -199,7 +225,7 @@ async function main() {
     }
     await page.type('#reg-name', `${runPrefix} Browser User`);
     await page.type('#reg-email', email);
-    await page.type('input[type="password"]', `Browser-${crypto.randomBytes(10).toString('hex')}!`);
+    await page.type('input[type="password"]', userPassword);
     await page.$eval('input[type="password"]', (input) => {
       const confirm = document.querySelectorAll('input[type="password"]')[1];
       Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(confirm, input.value);
@@ -267,14 +293,6 @@ async function main() {
     }
     await page.screenshot({ path: path.join(outputDir, '03-marketing-plan.png'), fullPage: true });
 
-    const saveResponse = page.waitForResponse((response) => response.url().endsWith(`/api/marketing-plans/${planId}/save`) && response.request().method() === 'POST')
-      .catch((error) => ({ waitError: error.message }));
-    await clickText(page, 'Lưu kế hoạch');
-    const saved = await saveResponse;
-    if (saved.waitError) throw new Error(`Plan save request was not observed: ${saved.waitError}`);
-    if (!saved.ok()) throw new Error(`Plan save returned HTTP ${saved.status()}.`);
-    await page.screenshot({ path: path.join(outputDir, '04-plan-saved.png'), fullPage: true });
-
     await page._client().send('Page.setDownloadBehavior', { behavior: 'allow', downloadPath: outputDir });
     await clickText(page, 'Xuất file');
     const markdownDeadline = Date.now() + 10000;
@@ -282,6 +300,24 @@ async function main() {
       await new Promise((resolve) => setTimeout(resolve, 200));
     }
     if (!fs.readdirSync(outputDir).some((file) => file.endsWith('.md'))) throw new Error('Markdown export did not create a file.');
+
+    const priorNotificationMax = await prisma.notification.aggregate({ _max: { id: true } });
+    const saveResponse = page.waitForResponse((response) => response.url().endsWith(`/api/marketing-plans/${planId}/save`) && response.request().method() === 'POST')
+      .catch((error) => ({ waitError: error.message }));
+    await clickText(page, 'Lưu kế hoạch');
+    const saved = await saveResponse;
+    if (saved.waitError) throw new Error(`Plan save request was not observed: ${saved.waitError}`);
+    if (!saved.ok()) throw new Error(`Plan save returned HTTP ${saved.status()}.`);
+    const newStaffNotifications = await prisma.notification.findMany({
+      where: {
+        id: { gt: priorNotificationMax._max.id || 0 },
+        title: 'Plan ready for review',
+        message: 'Marketing plan from user requires staff review.',
+      },
+      select: { id: true },
+    });
+    testStaffNotificationIds = newStaffNotifications.map(({ id }) => id);
+    await page.screenshot({ path: path.join(outputDir, '04-plan-saved.png'), fullPage: true });
 
     await page.goto(`${frontUrl}/templates`, { waitUntil: 'networkidle2' });
     await page.waitForFunction(() => document.body.innerText.includes('Thư viện'));
@@ -312,11 +348,48 @@ async function main() {
     if (addPost) {
       await clickText(page, addPost);
       await page.waitForSelector('#calendar-post-title', { timeout: 10000 });
-      await page.type('#calendar-post-title', `${runPrefix} browser calendar post`);
+      const originalTitle = `${runPrefix} browser calendar post`;
+      const editedTitle = `${runPrefix} edited calendar post`;
+      await page.type('#calendar-post-title', originalTitle);
       await page.type('#calendar-post-content', `${runPrefix} calendar caption persisted through browser`);
       await page.type('#calendar-post-image', 'https://example.test/browser-image.png');
       await page.click('form button[type="submit"]');
       await page.waitForFunction(() => !document.querySelector('#calendar-post-title'), { timeout: 15000 });
+      const calendarDb = new PrismaClient();
+      try {
+        const owner = await calendarDb.user.findUnique({ where: { email }, select: { id: true } });
+        const created = await calendarDb.scheduledPost.findFirst({ where: { userId: owner.id, title: originalTitle } });
+        if (!created) throw new Error('Calendar create did not persist in PostgreSQL.');
+        await page.reload({ waitUntil: 'networkidle2' });
+        await page.waitForFunction((title) => [...document.querySelectorAll('p')].some((item) => item.innerText === title && item.getClientRects().length), { timeout: 15000 }, originalTitle);
+        const opened = await page.evaluate((title) => {
+          const chip = [...document.querySelectorAll('p')].find((item) => item.innerText === title && item.getClientRects().length);
+          chip?.click();
+          return !!chip;
+        }, originalTitle);
+        if (!opened) throw new Error('Created calendar post not visible after refresh.');
+        await clickText(page, 'Sửa');
+        await page.waitForSelector('#calendar-post-title');
+        await replaceInput(page, '#calendar-post-title', editedTitle);
+        await replaceInput(page, '#calendar-post-content', `${runPrefix} edited caption`);
+        const editResponse = page.waitForResponse((response) => response.url().endsWith(`/api/scheduled-posts/${created.id}`) && response.request().method() === 'PATCH');
+        await page.click('form button[type="submit"]');
+        if (!(await editResponse).ok()) throw new Error('Calendar edit request failed.');
+        await page.reload({ waitUntil: 'networkidle2' });
+        await page.waitForFunction((title) => [...document.querySelectorAll('p')].some((item) => item.innerText === title && item.getClientRects().length), { timeout: 15000 }, editedTitle);
+        const updated = await calendarDb.scheduledPost.findUnique({ where: { id: created.id } });
+        if (updated.title !== editedTitle || !updated.content.startsWith(`${runPrefix} edited caption`)) throw new Error(`Calendar edit mismatch: ${JSON.stringify({ expectedTitle: editedTitle, actualTitle: updated.title, actualContent: updated.content })}`);
+        await page.evaluate((title) => [...document.querySelectorAll('p')].find((item) => item.innerText === title && item.getClientRects().length)?.click(), editedTitle);
+        page.once('dialog', (dialog) => dialog.accept());
+        const deleteResponse = page.waitForResponse((response) => response.url().endsWith(`/api/scheduled-posts/${created.id}`) && response.request().method() === 'DELETE');
+        await page.click('button[title="Xóa bài viết"]');
+        if (!(await deleteResponse).ok()) throw new Error('Calendar delete request failed.');
+        await page.reload({ waitUntil: 'networkidle2' });
+        if (await calendarDb.scheduledPost.findUnique({ where: { id: created.id } })) throw new Error('Calendar delete did not persist in PostgreSQL.');
+        await page.screenshot({ path: path.join(outputDir, '07-calendar-after-delete.png'), fullPage: true });
+      } finally {
+        await calendarDb.$disconnect();
+      }
     }
 
     await page.goto(`${frontUrl}/media-library`, { waitUntil: 'networkidle2' });
@@ -360,17 +433,82 @@ async function main() {
     await page.reload({ waitUntil: 'networkidle2' });
     await page.waitForFunction(() => document.body.innerText.length > 100, { timeout: 20000 });
 
-    prisma = new PrismaClient();
     const persisted = await prisma.marketingPlan.findUnique({ where: { id: Number(planId) } });
     if (!persisted || persisted.userId !== generatedPayload.data.userId) {
       const user = await prisma.user.findUnique({ where: { email }, select: { id: true } });
       if (!persisted || persisted.userId !== user?.id) throw new Error('Browser-generated plan did not persist after backend restart.');
     }
 
-    const failedApi = apiResponses.filter((item) => item.status >= 500);
-    if (failedApi.length) throw new Error(`Real API returned server errors: ${JSON.stringify(failedApi)}`);
+    const testUser = await prisma.user.findUnique({ where: { email }, select: { id: true } });
+    const staffEmail = `${runPrefix}-staff@example.test`;
+    const adminEmail = `${runPrefix}-admin@example.test`;
+    const staff = await prisma.user.create({ data: { name: `${runPrefix} Staff`, email: staffEmail, passwordHash: await bcrypt.hash(staffPassword, 10), role: 'staff', status: 'active' } });
+    const admin = await prisma.user.create({ data: { name: `${runPrefix} Admin`, email: adminEmail, passwordHash: await bcrypt.hash(adminPassword, 10), role: 'admin', status: 'active' } });
+
+    const denied = await page.evaluate(async ({ apiUrl, id }) => {
+      const token = JSON.parse(localStorage.getItem('pocket-agencom-auth')).state.token;
+      const response = await fetch(`${apiUrl}/api/admin/users/${id}/role`, { method: 'PATCH', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ role: 'staff' }) });
+      return response.status;
+    }, { apiUrl, id: testUser.id });
+    if (denied !== 403) throw new Error(`Normal user admin mutation returned HTTP ${denied}, expected 403.`);
+    if ((await prisma.user.findUnique({ where: { id: testUser.id } })).role !== 'user') throw new Error('Unauthorized role mutation changed the database.');
+
+    await loginAs(page, frontUrl, staffEmail, staffPassword);
+    try {
+      await page.waitForSelector(`a[href="/staff/plan-review/${planId}"]`, { timeout: 15000 });
+    } catch {
+      const [queueState, staffState] = await Promise.all([
+        page.evaluate(() => ({ path: location.pathname, text: document.body.innerText.slice(0, 1400), links: [...document.querySelectorAll('a')].map((link) => link.getAttribute('href')).filter(Boolean) })),
+        Promise.all([
+          prisma.marketingPlan.findUnique({ where: { id: Number(planId) }, select: { status: true, userId: true } }),
+          prisma.user.findUnique({ where: { email: staffEmail }, select: { role: true, status: true } }),
+        ]),
+      ]);
+      throw new Error(`Staff review queue omitted test plan ${planId}: ${JSON.stringify({ queueState, plan: staffState[0], staff: staffState[1] })}`);
+    }
+    await page.screenshot({ path: path.join(outputDir, '13-staff-review-queue.png'), fullPage: true });
+    await page.click(`a[href="/staff/plan-review/${planId}"]`);
+    await page.waitForFunction((id) => location.pathname === `/staff/plan-review/${id}`, { timeout: 15000 }, planId);
+    await page.waitForFunction(() => document.body.innerText.includes('Đánh dấu Đã xem'), { timeout: 15000 });
+    const reviewResponse = page.waitForResponse((response) => response.url().endsWith(`/api/marketing-plans/${planId}/review`) && response.request().method() === 'PATCH').catch((error) => ({ waitError: error.message }));
+    await clickText(page, 'Đánh dấu Đã xem');
+    const reviewedResponse = await reviewResponse;
+    if (reviewedResponse.waitError || !reviewedResponse.ok()) throw new Error(`Staff review request failed: ${reviewedResponse.waitError || reviewedResponse.status()}`);
+    await page.reload({ waitUntil: 'networkidle2' });
+    const reviewed = await prisma.marketingPlan.findUnique({ where: { id: Number(planId) } });
+    if (reviewed.status !== 'reviewed' || reviewed.reviewedById !== staff.id) throw new Error('Staff review did not persist in PostgreSQL.');
+    try {
+      await page.waitForFunction(() => document.body.innerText.toLocaleLowerCase('vi').includes('đang duyệt'), { timeout: 15000 });
+    } catch {
+      const visible = await page.evaluate(() => ({ path: location.pathname, text: document.body.innerText.slice(0, 1500) }));
+      throw new Error(`Staff review status not visible after refresh: ${JSON.stringify(visible)}`);
+    }
+    await page.screenshot({ path: path.join(outputDir, '14-staff-reviewed-plan.png'), fullPage: true });
+
+    await loginAs(page, frontUrl, adminEmail, adminPassword);
+    await page.goto(`${frontUrl}/admin/users`, { waitUntil: 'networkidle2' });
+    await page.type('input[placeholder="Tìm kiếm theo tên hoặc email..."]', email);
+    await page.waitForFunction((value) => document.body.innerText.includes(value), { timeout: 15000 }, email);
+    await page.evaluate((value) => {
+      const row = [...document.querySelectorAll('tr')].find((item) => item.innerText.includes(value));
+      row?.querySelector('button[title="Chỉnh sửa Vai trò / Trạng thái"]')?.click();
+    }, email);
+    await page.waitForFunction(() => document.body.innerText.includes('Phân quyền Người dùng'));
+    const editSelects = await page.$$('form select');
+    await editSelects[0].select('staff');
+    await editSelects[1].select('inactive');
+    await clickText(page, 'Lưu Thay đổi');
+    await page.waitForFunction(() => !document.body.innerText.includes('Phân quyền Người dùng'), { timeout: 15000 });
+    await page.reload({ waitUntil: 'networkidle2' });
+    await page.waitForFunction((value) => document.body.innerText.includes(value), { timeout: 15000 }, email);
+    const editedUser = await prisma.user.findUnique({ where: { id: testUser.id } });
+    if (editedUser.role !== 'staff' || editedUser.status !== 'inactive') throw new Error('Admin role/status edit did not persist in PostgreSQL.');
+    await page.screenshot({ path: path.join(outputDir, '15-admin-user-edited.png'), fullPage: true });
+
+    const failedApi = apiResponses.filter((item) => item.status >= 400 && !(item.status === 403 && item.path.includes('/api/admin/users/')));
+    if (failedApi.length) throw new Error(`Real API returned unexpected errors: ${JSON.stringify(failedApi)}`);
     if (browserErrors.length) throw new Error(`Browser console/page errors: ${safe(browserErrors.join(' | '))}`);
-    console.log(JSON.stringify({ target: { host: target.host, port: target.port, database: target.database, schema: target.schema }, runPrefix, planId, apiResponses, screenshots: outputDir, backup: backupInfo.file, verified: true }, null, 2));
+    console.log(JSON.stringify({ target: { host: target.host, port: target.port, database: target.database, schema: target.schema }, runPrefix, planId, staffId: staff.id, adminId: admin.id, roleStatusAfterAdmin: { role: editedUser.role, status: editedUser.status }, unauthorizedAdminStatus: denied, apiResponses, screenshots: outputDir, backup: backupInfo.file, verified: true }, null, 2));
   } finally {
     if (browser) {
       const browserProcess = browser.process();

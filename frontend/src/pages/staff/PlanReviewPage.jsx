@@ -244,7 +244,7 @@ export default function PlanReviewPage() {
                     <details
                       key={index}
                       className="group bg-surface dark:bg-surface-variant/20 rounded-2xl border border-surface-variant/30 overflow-hidden"
-                      defaultOpen={index === 0}
+                      open={index === 0}
                     >
                       <summary className="flex items-center justify-between p-6 cursor-pointer hover:bg-surface-container-low dark:hover:bg-surface-variant/35 transition-colors">
                         <div className="flex items-center gap-4">
