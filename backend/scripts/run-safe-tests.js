@@ -30,6 +30,9 @@ delete env.NODE_OPTIONS;
 env.NODE_ENV = 'test';
 env.FREE_ONLY_MODE = 'true';
 env.AI_ALLOW_PAID_MODELS = 'false';
+const blockedDatabaseUrl = 'postgresql://127.0.0.1:1/pocket_agencom_blocked_test';
+env.DATABASE_URL = blockedDatabaseUrl;
+env.DIRECT_URL = blockedDatabaseUrl;
 
 const result = spawnSync(process.execPath, ['--test', '--test-reporter=spec', ...testFiles], {
   cwd: path.resolve(__dirname, '..'),
