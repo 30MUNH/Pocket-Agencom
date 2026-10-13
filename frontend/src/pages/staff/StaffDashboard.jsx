@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Users, FileClock, LifeBuoy, BookOpen, ArrowUpRight, Megaphone, CheckSquare, ShieldCheck, ArrowRight } from 'lucide-react';
+import PageHeader from '../../components/ui/PageHeader';
 
 export default function StaffDashboard() {
   const [activities, setActivities] = useState([
@@ -27,19 +28,15 @@ export default function StaffDashboard() {
   return (
     <div className="space-y-8 animate-fade-in">
       {/* Page Header */}
-      <div>
-        <h2 className="text-display-lg-mobile md:text-display-lg font-display-lg text-primary dark:text-inverse-primary">
-          Tổng quan
-        </h2>
-        <p className="text-body-lg font-body-lg text-on-surface-variant mt-2 max-w-2xl">
-          Giám sát hoạt động hệ thống, quản lý các yêu cầu hỗ trợ và giám sát hoạt động của đại lý.
-        </p>
-      </div>
+      <PageHeader title="Tổng quan" description="Theo dõi kế hoạch cần duyệt và yêu cầu hỗ trợ." />
+      <p role="status" className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+        Số liệu và hoạt động bên dưới là dữ liệu minh họa; bảng điều khiển chưa kết nối với dữ liệu trực tiếp.
+      </p>
 
       {/* Bento Grid: Overview Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {/* Card 1: Total Users */}
-        <div className="bg-surface-container-lowest dark:bg-tertiary-container rounded-3xl p-8 shadow-[0_4px_24px_rgba(255,143,163,0.08)] border border-surface-container/10 hover:-translate-y-1 transition-transform duration-300 relative overflow-hidden group">
+        <div className="bg-white rounded-xl p-5 shadow-sm border border-surface-variant relative overflow-hidden">
           <div className="absolute -right-6 -top-6 w-24 h-24 bg-secondary-container rounded-full opacity-20 group-hover:scale-150 transition-transform duration-500 ease-out"></div>
           <div className="flex justify-between items-start mb-6 relative z-10">
             <div className="bg-secondary-container/50 p-3 rounded-2xl">
@@ -58,7 +55,7 @@ export default function StaffDashboard() {
         </div>
 
         {/* Card 2: Pending Reviews */}
-        <div className="bg-surface-container-lowest dark:bg-tertiary-container rounded-3xl p-8 shadow-[0_4px_24px_rgba(255,143,163,0.08)] border border-surface-container/10 hover:-translate-y-1 transition-transform duration-300 relative overflow-hidden group">
+        <div className="bg-white rounded-xl p-5 shadow-sm border border-surface-variant relative overflow-hidden">
           <div className="absolute -right-6 -top-6 w-24 h-24 bg-secondary-container rounded-full opacity-20 group-hover:scale-150 transition-transform duration-500 ease-out"></div>
           <div className="flex justify-between items-start mb-6 relative z-10">
             <div className="bg-secondary-container/50 p-3 rounded-2xl">
@@ -75,7 +72,7 @@ export default function StaffDashboard() {
         </div>
 
         {/* Card 3: Support Tickets */}
-        <div className="bg-surface-container-lowest dark:bg-tertiary-container rounded-3xl p-8 shadow-[0_4px_24px_rgba(255,143,163,0.08)] border border-surface-container/10 hover:-translate-y-1 transition-transform duration-300 relative overflow-hidden group">
+        <div className="bg-white rounded-xl p-5 shadow-sm border border-surface-variant relative overflow-hidden">
           <div className="absolute -right-6 -top-6 w-24 h-24 bg-secondary-container rounded-full opacity-20 group-hover:scale-150 transition-transform duration-500 ease-out"></div>
           <div className="flex justify-between items-start mb-6 relative z-10">
             <div className="bg-secondary-container/50 p-3 rounded-2xl">
@@ -91,7 +88,7 @@ export default function StaffDashboard() {
         </div>
 
         {/* Card 4: Active Templates */}
-        <div className="bg-surface-container-lowest dark:bg-tertiary-container rounded-3xl p-8 shadow-[0_4px_24px_rgba(255,143,163,0.08)] border border-surface-container/10 hover:-translate-y-1 transition-transform duration-300 relative overflow-hidden group">
+        <div className="bg-white rounded-xl p-5 shadow-sm border border-surface-variant relative overflow-hidden">
           <div className="absolute -right-6 -top-6 w-24 h-24 bg-secondary-container rounded-full opacity-20 group-hover:scale-150 transition-transform duration-500 ease-out"></div>
           <div className="flex justify-between items-start mb-6 relative z-10">
             <div className="bg-secondary-container/50 p-3 rounded-2xl">
@@ -110,7 +107,7 @@ export default function StaffDashboard() {
       {/* Lower Section: Layout Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Recent Activities Feed */}
-        <div className="lg:col-span-2 bg-surface-container-lowest dark:bg-tertiary-container rounded-3xl p-8 shadow-[0_4px_24px_rgba(255,143,163,0.08)] border border-surface-container/10 flex flex-col h-full">
+        <div className="lg:col-span-2 bg-white rounded-2xl p-5 sm:p-6 shadow-sm border border-surface-variant flex flex-col h-full">
           <div className="flex justify-between items-center mb-8">
             <h3 className="text-headline-md font-headline-md text-primary dark:text-inverse-primary">
               Hoạt động Gần đây
@@ -148,7 +145,7 @@ export default function StaffDashboard() {
         </div>
 
         {/* Quick Links & Actions */}
-        <div className="bg-surface-container-lowest dark:bg-tertiary-container rounded-3xl p-8 shadow-[0_4px_24px_rgba(255,143,163,0.08)] border border-surface-container/10 flex flex-col justify-between">
+        <div className="bg-white rounded-2xl p-5 sm:p-6 shadow-sm border border-surface-variant flex flex-col justify-between">
           <div>
             <h3 className="text-headline-md font-headline-md text-primary dark:text-inverse-primary mb-8">
               Hành động Nhân viên

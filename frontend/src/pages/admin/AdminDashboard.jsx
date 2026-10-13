@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Users, BadgeCheck, ClipboardList, DollarSign, TrendingUp, Minus, MoreHorizontal, Building2 } from 'lucide-react';
+import PageHeader from '../../components/ui/PageHeader';
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('30days');
@@ -56,21 +57,13 @@ export default function AdminDashboard() {
   return (
     <div className="space-y-8 animate-fade-in">
       {/* Page Header */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-        <div>
-          <h2 className="text-display-lg-mobile md:text-display-lg font-display-lg text-primary dark:text-inverse-primary">
-            Tổng quan
-          </h2>
-          <p className="text-body-lg font-body-lg text-surface-tint mt-2">
-            Giao diện quản lý cấp cao và phân tích hệ thống.
-          </p>
-        </div>
+      <PageHeader title="Tổng quan" description="Quản lý hệ thống và theo dõi hoạt động." >
         <div className="flex items-center gap-2 bg-surface-container-lowest dark:bg-tertiary-container rounded-full p-1 shadow-sm border border-surface-container/20">
           <button
             onClick={() => setActiveTab('30days')}
             className={`px-5 py-2 rounded-full font-label-sm text-label-sm transition-all duration-200 ${
               activeTab === '30days'
-                ? 'bg-secondary-container text-on-secondary-container font-semibold shadow-sm'
+              ? 'bg-primary text-on-primary font-semibold shadow-sm'
                 : 'text-on-surface-variant hover:bg-surface-container-low'
             }`}
           >
@@ -80,19 +73,23 @@ export default function AdminDashboard() {
             onClick={() => setActiveTab('year')}
             className={`px-5 py-2 rounded-full font-label-sm text-label-sm transition-all duration-200 ${
               activeTab === 'year'
-                ? 'bg-secondary-container text-on-secondary-container font-semibold shadow-sm'
+              ? 'bg-primary text-on-primary font-semibold shadow-sm'
                 : 'text-on-surface-variant hover:bg-surface-container-low'
             }`}
           >
             Năm nay
           </button>
         </div>
-      </div>
+      </PageHeader>
+
+      <p role="status" className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+        Số liệu và hoạt động bên dưới là dữ liệu minh họa; bảng điều khiển chưa kết nối với thống kê trực tiếp.
+      </p>
 
       {/* Key Metrics Bento Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {/* Widget 1: User Count */}
-        <div className="bg-surface-container-lowest dark:bg-tertiary-container rounded-3xl p-6 shadow-[0_4px_24px_rgba(255,143,163,0.08)] border border-surface-container/10 flex flex-col justify-between h-40 hover:-translate-y-1 transition-all duration-300">
+        <div className="bg-white rounded-xl p-5 shadow-sm border border-surface-variant flex flex-col justify-between h-40">
           <div className="flex justify-between items-start">
             <span className="text-label-sm font-label-sm text-surface-tint uppercase tracking-wider">
               Tổng Người dùng
@@ -113,7 +110,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* Widget 2: Staff Count */}
-        <div className="bg-surface-container-lowest dark:bg-tertiary-container rounded-3xl p-6 shadow-[0_4px_24px_rgba(255,143,163,0.08)] border border-surface-container/10 flex flex-col justify-between h-40 hover:-translate-y-1 transition-all duration-300">
+        <div className="bg-white rounded-xl p-5 shadow-sm border border-surface-variant flex flex-col justify-between h-40">
           <div className="flex justify-between items-start">
             <span className="text-label-sm font-label-sm text-surface-tint uppercase tracking-wider">
               Nhân viên Hoạt động
@@ -134,7 +131,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* Widget 3: Total Plans */}
-        <div className="bg-surface-container-lowest dark:bg-tertiary-container rounded-3xl p-6 shadow-[0_4px_24px_rgba(255,143,163,0.08)] border border-surface-container/10 flex flex-col justify-between h-40 hover:-translate-y-1 transition-all duration-300">
+        <div className="bg-white rounded-xl p-5 shadow-sm border border-surface-variant flex flex-col justify-between h-40">
           <div className="flex justify-between items-start">
             <span className="text-label-sm font-label-sm text-surface-tint uppercase tracking-wider">
               Gói dịch vụ Hoạt động
@@ -156,7 +153,7 @@ export default function AdminDashboard() {
 
         {/* Widget 4: Revenue */}
         <div className="bg-primary dark:bg-primary-container text-on-primary rounded-3xl p-6 shadow-xl flex flex-col justify-between h-40 hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group">
-          <div className="absolute inset-0 opacity-10 bg-cover bg-center mix-blend-overlay bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-secondary-fixed via-primary to-black pointer-events-none" />
+          <div className="absolute inset-0 bg-blue-900/10 pointer-events-none" />
           <div className="flex justify-between items-start relative z-10">
             <span className="text-label-sm font-label-sm text-surface-dim uppercase tracking-wider">
               Doanh thu hàng tháng (MRR)
@@ -180,7 +177,7 @@ export default function AdminDashboard() {
       {/* Main Content Grid (Charts and Lists) */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Chart Section */}
-        <div className="lg:col-span-2 bg-surface-container-lowest dark:bg-tertiary-container rounded-3xl p-8 shadow-[0_4px_24px_rgba(255,143,163,0.08)] border border-surface-container/10">
+        <div className="lg:col-span-2 bg-white rounded-2xl p-5 sm:p-6 shadow-sm border border-surface-variant">
           <div className="flex justify-between items-center mb-8">
             <div>
               <h3 className="text-headline-md font-headline-md text-primary dark:text-inverse-primary">
@@ -223,7 +220,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* Recent Activity List */}
-        <div className="bg-surface-container-lowest dark:bg-tertiary-container rounded-3xl p-8 shadow-[0_4px_24px_rgba(255,143,163,0.08)] border border-surface-container/10 flex flex-col justify-between">
+        <div className="bg-white rounded-2xl p-5 sm:p-6 shadow-sm border border-surface-variant flex flex-col justify-between">
           <div>
             <h3 className="text-headline-md font-headline-md text-primary dark:text-inverse-primary mb-6">
               Nâng cấp Gần đây
