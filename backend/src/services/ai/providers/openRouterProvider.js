@@ -74,7 +74,10 @@ class OpenRouterProvider {
     });
 
     const choice = response.data?.choices?.[0];
-    const text = choice?.message?.content || '';
+    const text = choice?.message?.content;
+    if (typeof text !== 'string' || !text.trim()) {
+      throw new AppError('OpenRouter returned an empty response.', 502);
+    }
     return {
       text,
       provider: this.name,

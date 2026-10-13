@@ -14,6 +14,7 @@ const marketingPlanService = require('../src/services/marketingPlanService');
 const CloudflareProvider = require('../src/services/ai/providers/cloudflareProvider');
 const FalProvider = require('../src/services/ai/providers/falProvider');
 const GroqProvider = require('../src/services/ai/providers/groqProvider');
+const OpenRouterProvider = require('../src/services/ai/providers/openRouterProvider');
 
 // Use minimal backoff delay for fast test execution
 aiConfig.limits.backoffBaseMs = 1;
@@ -124,6 +125,35 @@ test('AI Architecture: multi-provider priority fallback when primary provider en
   assert.equal(secondaryCallCount, 1, 'Secondary provider should have succeeded on fallback');
   assert.equal(result.provider, 'mockSecondary');
   assert.match(result.text, /Success fallback response/);
+});
+
+test('OpenRouter empty responses fall through to the next text provider', async () => {
+  const originalPost = axios.post;
+  axios.post = async () => ({ data: { choices: [{ message: { role: 'assistant', content: '' } }] } });
+  try {
+    const customService = new aiService.AIService();
+    const openrouter = new OpenRouterProvider('test-key', 'openrouter/free');
+    let fallbackCalls = 0;
+    customService.getTextProvidersInPriority = () => [
+      { name: 'openrouter', instance: openrouter },
+      {
+        name: 'gemini',
+        instance: {
+          generateText: async () => {
+            fallbackCalls++;
+            return { text: 'Fallback response', provider: 'gemini', model: 'gemini-2.5-flash' };
+          },
+        },
+      },
+    ];
+
+    const result = await customService.generateText({ prompt: 'Return a short response.' });
+    assert.equal(result.provider, 'gemini');
+    assert.equal(result.text, 'Fallback response');
+    assert.equal(fallbackCalls, 1);
+  } finally {
+    axios.post = originalPost;
+  }
 });
 
 test('AI Architecture: throws explicit error when all providers fail without returning mock plan data', async () => {
