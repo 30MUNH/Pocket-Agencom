@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Sparkles, Wand2, Copy, Check, Save, Loader2, Share2, CalendarDays } from 'lucide-react';
+import { ArrowLeft, Sparkles, Wand2, Copy, Check, Save, Loader2, Share2, CalendarDays, Landmark } from 'lucide-react';
 import { useGeneratePost } from '../../hooks/useMarketingPlans';
 import { authApi } from '../../api/authApi';
 import { scheduledPostApi } from '../../api/scheduledPostApi';
@@ -16,10 +16,12 @@ export default function QuickEditor() {
 
   const initialContent = location.state?.initialContent;
   const initialPlatform = location.state?.platform || location.state?.trend?.platform || 'Facebook';
-  const trend = location.state?.trend || (location.state?.template ? {
-    title: location.state.template.title,
-    teaser: location.state.template.desc,
-  } : null);
+  const trend = useMemo(() => {
+    return location.state?.trend || (location.state?.template ? {
+      title: location.state.template.title,
+      teaser: location.state.template.desc,
+    } : null);
+  }, [location.state?.trend, location.state?.template]);
 
   const [profileData, setProfileData] = useState(null);
   const [checkingProfile, setCheckingProfile] = useState(true);
@@ -29,6 +31,7 @@ export default function QuickEditor() {
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   const [attachedImage, setAttachedImage] = useState(null);
+  const [isSavingDraft, setIsSavingDraft] = useState(false);
 
   const handlePublishAndShare = () => {
     if (!generatedContent) {
@@ -63,11 +66,11 @@ export default function QuickEditor() {
       });
 
       const formattedTime = goldenTime.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
-      toast.success(`✨ Đã xếp lịch Giờ Vàng AI (${formattedTime}) thành công!`);
+      toast.success(`Đã lên lịch theo preset 19:30 (${formattedTime}).`);
       setTimeout(() => navigate('/calendar'), 1000);
     } catch (err) {
       console.error('[Schedule Error]', err);
-      toast.error('Có lỗi xảy ra khi lên lịch đăng bài.');
+      toast.error(err.message || 'Không thể lưu lịch đăng bài. Vui lòng thử lại.');
     }
   };
 
@@ -124,20 +127,42 @@ export default function QuickEditor() {
     }
   }, [checkingProfile, trend, generatedContent, platform, handleGenerateContent]);
 
-  const handleCopy = () => {
+  const handleCopy = async () => {
     if (!generatedContent) return;
-    navigator.clipboard.writeText(generatedContent);
-    setCopied(true);
-    toast.success('Đã sao chép nội dung bài đăng!');
-    setTimeout(() => setCopied(false), 2000);
+    try {
+      await navigator.clipboard.writeText(generatedContent);
+      setCopied(true);
+      toast.success('Đã sao chép nội dung bài đăng!');
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast.error('Không thể sao chép nội dung. Vui lòng cấp quyền clipboard.');
+    }
   };
 
-  const handleSaveDraft = () => {
+  const handleSaveDraft = async () => {
     if (!generatedContent) {
       toast.error('Không có nội dung để lưu nháp.');
       return;
     }
-    toast.success('Đã lưu vào kho nội dung (bản nháp)!');
+    setIsSavingDraft(true);
+    try {
+      await scheduledPostApi.createPost({
+        title: trend?.title || 'Bản nháp bài viết',
+        content: generatedContent,
+        platform,
+        scheduledTime: new Date().toISOString(),
+        status: 'draft',
+        isGoldenTime: false,
+        businessProfileId: profileData?.id,
+        imageUrl: attachedImage?.imageUrl,
+      });
+      toast.success('Đã lưu bản nháp.');
+      setTimeout(() => navigate('/calendar'), 700);
+    } catch (err) {
+      toast.error(err.message || 'Không thể lưu bản nháp. Vui lòng thử lại.');
+    } finally {
+      setIsSavingDraft(false);
+    }
   };
 
   if (checkingProfile) {
@@ -162,9 +187,9 @@ export default function QuickEditor() {
           >
             <ArrowLeft size={16} /> Quay lại Dashboard
           </button>
-          <h2 className="text-headline-lg font-headline-md text-primary dark:text-inverse-primary">
+          <h1 className="text-headline-lg font-headline-md text-primary dark:text-inverse-primary">
             Workspace Soạn Thảo Nhanh
-          </h2>
+          </h1>
           <p className="text-sm text-on-surface-variant">
             Biến các trào lưu mạng xã hội thành bài viết thương hiệu mang dấu ấn riêng của bạn.
           </p>
@@ -198,9 +223,7 @@ export default function QuickEditor() {
         
         {/* Left Column: Context Pane (5 cols) */}
         <div className="lg:col-span-5 flex flex-col gap-6">
-          <div className="bg-surface-container-lowest dark:bg-tertiary-container rounded-[2rem] p-6 shadow-[0_4px_24px_rgba(255,143,163,0.04)] border border-surface-variant/40 flex flex-col justify-between flex-1 relative overflow-hidden">
-            {/* Visual glow decoration */}
-            <div className="absolute -left-16 -top-16 w-36 h-36 bg-secondary-container/15 dark:bg-secondary-fixed-dim/5 rounded-full blur-2xl pointer-events-none" />
+          <div className="bg-white rounded-2xl p-5 sm:p-6 border border-surface-variant flex flex-col justify-between flex-1 relative overflow-hidden">
             
             <div className="space-y-6 relative z-10">
               <div className="flex items-center justify-between">
@@ -267,7 +290,7 @@ export default function QuickEditor() {
 
         {/* Right Column: Editor Pane (7 cols) */}
         <div className="lg:col-span-7 flex flex-col">
-          <div className="bg-surface-container-lowest dark:bg-tertiary-container rounded-[2rem] p-6 md:p-8 shadow-[0_4px_24px_rgba(255,143,163,0.06)] border border-surface-variant/40 flex flex-col justify-between flex-1 space-y-6">
+          <div className="bg-white rounded-2xl p-5 sm:p-6 border border-surface-variant flex flex-col justify-between flex-1 space-y-6">
             
             {/* Top Row: Platform Selector */}
             <div className="space-y-3">
@@ -402,28 +425,28 @@ export default function QuickEditor() {
               <button
                 onClick={handlePublishAndShare}
                 disabled={!generatedContent || generatePostMutation.isPending}
-                className="py-3 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:scale-[0.98] text-xs font-bold text-white flex items-center justify-center gap-1.5 shadow-md shadow-indigo-600/30 transition-all disabled:opacity-50"
+                className="min-h-11 rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-on-primary transition-colors hover:bg-blue-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-50 flex items-center justify-center gap-1.5"
               >
                 <Share2 size={16} />
-                <span>Đăng luôn tại {platform}</span>
+                <span>Chia sẻ tại {platform}</span>
               </button>
 
               <button
                 onClick={handleSchedulePost}
                 disabled={!generatedContent || generatePostMutation.isPending}
-                className="py-3 px-4 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 active:scale-[0.98] text-xs font-bold flex items-center justify-center gap-1.5 transition-all disabled:opacity-50"
+                className="min-h-11 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-950 transition-colors hover:bg-amber-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-700 disabled:opacity-50 flex items-center justify-center gap-1.5"
               >
-                <CalendarDays size={16} className="text-amber-400" />
-                <span>Lên lịch Giờ Vàng AI</span>
+                <CalendarDays size={16} aria-hidden="true" />
+                <span>Lên lịch · preset 19:30</span>
               </button>
 
               <button
                 onClick={handleSaveDraft}
-                disabled={!generatedContent || generatePostMutation.isPending}
+                disabled={!generatedContent || generatePostMutation.isPending || isSavingDraft}
                 className="py-3 px-4 rounded-xl bg-surface-container-high/60 hover:bg-surface-container-high active:scale-[0.98] text-xs font-bold text-on-surface flex items-center justify-center gap-1.5 transition-all disabled:opacity-50"
               >
                 <Save size={16} />
-                <span>Lưu bản nháp</span>
+                <span>{isSavingDraft ? 'Đang lưu…' : 'Lưu bản nháp'}</span>
               </button>
             </div>
 

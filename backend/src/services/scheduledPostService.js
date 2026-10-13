@@ -1,9 +1,6 @@
 const prisma = require('../config/prisma');
 const { AppError } = require('../middleware/errorHandler');
 
-// In-memory fallback store in case database tables are not migrated yet
-let demoScheduledPostsStore = [];
-
 /**
  * Formats a scheduled post to extract embedded image URLs without schema drift.
  */
@@ -69,56 +66,35 @@ async function createScheduledPost(userId, postData) {
   }
 
   const finalScheduledTime = scheduledTime ? new Date(scheduledTime) : calculateGoldenTime();
+  if (Number.isNaN(finalScheduledTime.getTime())) {
+    throw new AppError('Thời gian lên lịch không hợp lệ.', 400);
+  }
 
-  try {
-    const newPost = await prisma.scheduledPost.create({
-      data: {
-        userId,
-        businessProfileId: businessProfileId ? Number(businessProfileId) : null,
-        title,
-        content: enrichedContent,
-        imageUrl: imageUrl || null,
-        platform,
-        scheduledTime: finalScheduledTime,
-        status,
-        isGoldenTime,
-      },
-    });
-    return formatPostWithImage(newPost);
-  } catch (err) {
-    console.warn('[Prisma Fallback] ScheduledPost model fallback to memory store:', err.message);
-    const newPost = {
-      id: Date.now(),
+  const newPost = await prisma.scheduledPost.create({
+    data: {
       userId,
       businessProfileId: businessProfileId ? Number(businessProfileId) : null,
       title,
       content: enrichedContent,
       imageUrl: imageUrl || null,
       platform,
-      scheduledTime: finalScheduledTime.toISOString(),
+      scheduledTime: finalScheduledTime,
       status,
       isGoldenTime,
-      createdAt: new Date().toISOString(),
-    };
-    demoScheduledPostsStore.unshift(newPost);
-    return formatPostWithImage(newPost);
-  }
+    },
+  });
+  return formatPostWithImage(newPost);
 }
 
 /**
  * Retrieves all scheduled posts for a user.
  */
 async function getScheduledPosts(userId) {
-  try {
-    const posts = await prisma.scheduledPost.findMany({
-      where: { userId },
-      orderBy: { scheduledTime: 'asc' },
-    });
-    return (posts || []).map(formatPostWithImage);
-  } catch (err) {
-    console.warn('[Prisma Warning] Could not retrieve scheduled posts:', err.message);
-    return demoScheduledPostsStore.filter((p) => p.userId === userId).map(formatPostWithImage);
-  }
+  const posts = await prisma.scheduledPost.findMany({
+    where: { userId },
+    orderBy: { scheduledTime: 'asc' },
+  });
+  return (posts || []).map(formatPostWithImage);
 }
 
 /**
@@ -128,52 +104,35 @@ async function updateScheduledPost(userId, postId, updateData) {
   const idNum = parseInt(postId, 10);
   const { title, content, scheduledTime, status, imageUrl } = updateData;
 
-  try {
-    const existing = await prisma.scheduledPost.findUnique({ where: { id: idNum } });
-    if (!existing || existing.userId !== userId) {
-      throw new AppError('Không tìm thấy bài viết lên lịch hoặc bạn không có quyền cập nhật.', 404);
-    }
-
-    const data = {};
-    if (title !== undefined) data.title = title;
-    if (status !== undefined) data.status = status;
-    if (scheduledTime !== undefined) data.scheduledTime = new Date(scheduledTime);
-
-    const targetImageUrl = imageUrl !== undefined ? imageUrl : existing.imageUrl;
-    if (targetImageUrl !== undefined) {
-      data.imageUrl = targetImageUrl;
-    }
-
-    if (content !== undefined) {
-      let enriched = content;
-      if (targetImageUrl && !content.includes(targetImageUrl)) {
-        enriched = `${content}\n\n[IMAGE_URL: ${targetImageUrl}]`;
-      }
-      data.content = enriched;
-    }
-
-    const updated = await prisma.scheduledPost.update({
-      where: { id: idNum },
-      data,
-    });
-    return formatPostWithImage(updated);
-  } catch (err) {
-    if (err instanceof AppError) throw err;
-    console.warn('[Prisma Fallback] Updating post in memory store:', err.message);
-    const target = demoScheduledPostsStore.find((p) => p.id === idNum);
-    if (!target || target.userId !== userId) {
-      throw new AppError('Không tìm thấy bài viết lên lịch hoặc bạn không có quyền cập nhật.', 404);
-    }
-    if (title !== undefined) target.title = title;
-    if (status !== undefined) target.status = status;
-    if (scheduledTime !== undefined) target.scheduledTime = new Date(scheduledTime).toISOString();
-    if (imageUrl !== undefined) target.imageUrl = imageUrl;
-    if (content !== undefined) {
-      const img = imageUrl !== undefined ? imageUrl : target.imageUrl;
-      target.content = img && !content.includes(img) ? `${content}\n\n[IMAGE_URL: ${img}]` : content;
-    }
-    return formatPostWithImage(target);
+  const existing = await prisma.scheduledPost.findUnique({ where: { id: idNum } });
+  if (!existing || existing.userId !== userId) {
+    throw new AppError('Không tìm thấy bài viết lên lịch hoặc bạn không có quyền cập nhật.', 404);
   }
+
+  const data = {};
+  if (title !== undefined) data.title = title;
+  if (status !== undefined) data.status = status;
+  if (scheduledTime !== undefined) {
+    const parsedTime = new Date(scheduledTime);
+    if (Number.isNaN(parsedTime.getTime())) throw new AppError('Thời gian lên lịch không hợp lệ.', 400);
+    data.scheduledTime = parsedTime;
+  }
+
+  const targetImageUrl = imageUrl !== undefined ? imageUrl : existing.imageUrl;
+  if (targetImageUrl !== undefined) {
+    data.imageUrl = targetImageUrl;
+  }
+
+  if (content !== undefined) {
+    let enriched = content;
+    if (targetImageUrl && !content.includes(targetImageUrl)) {
+      enriched = `${content}\n\n[IMAGE_URL: ${targetImageUrl}]`;
+    }
+    data.content = enriched;
+  }
+
+  const updated = await prisma.scheduledPost.update({ where: { id: idNum }, data });
+  return formatPostWithImage(updated);
 }
 
 /**
@@ -182,27 +141,13 @@ async function updateScheduledPost(userId, postId, updateData) {
 async function updateScheduledPostStatus(userId, postId, status) {
   const idNum = parseInt(postId, 10);
 
-  try {
-    const existing = await prisma.scheduledPost.findUnique({ where: { id: idNum } });
-    if (!existing || existing.userId !== userId) {
-      throw new AppError('Không tìm thấy bài viết lên lịch hoặc bạn không có quyền cập nhật.', 404);
-    }
-
-    const updated = await prisma.scheduledPost.update({
-      where: { id: idNum },
-      data: { status },
-    });
-    return formatPostWithImage(updated);
-  } catch (err) {
-    if (err instanceof AppError) throw err;
-    console.warn('[Prisma Fallback] Updating post status in memory store:', err.message);
-    const target = demoScheduledPostsStore.find((p) => p.id === idNum);
-    if (!target || target.userId !== userId) {
-      throw new AppError('Không tìm thấy bài viết lên lịch hoặc bạn không có quyền cập nhật.', 404);
-    }
-    target.status = status;
-    return formatPostWithImage(target);
+  const existing = await prisma.scheduledPost.findUnique({ where: { id: idNum } });
+  if (!existing || existing.userId !== userId) {
+    throw new AppError('Không tìm thấy bài viết lên lịch hoặc bạn không có quyền cập nhật.', 404);
   }
+
+  const updated = await prisma.scheduledPost.update({ where: { id: idNum }, data: { status } });
+  return formatPostWithImage(updated);
 }
 
 /**
@@ -211,26 +156,13 @@ async function updateScheduledPostStatus(userId, postId, status) {
 async function deleteScheduledPost(userId, postId) {
   const idNum = parseInt(postId, 10);
 
-  try {
-    const existing = await prisma.scheduledPost.findUnique({ where: { id: idNum } });
-    if (!existing || existing.userId !== userId) {
-      throw new AppError('Không tìm thấy bài viết lên lịch hoặc bạn không có quyền xóa.', 404);
-    }
-
-    await prisma.scheduledPost.delete({
-      where: { id: idNum },
-    });
-    return { deleted: true };
-  } catch (err) {
-    if (err instanceof AppError) throw err;
-    console.warn('[Prisma Fallback] Deleting post in memory store:', err.message);
-    const target = demoScheduledPostsStore.find((p) => p.id === idNum);
-    if (!target || target.userId !== userId) {
-      throw new AppError('Không tìm thấy bài viết lên lịch hoặc bạn không có quyền xóa.', 404);
-    }
-    demoScheduledPostsStore = demoScheduledPostsStore.filter((p) => p.id !== idNum);
-    return { deleted: true };
+  const existing = await prisma.scheduledPost.findUnique({ where: { id: idNum } });
+  if (!existing || existing.userId !== userId) {
+    throw new AppError('Không tìm thấy bài viết lên lịch hoặc bạn không có quyền xóa.', 404);
   }
+
+  await prisma.scheduledPost.delete({ where: { id: idNum } });
+  return { deleted: true };
 }
 
 module.exports = {

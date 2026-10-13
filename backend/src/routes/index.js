@@ -8,6 +8,7 @@ const scheduledPostRoutes = require('./scheduledPostRoutes');
 const mediaRoutes = require('./mediaRoutes');
 const budgetRoutes = require('./budgetRoutes');
 const adminRoutes = require('./adminRoutes');
+const supportTicketRoutes = require('./supportTicketRoutes');
 const analyticsController = require('../controllers/analyticsController');
 
 const router = express.Router();
@@ -24,6 +25,7 @@ router.use('/analytics', analyticsRoutes);
 router.use('/scheduled-posts', scheduledPostRoutes);
 router.use('/media', mediaRoutes);
 router.use('/admin', adminRoutes);
+router.use('/support/tickets', supportTicketRoutes);
 router.use('/', budgetRoutes);
 
 module.exports = router;
