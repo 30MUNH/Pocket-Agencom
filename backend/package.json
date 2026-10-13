@@ -6,7 +6,9 @@
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js",
-    "test": "node --test test/*.test.js",
+    "test": "node scripts/run-safe-tests.js",
+    "test:unit": "node scripts/run-safe-tests.js unit",
+    "test:api": "node scripts/run-safe-tests.js api",
     "check": "node --check index.js && find src -name '*.js' -print0 | xargs -0 -n1 node --check"
   },
   "keywords": [],

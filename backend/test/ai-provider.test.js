@@ -1,6 +1,8 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const axios = require('axios');
 const sharp = require('sharp');
+const prismaFixture = require('./helpers/installPrismaFixture');
 const { generateSocialImageSchema, generateImagePromptSchema, refinePlanSchema } = require('../src/validators/marketingPlan.validator');
 const aiConfig = require('../src/services/ai/aiConfig');
 const aiService = require('../src/services/ai/aiService');
@@ -188,7 +190,14 @@ test('Honest Data Layer: scheduled posts and media stores return honest empty st
 });
 
 test('Honest Data Layer: social metrics does not hallucinate follower numbers when scraper is unavailable', async () => {
-  const res = await socialService.analyzeSocialProfile('https://instagram.com/pocket_test', 'instagram');
+  const originalGet = axios.get;
+  axios.get = async () => { throw new Error('Deterministic offline scraper fixture'); };
+  let res;
+  try {
+    res = await socialService.analyzeSocialProfile('https://instagram.com/pocket_test', 'instagram');
+  } finally {
+    axios.get = originalGet;
+  }
   assert.ok(res);
   // Followers must default to 0 (or null), never a random number from Math.random
   assert.equal(res.followers, 0);
@@ -307,6 +316,7 @@ test('Zero-Cost Free Tier: Cloudflare Workers AI sharp center-crop produces accu
 
 test('Zero-Cost Free Tier: user daily quotas enforce limits and reject requests when exhausted (async & sync)', async () => {
   const testUserId = 99991;
+  prismaFixture.__fixture.resetQuota(testUserId, new Date().toISOString().slice(0, 10));
 
   // Consume text quota up to limit
   for (let i = 0; i < aiConfig.userQuotas.dailyGenerationsLimit; i++) {
@@ -338,6 +348,27 @@ test('Zero-Cost Free Tier: user daily quotas enforce limits and reject requests 
   assert.equal(syncRes.allowed, true);
   const syncStatus = aiService.getUserQuotaStatusSync(syncUserId);
   assert.equal(syncStatus.text.used, 1);
+});
+
+test('AI quota fails closed when persistent storage is unavailable', async () => {
+  prismaFixture.__fixture.failNextQuotaOperation();
+  await assert.rejects(
+    aiService.checkAndIncrementUserQuota(99991, 'text'),
+    (error) => error.statusCode === 503,
+  );
+});
+
+test('AI quota increments atomically and never exceeds the configured limit', async () => {
+  const userId = 99992;
+  const dateKey = new Date().toISOString().slice(0, 10);
+  prismaFixture.__fixture.resetQuota(userId, dateKey);
+  const limit = aiConfig.userQuotas.dailyGenerationsLimit;
+  const results = await Promise.allSettled(
+    Array.from({ length: limit + 5 }, () => aiService.checkAndIncrementUserQuota(userId, 'text')),
+  );
+  assert.equal(results.filter((result) => result.status === 'fulfilled').length, limit);
+  assert.equal(results.filter((result) => result.status === 'rejected' && result.reason.statusCode === 429).length, 5);
+  assert.equal((await aiService.getUserQuotaStatus(userId)).text.used, limit);
 });
 
 test('Persistence: scheduled post format extracts embedded image URLs without schema drift', () => {

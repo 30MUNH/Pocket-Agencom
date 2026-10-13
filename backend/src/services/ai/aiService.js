@@ -23,8 +23,7 @@ function getTodayKey() {
 }
 
 /**
- * Checks and atomically increments user daily quota in PostgreSQL via Prisma,
- * falling back gracefully to memory store if database is offline or unmigrated.
+ * Checks and atomically increments the persistent user quota.
  */
 async function checkAndIncrementUserQuota(userId, type = 'text') {
   if (!userId) return { allowed: true, remaining: 999 };
@@ -36,66 +35,46 @@ async function checkAndIncrementUserQuota(userId, type = 'text') {
       : aiConfig.userQuotas.dailyGenerationsLimit;
 
   let currentCount;
-  try {
-    const existing = await prisma.aiQuotaUsage.findUnique({
-      where: {
-        userId_dateKey_type: {
-          userId: Number(userId),
-          dateKey,
-          type,
-        },
-      },
-    });
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      currentCount = await prisma.$transaction(async (tx) => {
+        const where = {
+          userId_dateKey_type: {
+            userId: Number(userId),
+            dateKey,
+            type,
+          },
+        };
+        const existing = await tx.aiQuotaUsage.findUnique({ where });
+        if (existing && existing.count >= maxLimit) {
+          throw new AppError(
+            `Bạn đã đạt giới hạn sử dụng AI miễn phí trong ngày (${maxLimit} lượt ${type === 'image' ? 'tạo ảnh' : 'tạo nội dung'}). Hạn ngạch sẽ được làm mới vào ngày mai!`,
+            429,
+          );
+        }
 
-    if (existing && existing.count >= maxLimit) {
-      userDailyQuotaUsage.set(quotaKey, existing.count);
-      throw new AppError(
-        `Bạn đã đạt giới hạn sử dụng AI miễn phí trong ngày (${maxLimit} lượt ${type === 'image' ? 'tạo ảnh' : 'tạo nội dung'}). Hạn ngạch sẽ được làm mới vào ngày mai!`,
-        429
-      );
+        const record = await tx.aiQuotaUsage.upsert({
+          where,
+          update: { count: { increment: 1 } },
+          create: { userId: Number(userId), dateKey, type, count: 1 },
+        });
+        if (record.count > maxLimit) {
+          throw new AppError(
+            `Bạn đã đạt giới hạn sử dụng AI miễn phí trong ngày (${maxLimit} lượt ${type === 'image' ? 'tạo ảnh' : 'tạo nội dung'}). Hạn ngạch sẽ được làm mới vào ngày mai!`,
+            429,
+          );
+        }
+        return record.count;
+      }, { isolationLevel: 'Serializable' });
+      break;
+    } catch (err) {
+      if (err instanceof AppError) throw err;
+      if (['P2002', 'P2034'].includes(err.code) && attempt < 2) continue;
+      throw new AppError('Không thể xác minh hạn ngạch AI. Vui lòng thử lại sau.', 503);
     }
-
-    const record = await prisma.aiQuotaUsage.upsert({
-      where: {
-        userId_dateKey_type: {
-          userId: Number(userId),
-          dateKey,
-          type,
-        },
-      },
-      update: {
-        count: { increment: 1 },
-      },
-      create: {
-        userId: Number(userId),
-        dateKey,
-        type,
-        count: 1,
-      },
-    });
-    currentCount = record.count;
-    userDailyQuotaUsage.set(quotaKey, currentCount);
-  } catch (err) {
-    if (err instanceof AppError) throw err;
-    // Memory fallback when DB is unreachable (e.g. unit tests or offline DB)
-    const inMem = userDailyQuotaUsage.get(quotaKey) || 0;
-    if (inMem >= maxLimit) {
-      throw new AppError(
-        `Bạn đã đạt giới hạn sử dụng AI miễn phí trong ngày (${maxLimit} lượt ${type === 'image' ? 'tạo ảnh' : 'tạo nội dung'}). Hạn ngạch sẽ được làm mới vào ngày mai!`,
-        429
-      );
-    }
-    currentCount = inMem + 1;
-    userDailyQuotaUsage.set(quotaKey, currentCount);
   }
 
-  if (currentCount > maxLimit) {
-    throw new AppError(
-      `Bạn đã đạt giới hạn sử dụng AI miễn phí trong ngày (${maxLimit} lượt ${type === 'image' ? 'tạo ảnh' : 'tạo nội dung'}). Hạn ngạch sẽ được làm mới vào ngày mai!`,
-      429
-    );
-  }
-
+  userDailyQuotaUsage.set(quotaKey, currentCount);
   return {
     allowed: true,
     used: currentCount,
@@ -156,9 +135,8 @@ async function getUserQuotaStatus(userId) {
       if (r.type === 'text') textUsed = r.count;
       if (r.type === 'image') imageUsed = r.count;
     }
-  } catch (err) {
-    textUsed = userDailyQuotaUsage.get(`${userId}:${dateKey}:text`) || 0;
-    imageUsed = userDailyQuotaUsage.get(`${userId}:${dateKey}:image`) || 0;
+  } catch {
+    throw new AppError('Không thể tải hạn ngạch AI. Vui lòng thử lại sau.', 503);
   }
 
   return {
