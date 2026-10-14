@@ -68,6 +68,7 @@ const prisma = {
       scheduledPosts.set(where.id, updated);
       return clone(updated);
     },
+    count: async () => 0,
     delete: async ({ where }) => {
       const existing = scheduledPosts.get(where.id);
       if (!existing) throw Object.assign(new Error('Record not found'), { code: 'P2025' });
@@ -75,6 +76,11 @@ const prisma = {
       return clone(existing);
     },
   },
+  user: { count: async () => 0 },
+  marketingPlanAsset: { count: async () => 0 },
+  marketingPlan: { findMany: async () => [] },
+  template: { count: async () => 0 },
+  mediaAssetAccessLease: { deleteMany: async () => ({ count: 0 }), findFirst: async () => null, count: async () => 0 },
   mediaAsset: {
     create: async ({ data }) => {
       if (!users.has(data.userId)) {
@@ -82,7 +88,7 @@ const prisma = {
         error.code = 'P2003';
         throw error;
       }
-      const asset = { id: nextAssetId++, ...clone(data), createdAt: new Date() };
+      const asset = { id: nextAssetId++, lifecycleState: 'active', ...clone(data), createdAt: new Date() };
       mediaAssets.set(asset.id, asset);
       return clone(asset);
     },
@@ -90,6 +96,18 @@ const prisma = {
       .filter((asset) => asset.userId === where.userId)
       .map(clone),
     findUnique: async ({ where }) => clone(mediaAssets.get(where.id) || null),
+    updateMany: async ({ where, data }) => {
+      const existing = mediaAssets.get(where.id);
+      if (!existing) return { count: 0 };
+      mediaAssets.set(where.id, { ...existing, ...clone(data) });
+      return { count: 1 };
+    },
+    deleteMany: async ({ where }) => {
+      const existing = mediaAssets.get(where.id);
+      if (!existing) return { count: 0 };
+      mediaAssets.delete(where.id);
+      return { count: 1 };
+    },
     delete: async ({ where }) => {
       const existing = mediaAssets.get(where.id);
       if (!existing) throw Object.assign(new Error('Record not found'), { code: 'P2025' });
@@ -97,6 +115,7 @@ const prisma = {
       return clone(existing);
     },
   },
+  $queryRaw: async () => [],
   $transaction: async (callback) => {
     const previous = transactionQueue;
     let release;

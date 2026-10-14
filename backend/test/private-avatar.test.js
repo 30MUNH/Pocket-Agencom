@@ -12,20 +12,22 @@ function loadAuthService(mockPrisma) {
 
 test('profile update accepts only an owned active private MediaAsset ID', async () => {
   const calls = [];
-  const prisma = {
-    mediaAsset: { async findFirst(args) { calls.push(['asset', args]); return { id: 7 }; } },
+  const tx = {
+    async $queryRaw() { calls.push(['lock']); },
+    mediaAsset: { async findUnique({ where }) { calls.push(['asset', where]); return { id: 7, userId: 4, sourceKind: 'private_storage', lifecycleState: 'active' }; } },
     user: { async update(args) { calls.push(['update', args]); return { id: 4, avatarMediaAssetId: 7, avatarUrl: null }; } },
   };
+  const prisma = { async $transaction(callback) { return callback(tx); } };
   const result = await loadAuthService(prisma).updateProfile(4, { avatarMediaAssetId: 7 });
   assert.equal(result.avatarMediaAssetId, 7);
-  assert.deepEqual(calls[0][1].where, { id: 7, userId: 4, sourceKind: 'private_storage', lifecycleState: 'active' });
-  assert.equal(calls[1][1].data.avatarUrl, null);
+  assert.deepEqual(calls.find(([name]) => name === 'asset')[1], { id: 7 });
+  assert.equal(calls.find(([name]) => name === 'update')[1].data.avatarUrl, null);
 });
 
 test('profile update rejects raw avatar URLs and foreign or non-private IDs', async () => {
   let updateCalls = 0;
   const prisma = {
-    mediaAsset: { async findFirst() { return null; } },
+    async $transaction(callback) { return callback({ async $queryRaw() {}, mediaAsset: { async findUnique() { return null; } }, user: { async update() { updateCalls += 1; } } }); },
     user: { async update() { updateCalls += 1; } },
   };
   const service = loadAuthService(prisma);

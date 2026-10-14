@@ -1,6 +1,8 @@
 const prisma = require('../config/prisma');
 const { AppError } = require('../middleware/errorHandler');
 const { validateExternalMediaUrl } = require('./externalMediaUrl');
+const { createMediaAssetReferenceService } = require('./mediaAssetReferenceService');
+const mediaAssetReferenceService = createMediaAssetReferenceService();
 
 /**
  * Uploads/records a media asset in the library.
@@ -39,15 +41,7 @@ async function getMediaAssets(userId) {
  * Deletes a media asset by ID with strict user ownership verification.
  */
 async function deleteMediaAsset(userId, assetId) {
-  const idNum = parseInt(assetId, 10);
-
-  const existing = await prisma.mediaAsset.findUnique({ where: { id: idNum } });
-  if (!existing || existing.userId !== userId) {
-    throw new AppError('Không tìm thấy tài sản truyền thông hoặc bạn không có quyền xóa.', 404);
-  }
-
-  await prisma.mediaAsset.delete({ where: { id: idNum } });
-  return { deleted: true };
+  return mediaAssetReferenceService.deleteOwnedAsset(userId, assetId);
 }
 
 module.exports = {

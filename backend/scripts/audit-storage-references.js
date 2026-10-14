@@ -13,7 +13,7 @@ async function main() {
       tx.businessProfile.findMany({ select: { id: true, userId: true, fileUrl: true, previewImage: true } }),
       tx.template.findMany({ select: { id: true, fileUrl: true, previewImage: true } }),
       tx.mediaAsset.findMany({ select: { id: true, userId: true, url: true } }),
-      tx.marketingPlanAsset.findMany({ select: { marketingPlanId: true, mediaAssetId: true } }),
+      tx.marketingPlanAsset.findMany({ select: { id: true, marketingPlanId: true, mediaAssetId: true } }),
     ]);
     return auditRecords({ users, scheduledPosts, marketingPlans, businessProfiles, templates, mediaAssets, marketingPlanAssets }, { supabaseProjectHost: projectHost, buckets: bucketNames });
   }, { isolationLevel: 'RepeatableRead' });

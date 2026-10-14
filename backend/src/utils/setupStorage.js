@@ -1,9 +1,9 @@
 async function setupStorage() {
-  console.log('💡 Cấu hình Supabase Storage:');
-  console.log('   1. Tạo public bucket "avatars" và "campaign-assets" nếu ứng dụng cần URL ảnh công khai.');
-  console.log('   2. Chỉ cấu hình SUPABASE_SERVICE_ROLE_KEY ở backend; không đưa khóa này vào frontend.');
-  console.log('   3. API xác thực người dùng và lưu tệp trong thư mục user-<id>; backend service role bỏ qua RLS.');
-  console.log('   4. Không thêm policy INSERT cho anon/authenticated. Public bucket cho phép mọi người đọc ảnh.');
+  console.log('Private Supabase Storage is disabled by default.');
+  console.log('After separate Staging approval, provision campaign-assets-private and avatars-private as private buckets.');
+  console.log('Keep SUPABASE_SERVICE_ROLE_KEY on the backend only. Use database-backed MediaAsset IDs for ownership.');
+  console.log('Never create or fall back to public buckets through this application helper.');
+  console.log('Enable PRIVATE_STORAGE_MODE=private only after migrations and real Storage checks are approved and complete.');
 }
 
 module.exports = setupStorage;

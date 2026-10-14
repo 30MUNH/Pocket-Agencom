@@ -66,7 +66,6 @@ function auditRecords(records = {}, options = {}) {
   const groups = [
     ['users', 'User', ['avatarUrl']],
     ['scheduledPosts', 'ScheduledPost', ['imageUrl', 'content']],
-    ['businessProfiles', 'BusinessProfile', ['fileUrl', 'previewImage']],
     ['templates', 'Template', ['fileUrl', 'previewImage']],
   ];
   for (const [collection, recordType, fields] of groups) {
@@ -94,7 +93,7 @@ function auditRecords(records = {}, options = {}) {
     }
   }
   for (const relation of records.marketingPlanAssets || []) {
-    references.push({ recordType: 'MarketingPlanAsset', recordId: String(relation.marketingPlanId), field: 'MarketingPlanAsset.mediaAssetId', classification: 'asset_id_reference' });
+    references.push({ recordType: 'MarketingPlanAsset', recordId: String(relation.id ?? relation.marketingPlanId), referencedAssetId: String(relation.mediaAssetId), field: 'MarketingPlanAsset.mediaAssetId', classification: 'asset_id_reference' });
   }
   const mediaAssets = (records.mediaAssets || []).map((asset) => ({
     id: String(asset.id),

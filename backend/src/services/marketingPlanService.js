@@ -4,6 +4,22 @@ const path = require('path');
 const { AppError } = require('../middleware/errorHandler');
 const { isValidPlanTransition } = require('../validators/marketingPlan.validator');
 const aiService = require('./ai/aiService');
+const { validateExternalMediaUrl } = require('./externalMediaUrl');
+
+function assertNoInternalStorageUrls(value, seen = new Set()) {
+  if (value == null || typeof value !== 'object') {
+    if (typeof value === 'string') {
+      const urls = value.match(/https?:\/\/[^\s"'<>\])}]+/gi) || [];
+      for (const url of urls) validateExternalMediaUrl(url);
+    }
+    return;
+  }
+  if (seen.has(value)) return;
+  seen.add(value);
+  if (Array.isArray(value)) value.forEach((entry) => assertNoInternalStorageUrls(entry, seen));
+  else Object.values(value).forEach((entry) => assertNoInternalStorageUrls(entry, seen));
+}
+
 
 async function generateAIContent(data, profile, userId) {
   return aiService.generateMarketingPlan(userId, data, profile);
@@ -34,7 +50,9 @@ function formatPlan(plan) {
 async function generatePlan(userId, data) {
   let profile = await prisma.businessProfile.findUnique({ where: { userId } });
   
+  assertNoInternalStorageUrls(data);
   const aiContent = await generateAIContent(data, profile, userId);
+  assertNoInternalStorageUrls(aiContent);
 
   const plan = await prisma.$transaction(async (tx) => {
     let profileTx = await tx.businessProfile.findUnique({ where: { userId } });
@@ -341,6 +359,7 @@ async function refinePlan(id, userId, { instruction }) {
   }
 
   const refinedData = await aiService.refineMarketingPlan({ plan, instruction });
+  assertNoInternalStorageUrls(refinedData);
 
   const updated = await prisma.marketingPlan.update({
     where: { id: Number(id) },
@@ -443,6 +462,7 @@ async function getTrendingBulletin(forceRefresh = false) {
 }
 
 module.exports = {
+  assertNoInternalStorageUrls,
   formatPlan,
   generatePlan,
   getPlans,

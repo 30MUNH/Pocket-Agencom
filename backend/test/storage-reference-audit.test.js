@@ -7,7 +7,7 @@ test('classifies avatar post marketing plan and JSON references', () => {
     users: [{ id: 'u1', avatarUrl: 'https://cdn.example/avatar.png', avatarMediaAssetId: 'a1' }],
     scheduledPosts: [{ id: 7, userId: 'u1', imageUrl: 'https://project.supabase.co/storage/v1/object/public/media/pic.png', content: 'Post\n\n[IMAGE_URL: https://external.example/photo.png]' }],
     marketingPlans: [{ id: 9, userId: 'u1', contentIdeas: JSON.stringify([{ imageUrl: 'https://external.example/idea.png' }]), videoScripts: null, checklist: null, playbook: null, seoKeywords: null, budgetBreakdown: null }],
-    businessProfiles: [{ id: 2, userId: 'u1', fileUrl: 'https://cdn.example/file.png', previewImage: 'https://cdn.example/preview.png' }],
+    templates: [{ id: 2, fileUrl: 'https://cdn.example/file.png', previewImage: 'https://cdn.example/preview.png' }],
     mediaAssets: [{ id: 'a1', userId: 'u1', url: 'https://external.example/owned.png' }],
     marketingPlanAssets: [{ marketingPlanId: 9, mediaAssetId: 'a1' }],
   }, { supabaseProjectHost: 'project.supabase.co', buckets: ['media'] });
@@ -17,8 +17,8 @@ test('classifies avatar post marketing plan and JSON references', () => {
   assert.ok(fields.includes('ScheduledPost.imageUrl'));
   assert.ok(fields.includes('ScheduledPost.content[IMAGE_URL]'));
   assert.ok(fields.includes('MarketingPlan.contentIdeas'));
-  assert.ok(fields.includes('BusinessProfile.fileUrl'));
-  assert.ok(fields.includes('BusinessProfile.previewImage'));
+  assert.ok(fields.includes('Template.fileUrl'));
+  assert.ok(fields.includes('Template.previewImage'));
   assert.ok(fields.includes('MarketingPlanAsset.mediaAssetId'));
   assert.equal(report.mediaAssets[0].classification, 'legacy_unverified');
 });

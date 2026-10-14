@@ -196,13 +196,26 @@ async function updateProfile(userId, data) {
     } else {
       const assetId = Number(data.avatarMediaAssetId);
       if (!Number.isSafeInteger(assetId) || assetId < 1) throw new AppError('Invalid avatar asset ID.', 400);
-      const asset = await prisma.mediaAsset.findFirst({
-        where: { id: assetId, userId, sourceKind: 'private_storage', lifecycleState: 'active' },
-        select: { id: true },
+      return prisma.$transaction(async (tx) => {
+        await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`media-asset:${assetId}`}, 0))`;
+        const asset = await tx.mediaAsset.findUnique({ where: { id: assetId } });
+        if (!asset || asset.userId !== userId || asset.sourceKind !== 'private_storage' || asset.lifecycleState !== 'active') {
+          throw new AppError('Avatar asset not found.', 404);
+        }
+        updateData.avatarMediaAssetId = asset.id;
+        updateData.avatarUrl = null;
+        if (data.name !== undefined) updateData.name = data.name;
+        if (data.phone !== undefined) updateData.phone = data.phone;
+        return tx.user.update({
+          where: { id: userId },
+          data: updateData,
+          select: {
+            id: true, name: true, email: true, role: true, status: true,
+            avatarUrl: true, avatarMediaAssetId: true, phone: true, createdAt: true,
+            businessProfile: { include: { socialPlatforms: true } },
+          },
+        });
       });
-      if (!asset) throw new AppError('Avatar asset not found.', 404);
-      updateData.avatarMediaAssetId = asset.id;
-      updateData.avatarUrl = null;
     }
   }
   if (data.name !== undefined) updateData.name = data.name;
