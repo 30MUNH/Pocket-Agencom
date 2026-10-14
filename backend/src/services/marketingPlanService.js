@@ -296,7 +296,7 @@ async function generateDetailedPost(user, { ideaTitle, ideaDescription, platform
   });
 }
 
-async function generateDetailedPostWithImage(user, { ideaTitle, ideaDescription, platform, businessProfileId, existingResources, campaignReason }, file, imageUrl) {
+async function generateDetailedPostWithImage(user, { ideaTitle, ideaDescription, platform, businessProfileId, existingResources, campaignReason }, file, mediaAssetId) {
   const profile = await prisma.businessProfile.findUnique({
     where: { id: Number(businessProfileId) },
   });
@@ -318,7 +318,7 @@ async function generateDetailedPostWithImage(user, { ideaTitle, ideaDescription,
     resources: existingResources,
     reason: campaignReason,
     file,
-    imageUrl,
+    mediaAssetId,
   });
 }
 

@@ -75,8 +75,8 @@ export default function UserSettings() {
     setIsUploading(true);
     try {
       const response = await uploadApi.uploadAvatar(file);
-      const url = response.url || response;
-      await updateProfileMutation.mutateAsync({ avatarUrl: url });
+      if (!response?.mediaAssetId) throw new Error('Avatar upload did not return an asset ID.');
+      await updateProfileMutation.mutateAsync({ avatarMediaAssetId: response.mediaAssetId });
       toast.success('Đã cập nhật ảnh đại diện thành công!');
     } catch (err) {
       console.error(err);

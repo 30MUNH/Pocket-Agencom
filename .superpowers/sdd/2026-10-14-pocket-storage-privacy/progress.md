@@ -17,3 +17,6 @@ Task 3: Ruling: every Storage object route on the exact configured Supabase host
 Task 3: complete (commit 44ab0d5; tests: external URL unit suite → 4/4 pass).
 Task 4: Ruling: signing leases protect the URL-minting operation for at most 30 seconds; once returned, the URL is a bearer link valid for 600 seconds and cannot be revoked by later application permission changes — cost if wrong: users may retain access until link expiry, as explicitly accepted in the design.
 Task 4: complete (pending commit; tests: storage/access/URL tests and safe backend suite → 71/71 pass; API suite required approved local loopback execution outside sandbox).
+Task 4: complete (commit 1e9d564; tests: safe backend suite → 71/71 pass).
+Task 5: Ruling: new avatar writes persist an asset ID and clear the legacy avatar URL; the current frontend and staff/admin screens will move from URL fields to demand-signed IDs in Task 8, while legacy `avatarUrl` display remains supported — cost if wrong: private avatars are not shown in those client components until Task 8 lands.
+Task 5: complete (pending commit; tests: avatar ownership and private-object compensation suites → 4/4 pass; safe backend suite → 73/73 pass).

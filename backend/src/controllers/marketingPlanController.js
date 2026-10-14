@@ -1,5 +1,5 @@
 const marketingPlanService = require('../services/marketingPlanService');
-const { uploadCampaignAsset } = require('../services/storageService');
+const mediaAccessService = require('../services/mediaAccessService').createMediaAccessService();
 const { AppError } = require('../middleware/errorHandler');
 const { generatePostWithImageSchema } = require('../validators/marketingPlan.validator');
 const { success } = require('../utils/response');
@@ -83,18 +83,23 @@ async function generatePostWithImage(req, res, next) {
       throw new AppError('Validation failed', 422, details);
     }
 
-    // 1) Persist the raw image to Supabase Storage (bucket: campaign-assets)
-    const { publicUrl } = await uploadCampaignAsset(req.file, `user-${req.user.id}`);
+    // Persist the image privately and pass its ID with the in-memory bytes to Gemini Vision.
+    const imageAsset = await mediaAccessService.createOwnedMediaAsset({
+      ownerId: req.user.id,
+      file: req.file,
+      purpose: 'campaign',
+      metadata: { name: req.file.originalname },
+    });
 
-    // 2) Send the image buffer + brand context to Gemini Vision
+    // The Vision call consumes bytes directly; no public or signed URL enters prompt content.
     const post = await marketingPlanService.generateDetailedPostWithImage(
       req.user,
       parsed.data,
       req.file,
-      publicUrl
+      imageAsset.id
     );
 
-    return success(res, post, 200);
+    return success(res, { ...post, mediaAssetId: imageAsset.id }, 200);
   } catch (err) {
     next(err);
   }

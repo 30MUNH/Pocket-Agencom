@@ -78,6 +78,7 @@ async function getMe(userId) {
       role: true,
       status: true,
       avatarUrl: true,
+      avatarMediaAssetId: true,
       phone: true,
       createdAt: true,
       businessProfile: {
@@ -185,9 +186,27 @@ async function updateBusinessProfile(userId, data) {
 
 async function updateProfile(userId, data) {
   const updateData = {};
+  if (data.avatarUrl !== undefined) {
+    throw new AppError('Avatar updates must reference an owned MediaAsset ID.', 400);
+  }
+  if (data.avatarMediaAssetId !== undefined) {
+    if (data.avatarMediaAssetId === null) {
+      updateData.avatarMediaAssetId = null;
+      updateData.avatarUrl = null;
+    } else {
+      const assetId = Number(data.avatarMediaAssetId);
+      if (!Number.isSafeInteger(assetId) || assetId < 1) throw new AppError('Invalid avatar asset ID.', 400);
+      const asset = await prisma.mediaAsset.findFirst({
+        where: { id: assetId, userId, sourceKind: 'private_storage', lifecycleState: 'active' },
+        select: { id: true },
+      });
+      if (!asset) throw new AppError('Avatar asset not found.', 404);
+      updateData.avatarMediaAssetId = asset.id;
+      updateData.avatarUrl = null;
+    }
+  }
   if (data.name !== undefined) updateData.name = data.name;
   if (data.phone !== undefined) updateData.phone = data.phone;
-  if (data.avatarUrl !== undefined) updateData.avatarUrl = data.avatarUrl;
 
   const user = await prisma.user.update({
     where: { id: userId },
@@ -199,6 +218,7 @@ async function updateProfile(userId, data) {
       role: true,
       status: true,
       avatarUrl: true,
+      avatarMediaAssetId: true,
       phone: true,
       createdAt: true,
       businessProfile: {
