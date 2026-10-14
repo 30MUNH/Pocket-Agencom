@@ -18,7 +18,7 @@ UPDATE "media_assets" SET "source_kind" = 'legacy_unverified';
 ALTER TABLE "media_assets" ADD CONSTRAINT "media_assets_source_shape_check" CHECK (
   ("source_kind" IN ('legacy_unverified', 'legacy_internal_verified') AND "storage_bucket" IS NULL AND "storage_path" IS NULL)
   OR ("source_kind" = 'external_url' AND "url" IS NOT NULL AND "storage_bucket" IS NULL AND "storage_path" IS NULL)
-  OR ("source_kind" = 'private_storage' AND "storage_bucket" IN ('campaign-assets-private', 'avatars-private') AND "storage_path" IS NOT NULL AND "storage_path" <> '' AND "storage_path" !~ '(^|/)\.\.?(/|$)')
+  OR ("source_kind" = 'private_storage' AND "storage_bucket" IS NOT NULL AND "storage_bucket" IN ('campaign-assets-private', 'avatars-private') AND "storage_path" IS NOT NULL AND "storage_path" <> '' AND "storage_path" !~ '(^|/)\.\.?(/|$)')
 );
 ALTER TABLE "media_assets" ADD CONSTRAINT "media_assets_lifecycle_check" CHECK (
   ("lifecycle_state" = 'active' AND "deletion_operation_id" IS NULL AND "deletion_started_at" IS NULL)

@@ -15,6 +15,7 @@ test('forward migration preserves rows and enforces source shapes and same-owner
   const sql = fs.readFileSync(path.join(migrationDir, 'migration.sql'), 'utf8');
   assert.match(sql, /UPDATE "media_assets"[\s\S]+source_kind[\s\S]+legacy_unverified/);
   assert.match(sql, /CHECK/);
+  assert.match(sql, /\("source_kind" = 'private_storage' AND "storage_bucket" IS NOT NULL AND "storage_bucket" IN/);
   assert.match(sql, /FOREIGN KEY \("user_id", "media_asset_id"\)/);
   assert.match(sql, /ON DELETE RESTRICT/);
   assert.doesNotMatch(sql, /DELETE FROM|DROP TABLE|TRUNCATE/i);
