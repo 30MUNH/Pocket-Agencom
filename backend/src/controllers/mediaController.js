@@ -30,6 +30,20 @@ async function uploadMedia(req, res, next) {
 /**
  * DELETE /api/media/:id
  */
+async function getMediaAssetAccess(req, res, next) {
+  try {
+    const mediaAccessService = require('../services/mediaAccessService');
+    const access = await mediaAccessService.getAuthorizedMediaAccess({
+      requester: req.user,
+      assetId: req.params.id,
+      disposition: req.query.download === 'true' ? 'attachment' : 'inline',
+    });
+    return success(res, access);
+  } catch (err) {
+    next(err);
+  }
+}
+
 async function deleteMedia(req, res, next) {
   try {
     const userId = req.user.id;
@@ -62,5 +76,6 @@ module.exports = {
   getMediaAssets,
   uploadMedia,
   deleteMedia,
+  getMediaAssetAccess,
   generateImage,
 };

@@ -32,7 +32,7 @@ async function getMediaAssets(userId) {
     where: { userId },
     orderBy: { createdAt: 'desc' },
   });
-  return assets || [];
+  return (assets || []).map(({ id, name, url, sourceKind, fileType, sizeBytes, createdAt }) => ({ id, name, url: sourceKind === 'private_storage' ? null : url, sourceKind, fileType, sizeBytes, createdAt }));
 }
 
 /**
