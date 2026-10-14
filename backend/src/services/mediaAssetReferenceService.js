@@ -3,6 +3,7 @@ const { AppError } = require('../middleware/errorHandler');
 const DEFAULT_STORAGE = () => require('./storageService');
 const PLAN_FIELDS = ['goal', 'contentIdeas', 'videoScripts', 'checklist', 'playbook', 'seoKeywords', 'budgetBreakdown', 'deploymentChannels', 'existingResources', 'campaignReason'];
 const REMOVE_TIMEOUT_MS = 10_000;
+const REFERENCE_TRANSACTION_TIMEOUT_MS = 20_000;
 const MAX_RETRY_DELAY_MS = 60 * 60 * 1000;
 
 function retryDelayMs(attemptCount) {
@@ -109,7 +110,7 @@ function createMediaAssetReferenceService({
         data: { lifecycleState: 'deleting', deletionOperationId: operationId, deletionStartedAt: now(), deletionLastAttemptAt: null, deletionAttemptCount: 0, deletionLastError: null },
       });
       return { operationId };
-    }));
+    }), { maxWait: 5_000, timeout: REFERENCE_TRANSACTION_TIMEOUT_MS });
   }
 
   async function resumeDeletion(assetId) {
@@ -124,7 +125,7 @@ function createMediaAssetReferenceService({
       const lease = await tx.mediaAssetAccessLease.findFirst({ where: { mediaAssetId: id, expiresAt: { gt: current } }, select: { id: true } });
       if (lease) return { pending: true, operationId: asset.deletionOperationId };
       return { asset, operationId: asset.deletionOperationId };
-    }));
+    }), { maxWait: 5_000, timeout: REFERENCE_TRANSACTION_TIMEOUT_MS });
     if (prepared.gone) return { deleted: true };
     if (prepared.pending || !prepared.asset) return { deleted: false, pending: true };
 
@@ -141,7 +142,7 @@ function createMediaAssetReferenceService({
           where: { id, lifecycleState: 'deleting', deletionOperationId: prepared.operationId },
           data: { deletionAttemptCount: { increment: 1 }, deletionLastAttemptAt: now(), deletionLastError: 'storage_remove_failed' },
         });
-      }));
+      }), { maxWait: 5_000, timeout: REFERENCE_TRANSACTION_TIMEOUT_MS });
       if (!missing) throw new AppError('Private asset deletion is pending recovery.', 503);
     } finally { clearTimeout(timeout); }
 
@@ -154,7 +155,7 @@ function createMediaAssetReferenceService({
       if (lease) return { deleted: false, pending: true };
       await tx.mediaAsset.deleteMany({ where: { id, lifecycleState: 'deleting', deletionOperationId: prepared.operationId } });
       return { deleted: true };
-    }));
+    }), { maxWait: 5_000, timeout: REFERENCE_TRANSACTION_TIMEOUT_MS });
   }
 
   async function deleteOwnedAsset(ownerId, assetId) {
@@ -180,4 +181,4 @@ function createMediaAssetReferenceService({
   return { deleteOwnedAsset, resumeDeletion, recoverDeletingAssets };
 }
 
-module.exports = { createMediaAssetReferenceService, countReferences, containsReference, retryDelayMs, REMOVE_TIMEOUT_MS, MAX_RETRY_DELAY_MS };
+module.exports = { createMediaAssetReferenceService, countReferences, containsReference, retryDelayMs, REMOVE_TIMEOUT_MS, REFERENCE_TRANSACTION_TIMEOUT_MS, MAX_RETRY_DELAY_MS };

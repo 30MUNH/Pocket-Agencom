@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { createMediaAssetReferenceService, retryDelayMs, MAX_RETRY_DELAY_MS } = require('../src/services/mediaAssetReferenceService');
+const { createMediaAssetReferenceService, retryDelayMs, REFERENCE_TRANSACTION_TIMEOUT_MS, MAX_RETRY_DELAY_MS } = require('../src/services/mediaAssetReferenceService');
 
 function setup({ asset, references = {}, leases = [], removeResult = null } = {}) {
   const calls = [];
@@ -30,7 +30,7 @@ function setup({ asset, references = {}, leases = [], removeResult = null } = {}
       async count() { return 0; },
     },
   };
-  const prismaClient = { async $transaction(callback) { return callback(tx); }, mediaAssetAccessLease: tx.mediaAssetAccessLease };
+  const prismaClient = { async $transaction(callback, options) { calls.push(['transaction-options', options]); return callback(tx); }, mediaAssetAccessLease: tx.mediaAssetAccessLease };
   const storageOperations = { async removePrivateObject(input) { calls.push(['remove-object', input]); if (removeResult) throw removeResult; return { removed: true }; } };
   return { calls, asset, storageOperations, service: createMediaAssetReferenceService({ prismaClient, storageOperations, now: () => new Date('2026-01-01T00:00:00Z') }) };
 }
@@ -72,6 +72,14 @@ test('attachment and signing leases cannot begin after deleting state starts', a
   const result = await service.deleteOwnedAsset(4, 12);
   assert.equal(asset.lifecycleState, 'deleting');
   assert.equal(result.deleted, true);
+});
+
+test('asset reference scans use a transaction deadline above the default five seconds', async () => {
+  const { service, calls } = setup({ asset: privateAsset() });
+  await service.deleteOwnedAsset(4, 12);
+  const options = calls.filter(([name]) => name === 'transaction-options').map(([, value]) => value);
+  assert.ok(options.length >= 2);
+  assert.ok(options.every((value) => value.timeout === REFERENCE_TRANSACTION_TIMEOUT_MS));
 });
 
 test('Storage timeout preserves deleting state and retry operation identity', async () => {
