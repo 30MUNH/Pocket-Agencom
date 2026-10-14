@@ -10,6 +10,14 @@ const aiConfig = {
   freeOnlyMode: process.env.FREE_ONLY_MODE !== 'false',
   allowPaidModels: process.env.AI_ALLOW_PAID_MODELS === 'true',
 
+  // Free model availability does not prove that the configured account has
+  // free-tier billing enabled. These gates require an explicit account check.
+  freeTierConfirmed: {
+    groq: process.env.AI_FREE_TIER_CONFIRMED_GROQ === 'true',
+    gemini: process.env.AI_FREE_TIER_CONFIRMED_GEMINI === 'true',
+    cloudflare: process.env.AI_FREE_TIER_CONFIRMED_CLOUDFLARE === 'true',
+  },
+
   // Provider selections
   textProvider: process.env.AI_TEXT_PROVIDER || 'groq',
   imageProvider: process.env.AI_IMAGE_PROVIDER || 'cloudflare',
@@ -107,7 +115,7 @@ const aiConfig = {
     const m = modelId.trim();
 
     if (p === 'groq') {
-      return this.verifiedFreeModels.groq.includes(m);
+      return this.freeTierConfirmed.groq && this.verifiedFreeModels.groq.includes(m);
     }
 
     if (p === 'openrouter') {
@@ -116,11 +124,11 @@ const aiConfig = {
     }
 
     if (p === 'gemini') {
-      return this.verifiedFreeModels.gemini.some((freeModel) => m.startsWith(freeModel));
+      return this.freeTierConfirmed.gemini && this.verifiedFreeModels.gemini.some((freeModel) => m.startsWith(freeModel));
     }
 
     if (p === 'cloudflare') {
-      return this.verifiedFreeModels.cloudflare.includes(m) || m.startsWith('@cf/');
+      return this.freeTierConfirmed.cloudflare && this.verifiedFreeModels.cloudflare.includes(m);
     }
 
     // fal.ai is paid-only, never free

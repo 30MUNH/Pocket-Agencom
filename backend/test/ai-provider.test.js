@@ -6,6 +6,24 @@ const prismaFixture = require('./helpers/installPrismaFixture');
 const { generateSocialImageSchema, generateImagePromptSchema, refinePlanSchema } = require('../src/validators/marketingPlan.validator');
 const aiConfig = require('../src/services/ai/aiConfig');
 const aiService = require('../src/services/ai/aiService');
+
+function loadAiConfigWithEnvironment(overrides) {
+  const modulePath = require.resolve('../src/services/ai/aiConfig');
+  const previousModule = require.cache[modulePath];
+  const previousEnvironment = new Map(Object.keys(overrides).map((key) => [key, process.env[key]]));
+  try {
+    for (const [key, value] of Object.entries(overrides)) process.env[key] = value;
+    delete require.cache[modulePath];
+    return require(modulePath);
+  } finally {
+    for (const [key, value] of previousEnvironment) {
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
+    delete require.cache[modulePath];
+    if (previousModule) require.cache[modulePath] = previousModule;
+  }
+}
 const analyticsService = require('../src/services/analyticsService');
 const socialService = require('../src/services/socialService');
 const scheduledPostService = require('../src/services/scheduledPostService');
@@ -236,32 +254,37 @@ test('Honest Data Layer: social metrics does not hallucinate follower numbers wh
   assert.ok(Array.isArray(res.areasToImprove));
 });
 
-test('Zero-Cost Free Tier: model whitelist verifies zero-cost models and rejects paid ones', () => {
-  // Groq verified free
-  assert.equal(aiConfig.isModelFree('groq', 'openai/gpt-oss-120b'), true);
-  // Groq deprecated or unverified
-  assert.equal(aiConfig.isModelFree('groq', 'llama-3.3-70b-versatile'), false);
-  assert.equal(aiConfig.isModelFree('groq', 'unknown/model'), false);
+test('FREE_ONLY_MODE blocks account-unverified providers and unknown Cloudflare models', () => {
+  const config = loadAiConfigWithEnvironment({
+    FREE_ONLY_MODE: 'true',
+    AI_ALLOW_PAID_MODELS: 'false',
+    AI_FREE_TIER_CONFIRMED_GROQ: 'false',
+    AI_FREE_TIER_CONFIRMED_GEMINI: 'false',
+    AI_FREE_TIER_CONFIRMED_CLOUDFLARE: 'false',
+  });
 
-  // OpenRouter verified free
-  assert.equal(aiConfig.isModelFree('openrouter', 'openrouter/free'), true);
-  assert.equal(aiConfig.isModelFree('openrouter', 'meta-llama/llama-3.3-70b-instruct:free'), true);
-  // OpenRouter paid models
-  assert.equal(aiConfig.isModelFree('openrouter', 'openai/gpt-4o'), false);
-  assert.equal(aiConfig.isModelFree('openrouter', 'anthropic/claude-3.5-sonnet'), false);
+  assert.equal(config.isModelFree('groq', 'openai/gpt-oss-120b'), false);
+  assert.equal(config.isModelFree('gemini', 'gemini-2.5-flash'), false);
+  assert.equal(config.isModelFree('cloudflare', '@cf/black-forest-labs/flux-1-schnell'), false);
+  assert.equal(config.isModelFree('cloudflare', '@cf/vendor/metered-model'), false);
+  assert.equal(config.isModelFree('openrouter', 'openrouter/free'), true);
+  assert.equal(config.isModelFree('openrouter', 'openai/gpt-4o'), false);
+  assert.equal(config.isModelFree('fal', 'fal-ai/flux/schnell'), false);
+});
 
-  // Gemini verified free
-  assert.equal(aiConfig.isModelFree('gemini', 'gemini-2.5-flash'), true);
-  assert.equal(aiConfig.isModelFree('gemini', 'gemini-3.5-flash'), true);
-  assert.equal(aiConfig.isModelFree('gemini', 'gemini-3.8-flash'), true);
-  assert.equal(aiConfig.isModelFree('gemini', 'gemini-2.0-flash'), false); // shut down June 2026
-  assert.equal(aiConfig.isModelFree('gemini', 'gemini-1.5-pro'), false);
+test('FREE_ONLY_MODE permits listed providers only after explicit account free-tier confirmation', () => {
+  const config = loadAiConfigWithEnvironment({
+    FREE_ONLY_MODE: 'true',
+    AI_ALLOW_PAID_MODELS: 'false',
+    AI_FREE_TIER_CONFIRMED_GROQ: 'true',
+    AI_FREE_TIER_CONFIRMED_GEMINI: 'true',
+    AI_FREE_TIER_CONFIRMED_CLOUDFLARE: 'true',
+  });
 
-  // Cloudflare Workers AI free tier
-  assert.equal(aiConfig.isModelFree('cloudflare', '@cf/black-forest-labs/flux-1-schnell'), true);
-
-  // fal.ai is always paid
-  assert.equal(aiConfig.isModelFree('fal', 'fal-ai/flux/schnell'), false);
+  assert.equal(config.isModelFree('groq', 'openai/gpt-oss-120b'), true);
+  assert.equal(config.isModelFree('gemini', 'gemini-2.5-flash'), true);
+  assert.equal(config.isModelFree('cloudflare', '@cf/black-forest-labs/flux-1-schnell'), true);
+  assert.equal(config.isModelFree('cloudflare', '@cf/vendor/metered-model'), false);
 });
 
 test('Zero-Cost Free Tier: fal.ai provider is disabled in FREE_ONLY_MODE', async () => {
