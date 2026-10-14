@@ -12,10 +12,12 @@ export function useAuthorizedMediaUrl({ assetId, legacyUrl, enabled = true, acce
   const [requestVersion, setRequestVersion] = useState(0);
   const [loading, setLoading] = useState(false);
   const [imageRetryCount, setImageRetryCount] = useState(0);
+  const [unavailable, setUnavailable] = useState(false);
 
   useEffect(() => {
     setSigned(null);
     setImageRetryCount(0);
+    setUnavailable(false);
     setVisible(false);
   }, [assetId]);
 
@@ -43,9 +45,15 @@ export function useAuthorizedMediaUrl({ assetId, legacyUrl, enabled = true, acce
     let cancelled = false;
     setLoading(true);
     accessRequest(assetId).then((response) => {
-      if (!cancelled) setSigned({ assetId, url: response?.url, expiresAt: response?.expiresAt });
+      if (!cancelled) {
+        setSigned({ assetId, url: response?.url, expiresAt: response?.expiresAt });
+        setUnavailable(!response?.url);
+      }
     }).catch(() => {
-      if (!cancelled) setSigned(null);
+      if (!cancelled) {
+        setSigned(null);
+        setUnavailable(true);
+      }
     }).finally(() => {
       if (!cancelled) setLoading(false);
     });
@@ -60,7 +68,11 @@ export function useAuthorizedMediaUrl({ assetId, legacyUrl, enabled = true, acce
   }, [signed, refresh]);
 
   const onError = useCallback((event) => {
-    if (!assetId || !signed?.url || imageRetryCount >= 1) return;
+    if (!assetId || !signed?.url) return;
+    if (imageRetryCount >= 1) {
+      setUnavailable(true);
+      return;
+    }
     setImageRetryCount((count) => count + 1);
     refresh();
     if (event?.currentTarget) event.currentTarget.removeAttribute('src');
@@ -70,6 +82,7 @@ export function useAuthorizedMediaUrl({ assetId, legacyUrl, enabled = true, acce
     ref: elementRef,
     url: assetId ? (signed?.assetId === assetId ? signed?.url || null : null) : (legacyUrl || null),
     loading,
+    unavailable,
     onError: assetId && !legacyUrl ? onError : undefined,
     refresh,
   };

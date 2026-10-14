@@ -13,6 +13,16 @@ test('private media access is demand-loaded and refreshes only transient compone
   assert.doesNotMatch(hook, /localStorage|sessionStorage|console\.(log|warn|error)/);
 });
 
+test('failed or exhausted private previews render an explicit unavailable state', async () => {
+  const [hook, image] = await Promise.all([
+    read('../src/hooks/useAuthorizedMediaUrl.js'),
+    read('../src/components/media/AuthorizedMediaImage.jsx'),
+  ]);
+  assert.match(hook, /setUnavailable\(true\)/);
+  assert.match(image, /unavailable/);
+  assert.match(image, /Ảnh không khả dụng/);
+});
+
 test('media library and saved plans render by asset ID without bulk signing', async () => {
   const [library, plans, api] = await Promise.all([
     read('../src/pages/user/MediaLibrary.jsx'),
