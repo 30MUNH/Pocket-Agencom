@@ -7,6 +7,7 @@ import { scheduledPostApi } from '../../api/scheduledPostApi';
 import { toast } from '../../store/toastStore';
 import PostSuccessModal from '../../components/social/PostSuccessModal';
 import SocialImageGeneratorModal from '../../components/media/SocialImageGeneratorModal';
+import AuthorizedMediaImage from '../../components/media/AuthorizedMediaImage';
 
 export default function QuickEditor() {
   const location = useLocation();
@@ -348,8 +349,8 @@ export default function QuickEditor() {
             {attachedImage && (
               <div className="p-3 rounded-2xl bg-surface-container/60 border border-secondary-container/40 flex items-center justify-between gap-3 animate-fade-in">
                 <div className="flex items-center gap-3 min-w-0">
-                  <img
-                    src={attachedImage.imageUrl}
+                  <AuthorizedMediaImage
+                    assetId={attachedImage.mediaAssetId}
                     alt="AI Visual"
                     className="w-12 h-12 rounded-xl object-cover border border-outline-variant/30 shrink-0"
                   />
@@ -463,7 +464,7 @@ export default function QuickEditor() {
           title: trend?.title || 'Bài viết bắt trend xu hướng',
           content: generatedContent,
           platform: platform,
-          url: attachedImage?.imageUrl || window.location.href,
+          url: window.location.href,
         }}
       />
 

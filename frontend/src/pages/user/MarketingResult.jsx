@@ -10,6 +10,7 @@ import CampaignBudgetTracker from '../../components/marketing/CampaignBudgetTrac
 import SocialImageGeneratorModal from '../../components/media/SocialImageGeneratorModal';
 import { marketingPlanApi } from '../../api/marketingPlanApi';
 import { normalizePlanContent } from '../../utils/planContent';
+import AuthorizedMediaImage from '../../components/media/AuthorizedMediaImage';
 
 /**
  * Splits AI Advisor output into { postContent, designTips }.
@@ -260,11 +261,11 @@ function IdeaCard({ idea, index, totalLength, businessProfileId, existingResourc
                       </button>
                     </div>
                     <div className="relative max-h-60 rounded-xl overflow-hidden bg-black/5 dark:bg-black/20 flex items-center justify-center">
-                      <img
-                        src={generatedAiImage?.imageUrl || previewUrl || uploadedImageUrl}
-                        alt="Ảnh bài đăng"
-                        className="max-h-60 w-full object-contain rounded-xl"
-                      />
+                      {generatedAiImage?.mediaAssetId ? (
+                        <AuthorizedMediaImage assetId={generatedAiImage.mediaAssetId} alt="Ảnh bài đăng" className="max-h-60 w-full object-contain rounded-xl" />
+                      ) : (
+                        <img src={previewUrl || uploadedImageUrl} alt="Ảnh bài đăng" className="max-h-60 w-full object-contain rounded-xl" />
+                      )}
                     </div>
                   </div>
                 ) : (
@@ -642,6 +643,20 @@ export default function MarketingResult() {
         <div className="rounded-2xl border border-amber-300/60 bg-amber-50 dark:bg-amber-950/20 px-5 py-4 text-sm text-amber-900 dark:text-amber-200">
           Kế hoạch lịch sử này có nội dung tham chiếu một tính năng đã ngừng hoạt động. Nội dung gốc được giữ nguyên để đối chiếu; các thao tác tạo lại hoặc tái sử dụng tự động đã được tắt.
         </div>
+      )}
+
+      {plan.mediaAssets?.length > 0 && (
+        <section className="space-y-3" aria-labelledby="plan-media-title">
+          <h2 id="plan-media-title" className="text-headline-md font-bold text-primary dark:text-inverse-primary">Tệp đã lưu cùng kế hoạch</h2>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+            {plan.mediaAssets.map(({ mediaAsset }) => mediaAsset?.fileType === 'image' && (
+              <figure key={mediaAsset.id} className="overflow-hidden rounded-2xl border border-surface-variant/30 bg-surface-container-lowest">
+                <AuthorizedMediaImage assetId={mediaAsset.sourceKind === 'private_storage' ? mediaAsset.id : null} legacyUrl={mediaAsset.url} alt={mediaAsset.name} className="aspect-video w-full object-cover" />
+                <figcaption className="truncate px-3 py-2 text-xs font-medium text-on-surface-variant">{mediaAsset.name}</figcaption>
+              </figure>
+            ))}
+          </div>
+        </section>
       )}
 
       {/* Bento Grid: Content Ideas */}

@@ -47,3 +47,42 @@ test('mode disabled and foreign bucket/path overrides never produce signing call
   await assert.rejects(service.getAuthorizedMediaAccess({ requester: { id: 4, role: 'user' }, assetId: '12', bucket: 'avatars', path: 'owned' }), { statusCode: 503 });
   assert.equal(calls.some(([name]) => name === 'sign'), false);
 });
+
+test('admin avatar access is limited to the target user linked avatar and 600 second URL', async () => {
+  const asset = { id: 12, userId: 8, sourceKind: 'private_storage', lifecycleState: 'active', storageBucket: 'avatars-private', storagePath: 'opaque-avatar.png', purpose: 'avatar' };
+  const calls = [];
+  const tx = {
+    async $queryRaw() { calls.push(['lock']); },
+    user: { async findUnique() { return { id: 8, status: 'active', avatarMediaAssetId: 12 }; } },
+    mediaAsset: { async findUnique() { return asset; } },
+    mediaAssetAccessLease: { async create() { return { id: 31 }; }, async delete() { return {}; } },
+  };
+  const prismaClient = { async $transaction(callback) { return callback(tx); }, mediaAssetAccessLease: tx.mediaAssetAccessLease };
+  const storageClient = { storage: { from(bucket) { return { async createSignedUrl(path, seconds) { calls.push(['sign', bucket, path, seconds]); return { data: { signedUrl: 'https://signed.invalid/avatar' } }; } }; } } };
+  const service = createMediaAccessService({ prismaClient, storageClient, mode: () => 'private' });
+  const result = await service.getAdminUserAvatarAccess({ requester: { id: 2, role: 'admin' }, targetUserId: 8 });
+  assert.equal(result.temporary, true);
+  assert.deepEqual(calls.find(([name]) => name === 'sign'), ['sign', 'avatars-private', 'opaque-avatar.png', 600]);
+});
+
+test('non-admin, inactive target, mismatched avatar and non-avatar assets cannot be signed by admin surface', async () => {
+  for (const { requester, target, asset } of [
+    { requester: { id: 2, role: 'user' }, target: { id: 8, status: 'active', avatarMediaAssetId: 12 }, asset: { id: 12, userId: 8, purpose: 'avatar', sourceKind: 'private_storage', lifecycleState: 'active', storageBucket: 'avatars-private', storagePath: 'x' } },
+    { requester: { id: 2, role: 'staff' }, target: { id: 8, status: 'inactive', avatarMediaAssetId: 12 }, asset: { id: 12, userId: 8, purpose: 'avatar', sourceKind: 'private_storage', lifecycleState: 'active', storageBucket: 'avatars-private', storagePath: 'x' } },
+    { requester: { id: 2, role: 'admin' }, target: { id: 8, status: 'active', avatarMediaAssetId: 12 }, asset: { id: 12, userId: 9, purpose: 'avatar', sourceKind: 'private_storage', lifecycleState: 'active', storageBucket: 'avatars-private', storagePath: 'x' } },
+    { requester: { id: 2, role: 'admin' }, target: { id: 8, status: 'active', avatarMediaAssetId: 12 }, asset: { id: 12, userId: 8, purpose: 'attachment', sourceKind: 'private_storage', lifecycleState: 'active', storageBucket: 'avatars-private', storagePath: 'x' } },
+  ]) {
+    const calls = [];
+    const tx = {
+      async $queryRaw() {},
+      user: { async findUnique() { return target; } },
+      mediaAsset: { async findUnique() { return asset; } },
+      mediaAssetAccessLease: { async create() { return { id: 31 }; }, async delete() { return {}; } },
+    };
+    const prismaClient = { async $transaction(callback) { return callback(tx); }, mediaAssetAccessLease: tx.mediaAssetAccessLease };
+    const storageClient = { storage: { from() { return { async createSignedUrl() { calls.push(['sign']); return { data: { signedUrl: 'https://signed.invalid' } }; } }; } } };
+    const service = createMediaAccessService({ prismaClient, storageClient, mode: () => 'private' });
+    await assert.rejects(service.getAdminUserAvatarAccess({ requester, targetUserId: 8 }));
+    assert.equal(calls.length, 0);
+  }
+});

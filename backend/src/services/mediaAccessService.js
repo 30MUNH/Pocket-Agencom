@@ -86,7 +86,40 @@ function createMediaAccessService(options = {}) {
     }
   }
 
-  return { createOwnedMediaAsset, getAuthorizedMediaAccess };
+  async function getAdminUserAvatarAccess({ requester, targetUserId }) {
+    if (!['admin', 'staff'].includes(requester?.role)) throw new AppError(NOT_FOUND, 404);
+    if (mode() !== 'private') throw new AppError('Private asset access is disabled.', 503);
+    const targetId = validAssetId(targetUserId);
+    if (!targetId) throw new AppError(NOT_FOUND, 404);
+    const result = await prismaClient.$transaction(async (tx) => {
+      const target = await tx.user.findUnique({
+        where: { id: targetId },
+        select: { id: true, status: true, avatarMediaAssetId: true },
+      });
+      if (!target || target.status !== 'active' || !target.avatarMediaAssetId) return { denied: true };
+      const id = Number(target.avatarMediaAssetId);
+      await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`media-asset:${id}`}, 0))`;
+      const asset = await tx.mediaAsset.findUnique({ where: { id } });
+      if (!asset || Number(asset.userId) !== targetId || asset.purpose !== 'avatar' || asset.sourceKind !== 'private_storage' || asset.lifecycleState !== 'active') return { denied: true };
+      if (asset.storageBucket !== PRIVATE_BUCKETS.avatars || !asset.storagePath) return { denied: true };
+      const lease = await tx.mediaAssetAccessLease.create({
+        data: { userId: targetId, mediaAssetId: asset.id, expiresAt: new Date(now().getTime() + LEASE_LIFETIME_MS) },
+      });
+      return { asset, leaseId: lease.id };
+    });
+    if (result.denied) throw new AppError(NOT_FOUND, 404);
+    try {
+      const { data, error } = await withSigningTimeout(
+        storageClient.storage.from(result.asset.storageBucket).createSignedUrl(result.asset.storagePath, URL_LIFETIME_SECONDS, { download: false }),
+      );
+      if (error || !data?.signedUrl) throw new AppError('Private avatar signing failed.', 503);
+      return { url: data.signedUrl, expiresAt: new Date(now().getTime() + URL_LIFETIME_SECONDS * 1000).toISOString(), temporary: true };
+    } finally {
+      await prismaClient.mediaAssetAccessLease.delete({ where: { id: result.leaseId } }).catch(() => {});
+    }
+  }
+
+  return { createOwnedMediaAsset, getAuthorizedMediaAccess, getAdminUserAvatarAccess };
 }
 
 module.exports = { createMediaAccessService, URL_LIFETIME_SECONDS, LEASE_LIFETIME_MS, SIGNING_TIMEOUT_MS };

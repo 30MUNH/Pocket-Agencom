@@ -769,10 +769,7 @@ ${postContent.slice(0, 1000)}`;
       purpose: 'campaign',
       metadata: { name: `AI_${platform}_${aspectRatio.replace(':', 'x')}_${Date.now()}`, businessProfileId },
     });
-    const mainAccess = await privateMediaAccess.getAuthorizedMediaAccess({ requester: { id: userId, role: 'user' }, assetId: mainAsset.id });
-
     let originalAssetId = null;
-    let originalImageUrl = null;
     if (generatedImageResult.originalBuffer && generatedImageResult.postProcessed) {
       const originalAsset = await privateMediaAccess.createOwnedMediaAsset({
         ownerId: userId,
@@ -781,7 +778,6 @@ ${postContent.slice(0, 1000)}`;
         metadata: { name: `AI_original_${Date.now()}`, businessProfileId },
       });
       originalAssetId = originalAsset.id;
-      originalImageUrl = (await privateMediaAccess.getAuthorizedMediaAccess({ requester: { id: userId, role: 'user' }, assetId: originalAsset.id })).url;
     }
 
     this.recordUsage({
@@ -793,8 +789,6 @@ ${postContent.slice(0, 1000)}`;
     });
 
     return {
-      imageUrl: mainAccess.url,
-      originalImageUrl,
       mediaAssetId: mainAsset.id,
       originalMediaAssetId: originalAssetId,
       prompt,

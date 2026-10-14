@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Search, Eye, Edit2, Ban, AlertTriangle, X, Check, Loader2, Shield, RefreshCw, UserCheck, Phone, Mail, Building2, Calendar } from 'lucide-react';
 import { adminApi } from '../../api/adminApi';
 import { toast } from '../../store/toastStore';
+import AuthorizedMediaImage from '../../components/media/AuthorizedMediaImage';
 
 export default function ManageUsers() {
   const [users, setUsers] = useState([]);
@@ -208,13 +209,12 @@ export default function ManageUsers() {
                   <tr key={user.id} className="hover:bg-surface-container-low/30 dark:hover:bg-surface-variant/20 transition-colors group">
                     <td className="py-4 px-6 md:px-8">
                       <div className="flex items-center gap-3">
-                        <img
+                        <AuthorizedMediaImage
+                          assetId={user.avatarMediaAssetId ? user.id : null}
+                          legacyUrl={user.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user.name || 'user')}`}
+                          accessRequest={adminApi.getUserAvatarAccess}
                           alt={user.name}
                           className="w-10 h-10 rounded-full object-cover shadow-sm border border-surface-container-high/15"
-                          src={
-                            user.avatarUrl ||
-                            `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user.name || 'user')}`
-                          }
                         />
                         <div>
                           <span className="text-body-md font-body-md text-primary dark:text-inverse-primary font-semibold block">
@@ -326,11 +326,10 @@ export default function ManageUsers() {
             </div>
 
             <div className="flex items-center gap-4 mb-6">
-              <img
-                src={
-                  selectedUser.avatarUrl ||
-                  `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(selectedUser.name || 'user')}`
-                }
+              <AuthorizedMediaImage
+                assetId={selectedUser.avatarMediaAssetId ? selectedUser.id : null}
+                legacyUrl={selectedUser.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(selectedUser.name || 'user')}`}
+                accessRequest={adminApi.getUserAvatarAccess}
                 alt={selectedUser.name}
                 className="w-16 h-16 rounded-full object-cover ring-4 ring-secondary/20"
               />

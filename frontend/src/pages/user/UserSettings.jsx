@@ -6,6 +6,7 @@ import { useUpdateProfile, useUpdateBusinessProfile } from '../../hooks/useAuth'
 import { uploadApi } from '../../api/uploadApi';
 import { authApi } from '../../api/authApi';
 import { toast } from '../../store/toastStore';
+import AuthorizedMediaImage from '../../components/media/AuthorizedMediaImage';
 
 export default function UserSettings() {
   const [activeTab, setActiveTab] = useState('profile');
@@ -247,13 +248,11 @@ export default function UserSettings() {
                     </div>
                   ) : (
                     <>
-                      <img
+                      <AuthorizedMediaImage
+                        assetId={user?.avatarMediaAssetId}
+                        legacyUrl={user?.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user?.name || 'user')}`}
                         className="w-full h-full object-cover"
                         alt={`${user?.name} Profile Avatar`}
-                        src={
-                          user?.avatarUrl ||
-                          `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user?.name || 'user')}`
-                        }
                       />
                       <div className="absolute inset-0 bg-primary/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all">
                         <Camera size={20} className="text-white" />

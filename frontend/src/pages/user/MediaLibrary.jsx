@@ -20,6 +20,7 @@ import { mediaApi } from '../../api/mediaApi';
 import { uploadApi } from '../../api/uploadApi';
 import { toast } from '../../store/toastStore';
 import SocialImageGeneratorModal from '../../components/media/SocialImageGeneratorModal';
+import AuthorizedMediaImage from '../../components/media/AuthorizedMediaImage';
 
 export default function MediaLibrary() {
   const [assets, setAssets] = useState([]);
@@ -54,14 +55,38 @@ export default function MediaLibrary() {
     fetchAssets();
   }, []);
 
-  const handleCopyUrl = async (id, url) => {
+  const handleCopyUrl = async (asset) => {
     try {
+      const access = asset.sourceKind === 'private_storage'
+        ? await mediaApi.getAssetAccess(asset.id)
+        : { url: asset.url };
+      if (!access?.url) throw new Error('Media URL is unavailable.');
+      const url = access.url;
       await navigator.clipboard.writeText(url);
-      setCopiedId(id);
-      toast.success('Đã sao chép liên kết media vào bộ nhớ tạm!');
+      setCopiedId(asset.id);
+      toast.success(access.temporary ? 'Đã sao chép liên kết tạm thời (có hiệu lực trong 10 phút).' : 'Đã sao chép liên kết media vào bộ nhớ tạm!');
       setTimeout(() => setCopiedId(null), 2000);
     } catch {
       toast.error('Không thể sao chép liên kết.');
+    }
+  };
+
+  const handleDownload = async (asset) => {
+    try {
+      const access = asset.sourceKind === 'private_storage'
+        ? await mediaApi.getAssetAccess(asset.id, { download: true })
+        : { url: asset.url };
+      if (!access?.url) throw new Error('Media URL is unavailable.');
+      const link = document.createElement('a');
+      link.href = access.url;
+      link.download = asset.name;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch {
+      toast.error('Không thể tải tập tin xuống.');
     }
   };
 
@@ -295,14 +320,15 @@ export default function MediaLibrary() {
               >
                 {asset.fileType === 'video' ? (
                   <div className="relative h-full w-full">
-                    <img src={asset.url} alt={asset.name} className="h-full w-full object-cover opacity-80" />
+                    <AuthorizedMediaImage assetId={asset.sourceKind === 'private_storage' ? asset.id : null} legacyUrl={asset.url} alt={asset.name} className="h-full w-full object-cover opacity-80" />
                     <div className="absolute inset-0 flex items-center justify-center bg-primary/40">
                       <Film className="h-8 w-8 text-white" />
                     </div>
                   </div>
                 ) : (
-                  <img
-                    src={asset.url}
+                  <AuthorizedMediaImage
+                    assetId={asset.sourceKind === 'private_storage' ? asset.id : null}
+                    legacyUrl={asset.url}
                     alt={asset.name}
                     className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                   />
@@ -331,7 +357,7 @@ export default function MediaLibrary() {
 
                 <div className="mt-3 flex items-center justify-between gap-2 border-t border-surface-variant/20 pt-2.5">
                   <button
-                    onClick={() => handleCopyUrl(asset.id, asset.url)}
+                    onClick={() => handleCopyUrl(asset)}
                     className="inline-flex items-center gap-1 rounded-full border border-surface-variant/40 bg-secondary-container px-3 py-1 text-[11px] font-bold text-secondary hover:bg-secondary-container/80 transition-colors"
                   >
                     {copiedId === asset.id ? <Check size={12} className="text-emerald-600" /> : <Copy size={12} />}
@@ -469,8 +495,9 @@ export default function MediaLibrary() {
               {previewAsset.fileType === 'video' ? (
                 <video src={previewAsset.url} controls className="max-h-[480px] w-full rounded-2xl" autoPlay />
               ) : (
-                <img
-                  src={previewAsset.url}
+                <AuthorizedMediaImage
+                  assetId={previewAsset.sourceKind === 'private_storage' ? previewAsset.id : null}
+                  legacyUrl={previewAsset.url}
                   alt={previewAsset.name}
                   className="max-h-[480px] w-auto max-w-full object-contain rounded-2xl"
                 />
@@ -487,23 +514,21 @@ export default function MediaLibrary() {
               <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  onClick={() => handleCopyUrl(previewAsset.id, previewAsset.url)}
+                  onClick={() => handleCopyUrl(previewAsset)}
                   className="inline-flex items-center gap-1.5 rounded-full border border-surface-variant/40 bg-secondary-container px-4 py-2 text-xs font-bold text-secondary hover:bg-secondary-container/80 transition-colors"
                 >
                   {copiedId === previewAsset.id ? <Check size={14} className="text-emerald-600" /> : <Copy size={14} />}
                   <span>{copiedId === previewAsset.id ? 'Đã copy URL' : 'Sao chép URL'}</span>
                 </button>
 
-                <a
-                  href={previewAsset.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  download={previewAsset.name}
+                <button
+                  type="button"
+                  onClick={() => handleDownload(previewAsset)}
                   className="inline-flex items-center gap-1.5 rounded-full bg-primary text-on-primary hover:opacity-90 px-4 py-2 text-xs font-bold shadow-sm transition-opacity"
                 >
                   <Download size={14} />
                   <span>Tải xuống</span>
-                </a>
+                </button>
               </div>
             </div>
 

@@ -32,6 +32,7 @@ async function getUsers(req, res, next) {
           role: true,
           status: true,
           avatarUrl: true,
+          avatarMediaAssetId: true,
           phone: true,
           createdAt: true,
           businessProfile: {
@@ -48,6 +49,16 @@ async function getUsers(req, res, next) {
     ]);
 
     return success(res, { users, total });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function getUserAvatarAccess(req, res, next) {
+  try {
+    const mediaAccessService = require('../services/mediaAccessService').createMediaAccessService();
+    const access = await mediaAccessService.getAdminUserAvatarAccess({ requester: req.user, targetUserId: req.params.id });
+    return success(res, access);
   } catch (err) {
     next(err);
   }
@@ -171,6 +182,7 @@ async function updateUserRole(req, res, next) {
 
 module.exports = {
   getUsers,
+  getUserAvatarAccess,
   updateUserStatus,
   updateUserRole,
 };

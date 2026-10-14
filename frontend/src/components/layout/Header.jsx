@@ -1,6 +1,7 @@
 import { Menu, LogOut } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
+import AuthorizedMediaImage from '../media/AuthorizedMediaImage';
 
 const ROLE_LABELS = {
   user: 'Thương hiệu',
@@ -76,8 +77,8 @@ export default function Header({ onMenuClick, isMenuOpen, user, userRole }) {
         </button>
 
         <div aria-label={user?.name ? `Tài khoản ${user.name}` : 'Tài khoản'} className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary-container text-sm font-semibold text-primary">
-          {user?.avatarUrl
-            ? <img alt="" className="h-full w-full object-cover" src={user.avatarUrl} />
+          {user?.avatarMediaAssetId || user?.avatarUrl
+            ? <AuthorizedMediaImage assetId={user?.avatarMediaAssetId} legacyUrl={user?.avatarUrl} alt="" className="h-full w-full object-cover" />
             : <span aria-hidden="true">{userInitial}</span>}
         </div>
       </div>

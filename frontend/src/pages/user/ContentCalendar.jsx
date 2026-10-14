@@ -19,6 +19,7 @@ import {
 import { scheduledPostApi } from '../../api/scheduledPostApi';
 import PostSuccessModal from '../../components/social/PostSuccessModal';
 import { toast } from '../../store/toastStore';
+import AuthorizedMediaImage from '../../components/media/AuthorizedMediaImage';
 
 // Platform Icon Helper
 function PlatformBadge({ platform = 'Facebook' }) {
@@ -713,10 +714,11 @@ export default function ContentCalendar() {
               <p className="whitespace-pre-wrap leading-relaxed">{selectedPost.content}</p>
             </div>
 
-            {selectedPost.imageUrl && (
+            {(selectedPost.mediaAssetId || selectedPost.imageUrl) && (
               <div className="mt-3 rounded-2xl overflow-hidden border border-surface-variant/30 max-h-56 flex items-center justify-center bg-black/5 dark:bg-black/20">
-                <img
-                  src={selectedPost.imageUrl}
+                <AuthorizedMediaImage
+                  assetId={selectedPost.mediaAssetId}
+                  legacyUrl={selectedPost.imageUrl}
                   alt={selectedPost.title}
                   className="w-full h-full max-h-56 object-cover"
                 />

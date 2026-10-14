@@ -3,7 +3,8 @@ import path from 'node:path';
 import puppeteer from 'puppeteer-core';
 
 const BASE_URL = process.env.UI_TEST_BASE_URL || 'http://127.0.0.1:5173';
-const SCREENSHOT_DIR = path.resolve('test-results/screenshots');
+const SCREENSHOT_DIR = path.resolve(process.env.UI_TEST_SCREENSHOT_DIR || 'test-results/screenshots');
+const RESULTS_PATH = path.resolve(process.env.UI_TEST_RESULTS_FILE || 'test-results/ui-ux-browser-results.json');
 const CHROME_PATH = process.env.CHROME_BIN || '/usr/bin/google-chrome';
 const screenshots = [];
 const checks = [];
@@ -56,12 +57,12 @@ async function main() {
     const body = request.postData() ? (() => {
       try { return JSON.parse(request.postData()); } catch { return {}; }
     })() : {};
-    apiCalls.push({ method, pathname, body });
+    apiCalls.push({ method, pathname, body, pageUrl: page.url() });
     let data = [];
 
     if (pathname === '/auth/me') {
       data = {
-        id: 1, name: 'Kiểm thử giao diện', email: 'ui-test@example.invalid', role: 'user', status: 'active',
+        id: 1, name: 'Kiểm thử giao diện', email: 'ui-test@example.invalid', role: 'user', status: 'active', avatarMediaAssetId: 800,
         businessProfile: { id: 10, businessName: 'Quán Cà phê', usp: 'Cà phê rang mới', brandVoice: 'Thân thiện' },
       };
     } else if (pathname === '/auth/login' || pathname === '/auth/register') {
@@ -107,6 +108,13 @@ async function main() {
       data = [];
     } else if (pathname.startsWith('/marketing-plans/')) {
       data = { id: 101, goal: 'Kế hoạch mẫu kiểm thử', status: 'saved', contentIdeas: [], videoScripts: [], checklist: [], playbook: [], seoKeywords: [] };
+    } else if (/^\/media\/\d+\/access$/.test(pathname)) {
+      data = { url: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="240" height="160"%3E%3Crect width="100%25" height="100%25" fill="%23dbeafe"/%3E%3C/svg%3E', expiresAt: new Date(Date.now() + 600000).toISOString(), temporary: true };
+    } else if (pathname === '/media' && method === 'GET') {
+      data = Array.from({ length: 32 }, (_, index) => ({
+        id: 700 + index, name: `Private mock image ${index + 1}`, url: null, sourceKind: 'private_storage',
+        fileType: 'image', sizeBytes: 4096, createdAt: new Date().toISOString(),
+      }));
     } else if (pathname.startsWith('/media')) {
       data = [];
     } else if (pathname === '/admin/users') {
@@ -138,7 +146,7 @@ async function main() {
 
     await page.evaluate(() => localStorage.setItem('pocket-agencom-auth', JSON.stringify({
       state: {
-        user: { id: 1, name: 'Kiểm thử giao diện', email: 'ui-test@example.invalid', role: 'user', status: 'active', businessProfile: { id: 10, businessName: 'Quán Cà phê' } },
+        user: { id: 1, name: 'Kiểm thử giao diện', email: 'ui-test@example.invalid', role: 'user', status: 'active', avatarMediaAssetId: 800, businessProfile: { id: 10, businessName: 'Quán Cà phê' } },
         token: 'ui-mock-token',
         isAuthenticated: true,
       },
@@ -252,11 +260,19 @@ async function main() {
     ]) {
       await page.goto(`${BASE_URL}${route}`, { waitUntil: 'networkidle2' });
       await sleep(450);
-      await page.screenshot({ path: path.join(SCREENSHOT_DIR, filename), fullPage: true });
+      await page.screenshot({ path: path.join(SCREENSHOT_DIR, filename), fullPage: route !== '/media-library' });
       screenshots.push(filename);
     }
 
     await page.goto(`${BASE_URL}/media-library`, { waitUntil: 'networkidle2' });
+    await sleep(900);
+    const mediaVisitCalls = apiCalls.filter((call) => new URL(call.pageUrl).pathname === '/media-library');
+    const visibleAssetIds = new Set(mediaVisitCalls.flatMap((call) => {
+      const match = call.pathname.match(/^\/media\/(\d+)\/access$/);
+      return match && Number(match[1]) >= 700 && Number(match[1]) < 732 ? [Number(match[1])] : [];
+    }));
+    record('Private Media Library requests visible asset IDs only', visibleAssetIds.size > 0 && visibleAssetIds.size < 32, `${visibleAssetIds.size}/32 assets signed on this page`);
+    record('Owner avatar resolves through the asset-ID access endpoint', apiCalls.some((call) => call.pathname === '/media/800/access'));
     await page.$$eval('button', (buttons) => buttons.find((button) => button.innerText.includes('Tạo ảnh AI'))?.click());
     await sleep(450);
     const imageStudioOpen = (await page.$$('[role="dialog"]')).length > 0;
@@ -301,7 +317,7 @@ async function main() {
     await browser.close();
   }
 
-  fs.writeFileSync(path.resolve('test-results/ui-ux-browser-results.json'), JSON.stringify({
+  fs.writeFileSync(RESULTS_PATH, JSON.stringify({
     mode: 'mocked-ui-only',
     baseUrl: BASE_URL,
     checks,

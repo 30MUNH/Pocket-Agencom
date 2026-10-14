@@ -16,6 +16,8 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { useGenerateImagePrompt, useGenerateSocialImage } from '../../hooks/useMarketingPlans';
+import { mediaApi } from '../../api/mediaApi';
+import AuthorizedMediaImage from './AuthorizedMediaImage';
 import { toast } from '../../store/toastStore';
 
 const ASPECT_RATIOS = [
@@ -106,8 +108,8 @@ export default function SocialImageGeneratorModal({
         businessProfileId: businessProfileId ? Number(businessProfileId) : undefined,
       });
 
-      if (res && res.imageUrl) {
-        setGeneratedResult(res);
+      if (res?.mediaAssetId) {
+        setGeneratedResult({ mediaAssetId: res.mediaAssetId, prompt: res.prompt, aspectRatio: res.aspectRatio || aspectRatio });
         toast.success('Tạo ảnh AI thành công! Đã lưu vào Media Library.');
       } else {
         toast.error('Không nhận được hình ảnh từ dịch vụ AI.');
@@ -119,11 +121,12 @@ export default function SocialImageGeneratorModal({
   };
 
   const handleCopyUrl = async () => {
-    if (!generatedResult?.imageUrl) return;
+    if (!generatedResult?.mediaAssetId) return;
     try {
-      await navigator.clipboard.writeText(generatedResult.imageUrl);
+      const access = await mediaApi.getAssetAccess(generatedResult.mediaAssetId);
+      await navigator.clipboard.writeText(access.url);
       setCopiedUrl(true);
-      toast.success('Đã sao chép liên kết hình ảnh!');
+      toast.success('Đã sao chép liên kết tạm thời (có hiệu lực trong 10 phút).');
       setTimeout(() => setCopiedUrl(false), 2000);
     } catch {
       toast.error('Không thể sao chép liên kết.');
@@ -131,27 +134,25 @@ export default function SocialImageGeneratorModal({
   };
 
   const handleDownload = async () => {
-    if (!generatedResult?.imageUrl) return;
+    if (!generatedResult?.mediaAssetId) return;
     try {
-      const response = await fetch(generatedResult.imageUrl);
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
+      const access = await mediaApi.getAssetAccess(generatedResult.mediaAssetId, { download: true });
       const link = document.createElement('a');
-      link.href = url;
+      link.href = access.url;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
       link.download = `agencom-ai-${platform.toLowerCase()}-${aspectRatio.replace(':', 'x')}-${Date.now()}.jpg`;
       document.body.appendChild(link);
       link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
+      link.remove();
       toast.success('Đang tải ảnh xuống máy...');
     } catch {
-      // Fallback: open in new tab
-      window.open(generatedResult.imageUrl, '_blank');
+      toast.error('Không thể tải ảnh xuống. Hãy thử lại sau khi làm mới bản xem trước.');
     }
   };
 
   const handleAttachImage = () => {
-    if (!generatedResult?.imageUrl) return;
+    if (!generatedResult?.mediaAssetId) return;
     if (onAttach) {
       onAttach(generatedResult);
       toast.success('Đã đính kèm ảnh vào nội dung!');
@@ -354,11 +355,11 @@ export default function SocialImageGeneratorModal({
                   </p>
                 </div>
               </div>
-            ) : generatedResult?.imageUrl ? (
+            ) : generatedResult?.mediaAssetId ? (
               <div className="w-full flex flex-col items-center space-y-4">
                 <div className={`w-full max-h-[320px] rounded-xl overflow-hidden shadow-lg border border-secondary-container/40 relative group ${currentRatio.cssAspect}`}>
-                  <img
-                    src={generatedResult.imageUrl}
+                  <AuthorizedMediaImage
+                    assetId={generatedResult.mediaAssetId}
                     alt={generatedResult.prompt || 'Generated AI Social Image'}
                     className="w-full h-full object-cover"
                   />
