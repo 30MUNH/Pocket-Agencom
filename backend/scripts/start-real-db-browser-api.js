@@ -22,9 +22,13 @@ async function main() {
   }
 
   const { createApp } = require('../src/app');
+  const aiConfig = require('../src/services/ai/aiConfig');
   const port = Number(process.env.PORT || 5055);
   const server = createApp().listen(port, '127.0.0.1', () => {
     console.log(`Real DB API listening on 127.0.0.1:${port}; target ${target.host}:${target.port}/${target.database}`);
+    console.log(
+      `[AI timeout config] requestMs=${aiConfig.limits.requestTimeoutMs} operationMs=${aiConfig.limits.operationTimeoutMs} maxRetries=${aiConfig.limits.maxRetries}`
+    );
   });
   const shutdown = async () => {
     server.close(async () => {

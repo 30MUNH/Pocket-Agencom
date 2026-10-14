@@ -27,6 +27,7 @@ class GroqProvider {
     jsonMode = false,
     timeoutMs = aiConfig.limits.requestTimeoutMs,
     model = this.model,
+    signal,
   }) {
     if (!this.apiKey || this.apiKey.trim().length === 0) {
       throw new Error('Groq API Key is not configured.');
@@ -62,6 +63,7 @@ class GroqProvider {
           'Content-Type': 'application/json',
         },
         timeout: timeoutMs,
+        signal,
       });
 
       const choice = response.data?.choices?.[0];

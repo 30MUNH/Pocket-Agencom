@@ -82,6 +82,10 @@ const aiConfig = {
   limits: {
     maxTokens: parseInt(process.env.AI_MAX_TOKENS || '4096', 10),
     requestTimeoutMs: parseInt(process.env.AI_REQUEST_TIMEOUT_MS || '45000', 10),
+    operationTimeoutMs: parseInt(
+      process.env.AI_OPERATION_TIMEOUT_MS || process.env.AI_REQUEST_TIMEOUT_MS || '45000',
+      10
+    ),
     imageTimeoutMs: parseInt(process.env.AI_IMAGE_TIMEOUT_MS || '60000', 10),
     maxConcurrentGenerations: parseInt(process.env.AI_MAX_CONCURRENT || '5', 10),
     maxRetries: parseInt(process.env.AI_MAX_RETRIES || '2', 10),

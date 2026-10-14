@@ -216,6 +216,19 @@ function waitWithBackoff(attempt, baseMs = aiConfig.limits.backoffBaseMs) {
   return new Promise((resolve) => setTimeout(resolve, delay));
 }
 
+function waitWithSignal(delayMs, signal) {
+  if (signal.aborted || delayMs <= 0) return Promise.resolve();
+  return new Promise((resolve) => {
+    const finish = () => {
+      clearTimeout(timer);
+      signal.removeEventListener('abort', finish);
+      resolve();
+    };
+    const timer = setTimeout(finish, delayMs);
+    signal.addEventListener('abort', finish, { once: true });
+  });
+}
+
 /**
  * Checks if an error is transient (rate-limit 429, timeout, or 5xx server error)
  */
@@ -325,77 +338,102 @@ class AIService {
   }) {
     await this.acquireConcurrencySlot();
     const startTime = Date.now();
+    const deadline = startTime + Math.max(1, aiConfig.limits.operationTimeoutMs);
+    const operationController = new AbortController();
+    const operationTimer = setTimeout(
+      () => operationController.abort(new Error('AI operation deadline exceeded')),
+      Math.max(1, deadline - Date.now())
+    );
     const providers = this.getTextProvidersInPriority();
-
-    if (providers.length === 0) {
-      this.releaseConcurrencySlot();
-      throw new AppError(
-        'Không có nhà cung cấp AI nào được cấu hình API key (Groq, OpenRouter, hoặc Gemini).',
-        503
-      );
-    }
-
     let lastError = null;
+    let successfulResult = null;
+    let successfulProvider = null;
 
-    for (const { name, instance } of providers) {
-      for (let attempt = 0; attempt <= aiConfig.limits.maxRetries; attempt++) {
-        const attemptStartedAt = Date.now();
-        try {
-          const result = await instance.generateText({
-            prompt,
-            systemPrompt,
-            temperature,
-            maxTokens,
-            jsonMode,
-          });
-
-          this.releaseConcurrencySlot();
-          this.recordUsage({
-            type: 'text',
-            provider: name,
-            model: result.model,
-            durationMs: Date.now() - startTime,
-            success: true,
-          });
-
-          return result;
-        } catch (err) {
-          lastError = err;
-          const status = err.response?.status || err.status || err.statusCode || null;
-          const code = err.code || err.cause?.code || null;
-          console.warn(
-            `[AI Service] ${name} attempt ${attempt + 1}/${aiConfig.limits.maxRetries + 1} failed after ${Date.now() - attemptStartedAt}ms (status=${status ?? 'none'}, code=${code ?? 'none'}).`
+    try {
+      for (const { name, instance } of providers) {
+        for (let attempt = 0; attempt <= aiConfig.limits.maxRetries; attempt++) {
+          const remainingMs = deadline - Date.now();
+          if (remainingMs <= 0 || operationController.signal.aborted) break;
+          const attemptStartedAt = Date.now();
+          const attemptTimeoutMs = Math.max(1, Math.min(aiConfig.limits.requestTimeoutMs, remainingMs));
+          const attemptController = new AbortController();
+          const attemptTimer = setTimeout(
+            () => attemptController.abort(new Error('AI provider attempt deadline exceeded')),
+            attemptTimeoutMs
           );
+          const signal = AbortSignal.any([operationController.signal, attemptController.signal]);
+          try {
+            const result = await instance.generateText({
+              prompt,
+              systemPrompt,
+              temperature,
+              maxTokens,
+              jsonMode,
+              timeoutMs: attemptTimeoutMs,
+              signal,
+            });
+            successfulResult = result;
+            successfulProvider = name;
+            break;
+          } catch (err) {
+            lastError = err;
+            const status = err.response?.status || err.status || err.statusCode || null;
+            const code = err.code || err.cause?.code || null;
+            console.warn(
+              `[AI Service] ${name} attempt ${attempt + 1}/${aiConfig.limits.maxRetries + 1} failed after ${Date.now() - attemptStartedAt}ms (status=${status ?? 'none'}, code=${code ?? 'none'}).`
+            );
+          } finally {
+            clearTimeout(attemptTimer);
+          }
 
-          // If retry-after header exists, respect it bounded
-          const retryAfterSec = parseInt(err.response?.headers?.['retry-after'], 10);
-          if (retryAfterSec && retryAfterSec > 0 && retryAfterSec <= 10) {
-            await new Promise((r) => setTimeout(r, retryAfterSec * 1000));
-          } else if (isTransientError(err) && attempt < aiConfig.limits.maxRetries) {
-            await waitWithBackoff(attempt);
+          if (successfulResult || operationController.signal.aborted || Date.now() >= deadline) break;
+          const retryAfterSec = Number.parseInt(lastError?.response?.headers?.['retry-after'], 10);
+          if (retryAfterSec > 0 && retryAfterSec <= 10) {
+            await waitWithSignal(Math.min(retryAfterSec * 1000, deadline - Date.now()), operationController.signal);
+          } else if (isTransientError(lastError) && attempt < aiConfig.limits.maxRetries) {
+            const backoff = Math.min(
+              aiConfig.limits.backoffBaseMs * (2 ** attempt) + Math.random() * 500,
+              10000,
+              deadline - Date.now()
+            );
+            await waitWithSignal(backoff, operationController.signal);
           } else {
-            // Non-transient or retries exhausted for this provider, try next provider
             break;
           }
         }
+        if (successfulResult || operationController.signal.aborted || Date.now() >= deadline) break;
       }
+
+      if (successfulResult) {
+        this.recordUsage({
+          type: 'text',
+          provider: successfulProvider,
+          model: successfulResult.model,
+          durationMs: Date.now() - startTime,
+          success: true,
+        });
+        return successfulResult;
+      }
+
+      this.recordUsage({
+        type: 'text',
+        durationMs: Date.now() - startTime,
+        success: false,
+        error: {
+          status: lastError?.response?.status || lastError?.status || lastError?.statusCode || null,
+          code: lastError?.code || lastError?.cause?.code || null,
+        },
+      });
+      throw new AppError(
+        providers.length === 0
+          ? 'Không có nhà cung cấp AI nào được cấu hình API key (Groq, OpenRouter, hoặc Gemini).'
+          : 'Các dịch vụ AI chưa phản hồi sau số lần thử có giới hạn. Vui lòng thử lại sau.',
+        503
+      );
+    } finally {
+      clearTimeout(operationTimer);
+      this.releaseConcurrencySlot();
     }
-
-    this.releaseConcurrencySlot();
-    this.recordUsage({
-      type: 'text',
-      durationMs: Date.now() - startTime,
-      success: false,
-      error: {
-        status: lastError?.response?.status || lastError?.status || lastError?.statusCode || null,
-        code: lastError?.code || lastError?.cause?.code || null,
-      },
-    });
-
-    throw new AppError(
-      'Các dịch vụ AI chưa phản hồi sau số lần thử có giới hạn. Vui lòng thử lại sau.',
-      503
-    );
   }
 
   /**
