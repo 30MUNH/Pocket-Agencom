@@ -1,7 +1,7 @@
 import axiosClient from './axiosClient';
 
 // Backend text generation allows up to three 45-second provider attempts plus backoff.
-const AI_TEXT_REQUEST_TIMEOUT_MS = 150000;
+const AI_TEXT_REQUEST_TIMEOUT_MS = 180000;
 
 export const marketingPlanApi = {
   list: () => axiosClient.get('/marketing-plans'),
