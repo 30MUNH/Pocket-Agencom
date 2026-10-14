@@ -8,6 +8,7 @@ import BudgetBreakdownCard from '../../components/marketing/BudgetBreakdownCard'
 import RevisionChatPanel from '../../components/marketing/RevisionChatPanel';
 import CampaignBudgetTracker from '../../components/marketing/CampaignBudgetTracker';
 import SocialImageGeneratorModal from '../../components/media/SocialImageGeneratorModal';
+import { marketingPlanApi } from '../../api/marketingPlanApi';
 import { normalizePlanContent } from '../../utils/planContent';
 
 /**
@@ -56,7 +57,7 @@ function renderBoldText(text) {
   });
 }
 
-function IdeaCard({ idea, index, totalLength, businessProfileId, existingResources, campaignReason }) {
+function IdeaCard({ idea, index, totalLength, businessProfileId, existingResources, campaignReason, planId }) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [detailedContent, setDetailedContent] = useState('');
   const [designTips, setDesignTips] = useState('');
@@ -132,7 +133,9 @@ function IdeaCard({ idea, index, totalLength, businessProfileId, existingResourc
           const { postContent, designTips: tips } = parseAdvisorContent(response.content);
           setDetailedContent(postContent);
           setDesignTips(tips);
-          setUploadedImageUrl(response.imageUrl || '');
+          setUploadedImageUrl('');
+          if (response.mediaAssetId && planId) await marketingPlanApi.attachAssets(planId, [response.mediaAssetId]);
+          setGeneratedAiImage(response.mediaAssetId ? { mediaAssetId: response.mediaAssetId } : null);
           setIsExpanded(true);
         } else {
           toast.error('Không nhận được nội dung từ AI.');
@@ -417,7 +420,13 @@ function IdeaCard({ idea, index, totalLength, businessProfileId, existingResourc
         platform={idea.channel || 'Facebook'}
         businessProfileId={businessProfileId}
         ideaTitle={idea.title}
-        onAttach={(result) => setGeneratedAiImage(result)}
+        onAttach={async (result) => {
+          setGeneratedAiImage(result);
+          if (result?.mediaAssetId && planId) {
+            try { await marketingPlanApi.attachAssets(planId, [result.mediaAssetId]); }
+            catch { toast.error('Ảnh đã lưu vào Media Library nhưng chưa thể gắn vào kế hoạch.'); }
+          }
+        }}
       />
     </div>
   );

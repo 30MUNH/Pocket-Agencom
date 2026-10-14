@@ -62,7 +62,7 @@ export default function QuickEditor() {
         status: 'pending_approval',
         isGoldenTime: true,
         businessProfileId: profileData?.id,
-        imageUrl: attachedImage?.imageUrl,
+        mediaAssetId: attachedImage?.mediaAssetId,
       });
 
       const formattedTime = goldenTime.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
@@ -154,7 +154,7 @@ export default function QuickEditor() {
         status: 'draft',
         isGoldenTime: false,
         businessProfileId: profileData?.id,
-        imageUrl: attachedImage?.imageUrl,
+        mediaAssetId: attachedImage?.mediaAssetId,
       });
       toast.success('Đã lưu bản nháp.');
       setTimeout(() => navigate('/calendar'), 700);

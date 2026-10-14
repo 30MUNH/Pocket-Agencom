@@ -119,6 +119,7 @@ async function getPlanById(id, user) {
       businessProfile: true,
       reviewedBy: { select: { id: true, name: true } },
       user: { select: { id: true, name: true, email: true } },
+      mediaAssets: { select: { mediaAssetId: true, purpose: true, mediaAsset: { select: { id: true, name: true, sourceKind: true, fileType: true } } } },
     },
   });
 
@@ -401,6 +402,42 @@ async function generateSocialImage(userId, { prompt, aspectRatio, platform, busi
 /**
   * Fetches trending bulletin topics (AI generated or curated)
   */
+async function attachMediaAssets(planId, userId, requestedAssetIds) {
+  if (!Array.isArray(requestedAssetIds) || requestedAssetIds.length > 50) throw new AppError('Invalid MediaAsset list.', 400);
+  const assetIds = [...new Set(requestedAssetIds.map((value) => {
+    const text = String(value);
+    if (!/^[1-9]\d*$/.test(text)) throw new AppError('Invalid media asset ID.', 400);
+    return Number(text);
+  }))].sort((a, b) => a - b);
+  return prisma.$transaction(async (tx) => {
+    for (const assetId of assetIds) await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`media-asset:${assetId}`}, 0))`;
+    const plan = await tx.marketingPlan.findUnique({ where: { id: Number(planId) }, select: { id: true, userId: true } });
+    if (!plan || plan.userId !== userId) throw new AppError('Marketing plan not found.', 404);
+    for (const assetId of assetIds) {
+      const asset = await tx.mediaAsset.findUnique({ where: { id: assetId }, select: { id: true, userId: true, lifecycleState: true } });
+      if (!asset || asset.userId !== userId || asset.lifecycleState !== 'active') throw new AppError('Media asset not found.', 404);
+    }
+    if (assetIds.length) await tx.marketingPlanAsset.createMany({
+      data: assetIds.map((mediaAssetId) => ({ userId, marketingPlanId: plan.id, mediaAssetId, purpose: 'attachment' })),
+      skipDuplicates: true,
+    });
+    return tx.marketingPlanAsset.findMany({ where: { userId, marketingPlanId: plan.id }, select: { mediaAssetId: true, purpose: true, createdAt: true }, orderBy: { createdAt: 'asc' } });
+  });
+}
+
+async function detachMediaAsset(planId, userId, requestedAssetId) {
+  const text = String(requestedAssetId);
+  if (!/^[1-9]\d*$/.test(text)) throw new AppError('Invalid media asset ID.', 400);
+  const mediaAssetId = Number(text);
+  return prisma.$transaction(async (tx) => {
+    await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`media-asset:${mediaAssetId}`}, 0))`;
+    const plan = await tx.marketingPlan.findUnique({ where: { id: Number(planId) }, select: { id: true, userId: true } });
+    if (!plan || plan.userId !== userId) throw new AppError('Marketing plan not found.', 404);
+    const removed = await tx.marketingPlanAsset.deleteMany({ where: { userId, marketingPlanId: plan.id, mediaAssetId } });
+    return { detached: removed.count > 0 };
+  });
+}
+
 async function getTrendingBulletin(forceRefresh = false) {
   return aiService.getTrendingBulletin({ forceRefresh });
 }
@@ -418,5 +455,7 @@ module.exports = {
   refinePlan,
   generateImagePrompt,
   generateSocialImage,
+  attachMediaAssets,
+  detachMediaAsset,
   getTrendingBulletin,
 };

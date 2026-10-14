@@ -92,15 +92,17 @@ export default function MediaLibrary() {
     try {
       setIsUploading(true);
       const uploadRes = await uploadApi.uploadSingle(file);
-      const fileUrl = uploadRes?.url;
-      if (!fileUrl) throw new Error('Dịch vụ lưu trữ không trả về URL của ảnh.');
+      if (!uploadRes?.mediaAssetId) throw new Error('Dịch vụ lưu trữ không trả về mã tài sản.');
 
-      const newAsset = await mediaApi.uploadAsset({
-        name: file.name,
-        url: fileUrl,
-        fileType: 'image',
-        sizeBytes: file.size
-      });
+      const newAsset = {
+        id: uploadRes.mediaAssetId,
+        name: uploadRes.name || file.name,
+        url: null,
+        sourceKind: 'private_storage',
+        fileType: uploadRes.fileType || 'image',
+        sizeBytes: uploadRes.sizeBytes || file.size,
+        createdAt: new Date().toISOString(),
+      };
 
       setAssets(prev => [newAsset, ...prev]);
       toast.success(`Tải lên ${file.name} thành công!`);

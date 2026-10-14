@@ -132,6 +132,20 @@ async function generateSocialImage(req, res, next) {
   }
 }
 
+async function updateMediaAssets(req, res, next) {
+  try {
+    const result = await marketingPlanService.attachMediaAssets(req.params.id, req.user.id, req.body.mediaAssetIds);
+    return success(res, result);
+  } catch (err) { next(err); }
+}
+
+async function removeMediaAsset(req, res, next) {
+  try {
+    const result = await marketingPlanService.detachMediaAsset(req.params.id, req.user.id, req.params.assetId);
+    return success(res, result);
+  } catch (err) { next(err); }
+}
+
 async function getTrends(req, res, next) {
   try {
     const trends = await marketingPlanService.getTrendingBulletin(false);
@@ -162,6 +176,8 @@ module.exports = {
   refine,
   generateImagePrompt,
   generateSocialImage,
+  updateMediaAssets,
+  removeMediaAsset,
   getTrends,
   refreshTrends,
 };

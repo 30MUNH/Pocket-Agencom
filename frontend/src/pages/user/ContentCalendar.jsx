@@ -76,6 +76,7 @@ export default function ContentCalendar() {
     platform: 'Facebook',
     scheduledTime: '',
     imageUrl: '',
+    mediaAssetId: null,
     status: 'pending_approval',
     isGoldenTime: false,
   });
@@ -219,6 +220,7 @@ export default function ContentCalendar() {
       platform: 'Facebook',
       scheduledTime: localISOTime,
       imageUrl: '',
+      mediaAssetId: null,
       status: 'pending_approval',
       isGoldenTime: true,
     });
@@ -242,6 +244,7 @@ export default function ContentCalendar() {
       platform: post.platform || 'Facebook',
       scheduledTime: localISOTime,
       imageUrl: post.imageUrl || '',
+      mediaAssetId: post.mediaAssetId || null,
       status: post.status || 'pending_approval',
       isGoldenTime: !!post.isGoldenTime,
     });
@@ -282,7 +285,8 @@ export default function ContentCalendar() {
         content: formData.content.trim(),
         platform: formData.platform,
         scheduledTime: formData.scheduledTime ? new Date(formData.scheduledTime).toISOString() : new Date().toISOString(),
-        imageUrl: formData.imageUrl.trim() || undefined,
+        mediaAssetId: formData.mediaAssetId || undefined,
+        imageUrl: formData.mediaAssetId ? undefined : (formData.imageUrl.trim() || undefined),
         status: formData.status,
         isGoldenTime: formData.isGoldenTime,
       };
@@ -877,7 +881,7 @@ export default function ContentCalendar() {
                   type="url"
                   placeholder="https://..."
                   value={formData.imageUrl}
-                  onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
+                  onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value, mediaAssetId: null })}
                   className="w-full rounded-lg border border-surface-variant bg-white p-3 text-base text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
                 />
               </div>

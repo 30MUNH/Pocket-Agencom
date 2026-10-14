@@ -20,3 +20,6 @@ Task 4: complete (pending commit; tests: storage/access/URL tests and safe backe
 Task 4: complete (commit 1e9d564; tests: safe backend suite → 71/71 pass).
 Task 5: Ruling: new avatar writes persist an asset ID and clear the legacy avatar URL; the current frontend and staff/admin screens will move from URL fields to demand-signed IDs in Task 8, while legacy `avatarUrl` display remains supported — cost if wrong: private avatars are not shown in those client components until Task 8 lands.
 Task 5: complete (pending commit; tests: avatar ownership and private-object compensation suites → 4/4 pass; safe backend suite → 73/73 pass).
+Task 5: complete (commit c198645; tests: avatar/profile ownership, private generation persistence/compensation and safe backend suite → 73/73 pass).
+Task 6: Ruling: scheduled-post and Marketing Plan new attachments use normalized IDs; external URL fields remain supported only through the strict external URL validator, while old URL/marker fields remain readable unchanged — cost if wrong: unsupported legacy workflows that write Supabase URLs must migrate clients to IDs first.
+Task 6: complete (pending commit; tests: scheduled and Marketing Plan association unit tests; safe backend suite → 80/80 pass).
