@@ -11,6 +11,7 @@ import {
   Globe
 } from 'lucide-react';
 import { socialApi } from '../../api/socialApi';
+import { normalizePlatformList } from '../../utils/normalizePlatformList';
 import { toast } from '../../store/toastStore';
 
 function FacebookIcon({ className }) {
@@ -72,7 +73,7 @@ export default function SocialLinkManager() {
     setIsFetching(true);
     try {
       const response = await socialApi.getPlatforms();
-      setPlatforms(response.data || []);
+      setPlatforms(normalizePlatformList(response));
     } catch (err) {
       console.error('Failed to load platforms:', err);
       setError('Không thể tải danh sách liên kết mạng xã hội.');
