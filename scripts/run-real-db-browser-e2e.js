@@ -20,13 +20,18 @@ let browser;
 let prisma;
 let testStaffNotificationIds = [];
 let planId = null;
+let fixtureBudgetPlanId = null;
+let testAvatarAssetId = null;
+let staffUser = null;
 let appLogs = '';
 const apiResponses = [];
 const browserErrors = [];
+const browserWarnings = [];
 const browserLifecycle = [];
+const workflowFailures = [];
 const runPrefix = `pa-realdb-browser-${Date.now()}-${crypto.randomBytes(3).toString('hex')}`;
 const email = `${runPrefix}@example.test`;
-const userPassword = `Browser-${crypto.randomBytes(10).toString('hex')}!`;
+let userPassword = `Browser-${crypto.randomBytes(10).toString('hex')}!`;
 const staffPassword = `Staff-${crypto.randomBytes(10).toString('hex')}!`;
 const adminPassword = `Admin-${crypto.randomBytes(10).toString('hex')}!`;
 
@@ -91,9 +96,36 @@ async function cleanup() {
   const plans = await prisma.marketingPlan.findMany({ where: { userId: { in: ids } }, select: { id: true } });
   const planIds = plans.map(({ id }) => id);
   if (planIds.length) await prisma.expense.deleteMany({ where: { marketingPlanId: { in: planIds } } });
+  const privateAssets = await prisma.mediaAsset.findMany({
+    where: { userId: { in: ids }, sourceKind: 'private_storage' },
+    select: { id: true, userId: true },
+  });
+  if (privateAssets.length) {
+    await prisma.user.updateMany({ where: { id: { in: ids } }, data: { avatarMediaAssetId: null, avatarUrl: null } });
+    const { createMediaAssetReferenceService } = require('../backend/src/services/mediaAssetReferenceService');
+    const references = createMediaAssetReferenceService({ prismaClient: prisma });
+    for (const asset of privateAssets) {
+      const deletion = await references.deleteOwnedAsset(asset.userId, asset.id);
+      if (deletion.pending) {
+        const expiresAt = await prisma.mediaAssetAccessLease.aggregate({
+          where: { mediaAssetId: asset.id },
+          _max: { expiresAt: true },
+        });
+        const cleanupDeadline = Math.max(Date.now() + 1000, (expiresAt._max.expiresAt?.getTime() || Date.now()) + 15000);
+        console.log(JSON.stringify({ event: 'waiting-for-test-avatar-signed-url-expiry', leaseExpiresAt: expiresAt._max.expiresAt?.toISOString() || null }));
+        while (Date.now() < cleanupDeadline && await prisma.mediaAsset.findUnique({ where: { id: asset.id } })) {
+          await references.recoverDeletingAssets({ limit: 100 });
+          await new Promise((resolve) => setTimeout(resolve, 5000));
+        }
+        if (await prisma.mediaAsset.findUnique({ where: { id: asset.id } })) {
+          throw new Error('Test avatar remains pending after its signed URL lease expired; preserved the asset record for recovery.');
+        }
+      }
+    }
+  }
   await prisma.marketingPlan.deleteMany({ where: { userId: { in: ids } } });
   await prisma.scheduledPost.deleteMany({ where: { userId: { in: ids } } });
-  await prisma.mediaAsset.deleteMany({ where: { userId: { in: ids } } });
+  await prisma.mediaAsset.deleteMany({ where: { userId: { in: ids }, sourceKind: 'external_url' } });
   await prisma.supportTicket.deleteMany({ where: { userId: { in: ids } } });
   await prisma.supportTicket.deleteMany({ where: { assignedStaffId: { in: ids } } });
   await prisma.notification.deleteMany({ where: { userId: { in: ids } } });
@@ -141,6 +173,20 @@ async function loginAs(page, frontUrl, accountEmail, password) {
   await page.waitForFunction(() => location.pathname === '/dashboard', { timeout: 20000 });
 }
 
+async function browserApi(page, apiUrl, method, route, body) {
+  return page.evaluate(async ({ apiUrl, method, route, body }) => {
+    const token = JSON.parse(localStorage.getItem('pocket-agencom-auth')).state.token;
+    const response = await fetch(`${apiUrl}/api${route}`, {
+      method,
+      headers: { Authorization: `Bearer ${token}`, ...(body ? { 'Content-Type': 'application/json' } : {}) },
+      ...(body ? { body: JSON.stringify(body) } : {}),
+    });
+    let payload = null;
+    try { payload = await response.json(); } catch { /* status is still useful */ }
+    return { status: response.status, payload };
+  }, { apiUrl, method, route, body });
+}
+
 async function main() {
   if (!optedIn) throw new Error('Real browser E2E is disabled. Set PA_REAL_DB_E2E=true explicitly.');
   const appEnv = dotenv.parse(fs.readFileSync(backendEnvPath));
@@ -176,6 +222,7 @@ async function main() {
   const outputDir = `/tmp/pocket-agencom-db-backups/browser-${Date.now()}`;
   fs.mkdirSync(outputDir, { recursive: true, mode: 0o700 });
   prisma = new PrismaClient();
+  console.log(JSON.stringify({ event: 'real-browser-e2e-start', target: { host: target.host, port: target.port, database: target.database, schema: target.schema }, runPrefix, aiSkipped: skipAi, backup: backupInfo.file, outputDir }));
 
   try {
     await startBackend(apiPort, env, frontUrl);
@@ -204,7 +251,11 @@ async function main() {
     const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
     page.on('pageerror', (error) => browserErrors.push(error.message));
     page.on('console', (message) => {
-      if (message.type() === 'error' && !message.text().startsWith('Failed to load resource:')) browserErrors.push(message.text());
+      if (message.type() === 'error' && !message.text().startsWith('Failed to load resource:')) {
+        const text = message.text();
+        if (text.includes('Cannot update a component') || text.includes('Encountered two children with the same key')) browserWarnings.push(text);
+        else browserErrors.push(text);
+      }
     });
     page.on('requestfailed', (request) => {
       if ((request.url().startsWith(frontUrl) || request.url().startsWith(apiUrl)) && request.failure()?.errorText !== 'net::ERR_ABORTED') {
@@ -253,6 +304,149 @@ async function main() {
       throw new Error(`Registration did not complete: ${JSON.stringify({ visibleState, apiResponses, browserErrors })}`);
     }
     await page.screenshot({ path: path.join(outputDir, '01-dashboard.png'), fullPage: true });
+
+    const testOwner = await prisma.user.findUnique({ where: { email }, include: { businessProfile: true } });
+    if (!testOwner?.businessProfile) throw new Error('Browser-registered user has no persisted business profile.');
+    staffUser = await prisma.user.create({
+      data: {
+        name: `${runPrefix} Staff`,
+        email: `${runPrefix}-staff@example.test`,
+        passwordHash: await bcrypt.hash(staffPassword, 10),
+        role: 'staff',
+        status: 'active',
+      },
+    });
+
+    const avatarPath = path.join(outputDir, 'synthetic-browser-avatar.png');
+    fs.writeFileSync(avatarPath, await page.screenshot({ type: 'png' }), { mode: 0o600 });
+    await page.goto(`${frontUrl}/settings`, { waitUntil: 'networkidle2' });
+    const avatarInput = await page.$('input[type="file"]');
+    if (!avatarInput) throw new Error('Avatar upload file input did not render.');
+    const avatarUploadResponse = page.waitForResponse((response) => response.url().endsWith('/api/upload/avatar') && response.request().method() === 'POST', { timeout: 30000 });
+    const avatarProfileResponse = page.waitForResponse((response) => response.url().endsWith('/api/auth/profile') && response.request().method() === 'PUT', { timeout: 30000 });
+    await avatarInput.uploadFile(avatarPath);
+    const avatarUpload = await avatarUploadResponse;
+    if (!avatarUpload.ok()) throw new Error(`Avatar upload returned HTTP ${avatarUpload.status()}.`);
+    const avatarUpdated = await avatarProfileResponse;
+    if (!avatarUpdated.ok()) throw new Error(`Avatar profile update returned HTTP ${avatarUpdated.status()}.`);
+    const persistedAvatarOwner = await prisma.user.findUnique({ where: { id: testOwner.id }, select: { avatarMediaAssetId: true } });
+    testAvatarAssetId = persistedAvatarOwner.avatarMediaAssetId;
+    const avatarAsset = testAvatarAssetId && await prisma.mediaAsset.findUnique({ where: { id: testAvatarAssetId } });
+    if (!avatarAsset || avatarAsset.userId !== testOwner.id || avatarAsset.sourceKind !== 'private_storage' || avatarAsset.storageBucket !== 'avatars-private') {
+      throw new Error('Avatar upload did not persist an owned private Storage asset.');
+    }
+    const ownerAvatarAccess = await browserApi(page, apiUrl, 'GET', `/media/${testAvatarAssetId}/access`);
+    if (ownerAvatarAccess.status !== 200 || !ownerAvatarAccess.payload?.data?.url) throw new Error('Avatar owner access did not return an authorized preview URL.');
+    const ownerAvatarPreview = await page.evaluate((url) => new Promise((resolve) => {
+      const image = new Image();
+      image.onload = () => resolve({ loaded: true, width: image.naturalWidth, height: image.naturalHeight });
+      image.onerror = () => resolve({ loaded: false, width: 0, height: 0 });
+      image.src = url;
+    }), ownerAvatarAccess.payload.data.url);
+    if (!ownerAvatarPreview.loaded || ownerAvatarPreview.width < 1 || ownerAvatarPreview.height < 1) {
+      throw new Error('Authorized avatar preview did not render in the browser.');
+    }
+    await page.screenshot({ path: path.join(outputDir, '01a-private-avatar.png'), fullPage: true });
+
+    await loginAs(page, frontUrl, staffUser.email, staffPassword);
+    const staffAvatarAccess = await browserApi(page, apiUrl, 'GET', `/admin/users/${testOwner.id}/avatar-access`);
+    if (staffAvatarAccess.status !== 200 || !staffAvatarAccess.payload?.data?.url) throw new Error('Staff avatar access was not authorized for the linked avatar.');
+    const staffAvatarPreview = await page.evaluate((url) => new Promise((resolve) => {
+      const image = new Image();
+      image.onload = () => resolve({ loaded: true, width: image.naturalWidth, height: image.naturalHeight });
+      image.onerror = () => resolve({ loaded: false, width: 0, height: 0 });
+      image.src = url;
+    }), staffAvatarAccess.payload.data.url);
+    if (!staffAvatarPreview.loaded || staffAvatarPreview.width < 1 || staffAvatarPreview.height < 1) {
+      throw new Error('Staff avatar signed URL did not render image bytes.');
+    }
+    await loginAs(page, frontUrl, email, userPassword);
+
+    const analyticsResponse = await browserApi(page, apiUrl, 'GET', '/analytics/my-business');
+    if (analyticsResponse.status !== 200 || !analyticsResponse.payload?.success) throw new Error(`Dashboard analytics returned HTTP ${analyticsResponse.status}.`);
+    await page.goto(`${frontUrl}/dashboard`, { waitUntil: 'networkidle2' });
+    await page.waitForFunction(() => document.body.innerText.length > 100, { timeout: 15000 });
+    await page.screenshot({ path: path.join(outputDir, '01b-dashboard-analytics.png'), fullPage: true });
+
+    const socialUrl = `https://instagram.com/${runPrefix}`;
+    const socialCreate = await browserApi(page, apiUrl, 'PUT', '/auth/business-profile', {
+      businessName: `${runPrefix} business`,
+      socialLinks: [{ platform: 'instagram', url: socialUrl }],
+    });
+    if (socialCreate.status !== 200) throw new Error(`Social account create returned HTTP ${socialCreate.status}.`);
+    const socialAsset = await prisma.socialPlatform.findFirst({ where: { userId: testOwner.id, platform: 'instagram', url: socialUrl } });
+    if (!socialAsset) throw new Error('Social account create was not persisted in PostgreSQL.');
+    try {
+      await page.goto(`${frontUrl}/settings`, { waitUntil: 'networkidle2' });
+      await clickText(page, 'Liên kết Mạng xã hội');
+      await page.waitForFunction((url) => [...document.querySelectorAll('a[href]')].some((link) => {
+        try { return new URL(link.href).href === new URL(url).href; } catch { return false; }
+      }), { timeout: 15000 }, socialUrl);
+      page.once('dialog', (dialog) => dialog.accept());
+      const socialDeleteResponse = page.waitForResponse((response) => response.url().endsWith(`/api/social-platforms/${socialAsset.id}`) && response.request().method() === 'DELETE');
+      await clickText(page, 'Ngắt kết nối');
+      const socialDeleted = await socialDeleteResponse;
+      if (!socialDeleted.ok() || await prisma.socialPlatform.findUnique({ where: { id: socialAsset.id } })) throw new Error('Social account delete did not persist.');
+    } catch (error) {
+      const state = await page.evaluate(() => ({ path: location.pathname, text: document.body.innerText.slice(0, 900) })).catch(() => null);
+      await page.screenshot({ path: path.join(outputDir, 'social-settings-failure.png'), fullPage: true }).catch(() => {});
+      workflowFailures.push(`Social account browser list/delete failed: ${safe(error.message)} (${JSON.stringify(state)})`);
+    }
+
+    await page.goto(`${frontUrl}/settings`, { waitUntil: 'networkidle2' });
+    await clickText(page, 'Bảo mật');
+    await page.waitForSelector('#currentPassword');
+    const changedPassword = `Changed-${crypto.randomBytes(10).toString('hex')}!`;
+    await page.type('#currentPassword', userPassword);
+    await page.type('#newPassword', changedPassword);
+    await page.type('#confirmPassword', changedPassword);
+    const passwordResponse = page.waitForResponse((response) => response.url().endsWith('/api/auth/change-password') && response.request().method() === 'PUT');
+    await clickText(page, 'Cập nhật Mật khẩu');
+    const passwordUpdated = await passwordResponse;
+    if (!passwordUpdated.ok()) throw new Error(`Password change returned HTTP ${passwordUpdated.status()}.`);
+    userPassword = changedPassword;
+    await loginAs(page, frontUrl, email, userPassword);
+
+    await page.goto(`${frontUrl}/settings`, { waitUntil: 'networkidle2' });
+    await clickText(page, 'Thông báo');
+    const initialPreference = await page.$eval('button[role="switch"]', (button) => button.getAttribute('aria-checked'));
+    await page.click('button[role="switch"]');
+    await page.waitForFunction((value) => document.querySelector('button[role="switch"]')?.getAttribute('aria-checked') !== value, { timeout: 5000 }, initialPreference);
+    const toggledPreference = await page.$eval('button[role="switch"]', (button) => button.getAttribute('aria-checked'));
+    await page.reload({ waitUntil: 'networkidle2' });
+    await clickText(page, 'Thông báo');
+    const persistedPreference = await page.$eval('button[role="switch"]', (button) => button.getAttribute('aria-checked'));
+    if (persistedPreference !== toggledPreference) throw new Error('Local notification preference did not persist after browser reload.');
+
+    try {
+      const budgetPlan = await prisma.marketingPlan.create({
+        data: {
+          userId: testOwner.id,
+          businessProfileId: testOwner.businessProfile.id,
+          goal: `${runPrefix} budget workflow fixture`,
+          campaignType: 'awareness',
+          budget: 100000,
+          status: 'saved',
+        },
+      });
+      fixtureBudgetPlanId = budgetPlan.id;
+      await page.goto(`${frontUrl}/marketing-kit/result?planId=${budgetPlan.id}`, { waitUntil: 'networkidle2' });
+      await page.waitForFunction(() => document.body.innerText.toLocaleLowerCase('vi').includes('quản lý ngân sách & chi tiêu'), { timeout: 30000 });
+      await page.type('input[placeholder="Ví dụ: 5000000"]', '1250');
+      await page.type('input[placeholder="Nhập ghi chú chi tiết..."]', `${runPrefix} expense browser fixture`);
+      const expenseResponse = page.waitForResponse((response) => response.url().endsWith('/api/expenses') && response.request().method() === 'POST');
+      await clickText(page, 'Ghi nhận chi phí');
+      const expenseSaved = await expenseResponse;
+      if (!expenseSaved.ok()) throw new Error(`Expense create returned HTTP ${expenseSaved.status()}.`);
+      const expense = await prisma.expense.findFirst({ where: { marketingPlanId: budgetPlan.id, note: `${runPrefix} expense browser fixture` } });
+      if (!expense || Number(expense.amount) !== 1250) throw new Error('Expense create did not persist in PostgreSQL.');
+      await page.waitForFunction((note) => document.body.innerText.includes(note), { timeout: 10000 }, expense.note);
+      await page.screenshot({ path: path.join(outputDir, '01c-budget-expense.png'), fullPage: true });
+    } catch (error) {
+      const state = await page.evaluate(() => ({ path: location.pathname, text: document.body.innerText.slice(0, 1000) })).catch(() => null);
+      await page.screenshot({ path: path.join(outputDir, 'budget-expense-failure.png'), fullPage: true }).catch(() => {});
+      workflowFailures.push(`Budget/expense browser create failed: ${safe(error.message)} (${JSON.stringify(state)})`);
+    }
 
     await page.goto(`${frontUrl}/business-profile`, { waitUntil: 'networkidle2' });
     await page.waitForFunction(
@@ -427,11 +621,15 @@ async function main() {
     await page.waitForFunction(() => document.body.innerText.includes('Cài đặt') || document.body.innerText.includes('Tài khoản'));
     await page.waitForSelector('#fullName');
     await replaceInput(page, '#fullName', `${runPrefix} Browser Settings`);
-    const profileResponse = page.waitForResponse((response) => response.url().endsWith('/api/auth/profile') && response.request().method() === 'PUT')
+    const profileResponse = page.waitForResponse((response) => response.url().endsWith('/api/auth/profile') && response.request().method() === 'PUT', { timeout: 15000 })
       .catch((error) => ({ waitError: error.message }));
-    await page.$eval('#fullName', (input) => input.form.querySelector('button[type="submit"]').click());
+    await page.click('form button[type="submit"]');
     const profileSaved = await profileResponse;
-    if (profileSaved.waitError || !profileSaved.ok()) throw new Error(`Settings profile update failed: ${profileSaved.waitError || profileSaved.status()}`);
+    if (profileSaved.waitError || !profileSaved.ok()) {
+      await page.screenshot({ path: path.join(outputDir, 'settings-profile-failure.png'), fullPage: true }).catch(() => {});
+      const state = await page.evaluate(() => ({ path: location.pathname, text: document.body.innerText.slice(0, 1200), fullName: document.querySelector('#fullName')?.value }));
+      workflowFailures.push(`Settings profile update failed: ${profileSaved.waitError || profileSaved.status()} (${JSON.stringify(state)})`);
+    }
     await page.screenshot({ path: path.join(outputDir, '10-settings.png'), fullPage: true });
 
     await stop(backendProcess);
@@ -528,10 +726,13 @@ async function main() {
       if (authState?.token || authState?.isAuthenticated) throw new Error('Logout left the browser session authenticated.');
     }
 
+    const timeoutLog = appLogs.split('\n').find((line) => line.startsWith('[AI timeout config]')) || null;
     const failedApi = apiResponses.filter((item) => item.status >= 400 && !(item.status === 403 && item.path.includes('/api/admin/users/')) && !(skipAi && item.status === 503 && item.path === '/api/marketing-plans/trends'));
+    const verified = workflowFailures.length === 0 && failedApi.length === 0 && browserErrors.length === 0;
+    console.log(JSON.stringify({ target: { host: target.host, port: target.port, database: target.database, schema: target.schema }, runPrefix, aiSkipped: skipAi, runtimeAiTimeoutConfig: timeoutLog, planId, fixtureBudgetPlanId, avatarAssetId: testAvatarAssetId, staffId: staffUser?.id || null, adminId: staff?.id || null, roleStatusAfterAdmin: editedUser ? { role: editedUser.role, status: editedUser.status } : null, unauthorizedAdminStatus: denied, workflowFailures, failedApi, browserErrors, browserWarnings, apiResponses, screenshots: outputDir, backup: backupInfo.file, verified }, null, 2));
     if (failedApi.length) throw new Error(`Real API returned unexpected errors: ${JSON.stringify(failedApi)}`);
     if (browserErrors.length) throw new Error(`Browser console/page errors: ${safe(browserErrors.join(' | '))}`);
-    console.log(JSON.stringify({ target: { host: target.host, port: target.port, database: target.database, schema: target.schema }, runPrefix, aiSkipped: skipAi, planId, staffId: staff?.id || null, adminId: admin?.id || null, roleStatusAfterAdmin: editedUser ? { role: editedUser.role, status: editedUser.status } : null, unauthorizedAdminStatus: denied, apiResponses, screenshots: outputDir, backup: backupInfo.file, verified: true }, null, 2));
+    if (workflowFailures.length) throw new Error(`One or more independent browser workflows failed: ${workflowFailures.join(' | ')}`);
   } finally {
     if (browser) {
       const browserProcess = browser.process();

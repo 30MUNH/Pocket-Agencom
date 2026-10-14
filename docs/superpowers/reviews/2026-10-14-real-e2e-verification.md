@@ -147,3 +147,57 @@ The branch remains `feat/ui-ux-functional-overhaul`. No migration, bucket, Cloud
 Focused local implementation commit: `d7f8864` — `fix(ai): enforce eligibility and account for text usage`.
 Additional focused local commits: `21da85b` — `fix(frontend): align AI request deadline with retry budget`; `a38ed7d` — `fix(ai): surface provider failures for social insights`.
 Real-browser harness commit: `268ec80` — `test: isolate non-AI real browser workflows`.
+
+## Follow-up: AI reliability and remaining real browser workflows
+
+This follow-up supersedes earlier “unverified” statuses below where it records a newer live browser result. It does not change the legacy Storage or RAG conclusions.
+
+### A. AI timeout correction
+
+- Root cause: `AIService.generateText()` enforced Axios/provider timeouts inconsistently and did not pass a shared `AbortSignal` or a total-operation deadline through provider calls. Retries and provider fallback could therefore outlive the requested timeout. The spawned real-browser API inherits the caller's environment; dotenv does not override inherited values.
+- Commit `7cf6620` adds a per-attempt deadline and one total operation deadline, propagates cancellation to OpenRouter/Groq Axios requests and Gemini requests, bounds retry delays to the remaining operation time, and releases concurrency slots after abort.
+- A controlled local delayed HTTP server proved the request was cancelled at the configured request deadline and a 100 ms total deadline stopped the operation after one attempt without retry. The test uses no provider and is timeout-mechanics evidence only.
+- The actual child-process check printed `[AI timeout config] requestMs=30000 operationMs=30000 maxRetries=0` when launched with `AI_REQUEST_TIMEOUT_MS=30000 AI_MAX_RETRIES=0`. The final browser run logged its effective 45,000 ms request and operation deadlines and two retries. The browser's Axios limit is 90,000 ms, above the backend's 45,000 ms operation limit.
+- Backend test suite: 111 passed, 0 failed. `npm run check --prefix backend` passed.
+
+### B. AI workflow results
+
+| Workflow | Status | Evidence |
+|---|---|---|
+| Marketing Plan generation | **FAIL — provider reliability** | An earlier real `openrouter/free` call generated and persisted a plan. The fresh minimum structured probe routed to `dots-studio/dots-3-note-preview:free` but returned no usable content (HTTP 200, zero-cost usage). A pinned Liquid free model returned HTTP 502 with an empty response; pinned Gemma returned HTTP 429. The earlier pass is not evidence of repeatable current reliability. |
+| Marketing Plan refinement/revision | **BLOCKED — provider** | The provider did not return a usable structured response in the fresh probes; no fake fallback or paid request was used. |
+| Quick Editor AI caption | **BLOCKED — provider** | Draft save passed in the browser; real caption generation was not accepted because the configured provider probes produced no usable content. |
+| Image-prompt generation | **BLOCKED — provider** | No usable real structured response was available to validate or persist. |
+| Social analysis and trend text | **BLOCKED — provider** | The non-AI browser run deliberately skipped AI; the trends endpoint returned expected 503 while AI was disabled. No fabricated analysis was accepted. |
+| AI image generation, Gemini Vision, and embeddings | **BLOCKED — account eligibility** | No billable inference was attempted. See the dashboard fields in section D. |
+
+### C. Latest non-AI real browser run
+
+- Run prefix: `pa-realdb-browser-1791962146925-05831e`; verified pre-run snapshot: `/tmp/pocket-agencom-db-backups/pocket-agencom-2026-10-14T07-16-01-506Z.json.gz`; screenshots: `/tmp/pocket-agencom-db-backups/browser-1791962161603`.
+- The run ended with `verified: true`, `workflowFailures: []`, no unexpected API failures, and no page errors. The two browser console warnings were recorded separately: a React state update during another component's render and a duplicate child key.
+- **REAL E2E PASS:** registration/login/logout; profile settings persistence; private avatar upload to `avatars-private`; owner preview and staff avatar preview rendered actual bytes; dashboard analytics API/render; social account persistence, UI list and browser deletion; password change followed by login with the new password; notification preference toggle and reload persistence; budget/expense create and rendered persistence; template selection and Quick Editor draft save; calendar create/edit/delete; external media URL registration; support ticket submission.
+- Social list rendering had a confirmed frontend defect: Axios unwraps a successful response to an array, while the settings component only read `response.data`. The component now accepts both array and wrapped response shapes. A focused frontend regression test covers both.
+- Budget/expense browser coverage proves create/read. Expense update/delete actions are **NOT IMPLEMENTED** in the current UI/API, so CRUD is not claimed.
+- Notification preference persistence is browser-local. Notification inbox/read/delete actions are **NOT IMPLEMENTED** in the inspected user API/UI. Automatic notification records from other workflows are separate.
+- Social add through the profile API plus persisted list/delete were verified. AI-powered profile analysis and scraper-based external metrics remain **BLOCKED** by provider/account eligibility; external analytics are not represented as real data.
+- Frontend tests: 20 passed, 0 failed. Frontend production build passed. Vite emitted the pre-existing Node 20.18 vs required 20.19 warning and a 516 kB main-chunk warning.
+
+### D. Free-tier eligibility
+
+- Configuration has provider keys, but `freeTierConfirmed` is false for Groq, Gemini, and Cloudflare. Keys alone do not establish free billing. OpenRouter's one HTTP 200 probe reported usage cost `$0`; this does not establish reliable structured output or eligibility for other providers.
+- Cloudflare owner check: in the Cloudflare dashboard, verify the account plan and Workers AI usage/allocation under **AI → Workers AI**. Confirm current Neurons used against the 10,000/day no-charge allocation and whether paid/unified billing is enabled. See [Cloudflare Workers AI pricing](https://developers.cloudflare.com/workers-ai/platform/pricing/).
+- Gemini owner check: in Google AI Studio **Projects**, verify the configured key's project has **Billing Tier = Free Tier** and its **Status** is active; review **Usage** and the Billing page's prepay/postpay, credit balance, and auto-reload fields. Do not use the key if its project is paid or billing status is uncertain. See [Gemini API billing](https://ai.google.dev/gemini-api/docs/billing/).
+- Cloudflare account endpoints previously returned 403; they were not retried. Gemini account eligibility was not established programmatically. No paid inference, Cloud policy change, or AI image/vision/embedding call occurred.
+
+### E. RAG and legacy privacy
+
+- Read-only inspection found 7 knowledge-base rows, all 768-dimensional, with no embedding-model provenance and no owner/business metadata. Current retrieval code has no tenant filter and includes rows without model provenance. Whether the corpus is intentionally global is unresolved; no reindex, write, or retrieval inference was performed. Keep this as a separate follow-up.
+- Legacy public Storage buckets and objects remain unchanged and anonymously accessible. Milestone B / legacy privacy cutover is **NOT COMPLETE**. No old bucket was made private and no legacy object or record was deleted.
+- After browser cleanup, both private bucket root inventories were empty: `avatars-private` 0 objects; `campaign-assets-private` 0 objects.
+
+### F. Database reconciliation, cleanup, and Git
+
+- Final browser run pre-snapshot and verified post-run snapshot both contain exactly 1,487 rows across 15 tables. Counts matched exactly: `_prisma_migrations=5`, `ai_quota_usage=4`, `business_profiles=210`, `expenses=0`, `knowledge_base=7`, `marketing_plan_assets=0`, `marketing_plans=1011`, `media_asset_access_leases=0`, `media_assets=2`, `notifications=24`, `scheduled_posts=1`, `social_platforms=4`, `support_tickets=2`, `templates=0`, `users=217`.
+- Post-run snapshot: `/tmp/pocket-agencom-db-backups/pocket-agencom-2026-10-14T07-19-42-272Z.json.gz`, SHA-256 `4c2541d6d3e788fc7ee5b4b8df1f3cce190fe7bb3d4610418251a6e16cfd0b7b`, verified. The test plan (ID `8112`), avatar asset (ID `45`), synthetic users, expense, social record, and other run-owned rows were cleaned. Both private Storage inventories are empty.
+- One earlier rerun left its private avatar metadata after the cleanup transaction hit Prisma's default five-second timeout while scanning serialized Marketing Plan references (6.071 seconds elapsed). The exact synthetic asset was subsequently deleted through the ownership/reference-checked service after raising its transaction deadline; its two synthetic users and all prefixed records were removed. The regression test now verifies a 20-second reference transaction deadline. No source/legacy object was touched.
+- Confirmed fix commits: `7cf6620` — `fix(ai): enforce request and operation deadlines`; `107804e` — `fix(storage): bound reference-check transactions`; `e1a170f` — `fix(frontend): render saved social platforms`. The real-browser harness updates and this report are in a separate local commit. No push, merge, deploy, or PR was performed. The branch remains `feat/ui-ux-functional-overhaul`; unrelated working-tree changes remain unstaged.
