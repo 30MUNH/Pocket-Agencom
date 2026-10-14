@@ -8,7 +8,7 @@ const { AppError } = require('../middleware/errorHandler');
  * Uses real public metadata scraping for numeric metrics,
  * and AI solely for qualitative strategic insights (strengths, areas to improve).
  */
-async function analyzeSocialProfile(url, platform) {
+async function analyzeSocialProfile(url, platform, userId) {
   // Step 1: Scrape real public metrics
   let scraped = {};
   try {
@@ -33,37 +33,18 @@ Trả về DUY NHẤT một đối tượng JSON:
 - Nền tảng: ${platform}
 - URL: ${url}`;
 
-  let qualitative = {
-    strengths: [
-      'Hồ sơ cập nhật kênh liên lạc rõ ràng',
-      'Định vị kênh phù hợp với đối tượng mục tiêu',
-      'Có tiềm năng phát triển nội dung đa định dạng',
-    ],
-    areasToImprove: [
-      'Nên duy trì lịch đăng bài đều đặn vào khung giờ vàng',
-      'Tăng cường các định dạng video ngắn (Reels, TikTok, Shorts)',
-      'Bổ sung lời kêu gọi hành động (CTA) cụ thể ở mỗi bài đăng',
-    ],
-  };
-
-  try {
-    const aiResult = await aiService.generateStructuredContent({
-      prompt: userPrompt,
-      systemPrompt: SYSTEM_PROMPT,
-      validatorFn: (parsed) => {
-        if (!Array.isArray(parsed.strengths) || !Array.isArray(parsed.areasToImprove)) {
-          throw new Error('Invalid structure');
-        }
-        return parsed;
-      },
-    });
-
-    if (aiResult.data) {
-      qualitative = aiResult.data;
-    }
-  } catch (aiErr) {
-    console.warn('[Social AI Advice Notice] Could not generate qualitative advice:', aiErr.message);
-  }
+  if (userId) await aiService.checkAndIncrementUserQuota(userId, 'text');
+  const aiResult = await aiService.generateStructuredContent({
+    prompt: userPrompt,
+    systemPrompt: SYSTEM_PROMPT,
+    validatorFn: (parsed) => {
+      if (!Array.isArray(parsed.strengths) || !Array.isArray(parsed.areasToImprove)) {
+        throw new AppError('AI social analysis returned an invalid response.', 502);
+      }
+      return parsed;
+    },
+  });
+  const qualitative = aiResult.data;
 
   return {
     followers,
@@ -92,7 +73,7 @@ async function addPlatform(userId, { platform, url }) {
     });
   }
 
-  const analysis = await analyzeSocialProfile(url, platform);
+  const analysis = await analyzeSocialProfile(url, platform, userId);
 
   const aiInsight = `### Điểm mạnh\n${analysis.strengths.map((s) => `- ${s}`).join('\n')}\n\n### Cần cải thiện\n${analysis.areasToImprove.map((a) => `- ${a}`).join('\n')}`;
 
@@ -189,7 +170,7 @@ async function triggerAnalysis(userId, id) {
     throw new AppError('Không có quyền thực hiện hành động này.', 403);
   }
 
-  const analysis = await analyzeSocialProfile(record.url, record.platform);
+  const analysis = await analyzeSocialProfile(record.url, record.platform, userId);
   const aiInsight = `### Điểm mạnh\n${analysis.strengths.map((s) => `- ${s}`).join('\n')}\n\n### Cần cải thiện\n${analysis.areasToImprove.map((a) => `- ${a}`).join('\n')}`;
 
   const updated = await prisma.socialPlatform.update({

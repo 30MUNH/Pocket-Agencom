@@ -255,21 +255,38 @@ test('Honest Data Layer: scheduled posts and media stores return honest empty st
   assert.equal(assets.length, 0, 'Must not return hardcoded Unsplash demo assets');
 });
 
-test('Honest Data Layer: social metrics does not hallucinate follower numbers when scraper is unavailable', async () => {
+test('social analysis surfaces provider failure instead of presenting static advice as generated output', async () => {
   const originalGet = axios.get;
   axios.get = async () => { throw new Error('Deterministic offline scraper fixture'); };
-  let res;
   try {
-    res = await socialService.analyzeSocialProfile('https://instagram.com/pocket_test', 'instagram');
+    await assert.rejects(
+      socialService.analyzeSocialProfile('https://instagram.com/pocket_test', 'instagram'),
+      { statusCode: 503 },
+    );
   } finally {
     axios.get = originalGet;
   }
-  assert.ok(res);
-  // Followers must default to 0 (or null), never a random number from Math.random
-  assert.equal(res.followers, 0);
-  assert.equal(res.engagementRate, 0);
-  assert.ok(Array.isArray(res.strengths));
-  assert.ok(Array.isArray(res.areasToImprove));
+});
+
+test('social analysis consumes one persistent text quota unit for its owner', async () => {
+  const userId = 501;
+  const dateKey = new Date().toISOString().slice(0, 10);
+  prismaFixture.__fixture.resetQuota(userId, dateKey, 'text');
+  const originalGet = axios.get;
+  const originalStructured = aiService.generateStructuredContent;
+  axios.get = async () => { throw new Error('Deterministic offline scraper fixture'); };
+  aiService.generateStructuredContent = async () => ({
+    data: { strengths: ['Định vị rõ ràng'], areasToImprove: ['Thêm lời kêu gọi hành động'] },
+  });
+
+  try {
+    await socialService.analyzeSocialProfile('https://instagram.com/pocket_test', 'instagram', userId);
+    assert.equal((await aiService.getUserQuotaStatus(userId)).text.used, 1);
+  } finally {
+    axios.get = originalGet;
+    aiService.generateStructuredContent = originalStructured;
+    prismaFixture.__fixture.resetQuota(userId, dateKey, 'text');
+  }
 });
 
 test('FREE_ONLY_MODE blocks account-unverified providers and unknown Cloudflare models', () => {
@@ -551,17 +568,7 @@ test('Ownership & Security: scheduled posts and media library prevent cross-user
   assert.equal(deletedAsset.deleted, true);
 });
 
-test('Trend Bulletin: aiService provides trending topics and marketingPlanService delegates gracefully', async () => {
-  const trends = await aiService.getTrendingBulletin({ forceRefresh: false });
-  assert.ok(Array.isArray(trends));
-  assert.equal(trends.length, 3);
-  assert.ok(trends[0].title);
-  assert.ok(trends[0].tags.length > 0);
-  assert.ok(trends[0].teaser);
-  assert.ok(trends[0].prefill);
-
-  // marketingPlanService.getTrendingBulletin returns valid trends
-  const serviceTrends = await marketingPlanService.getTrendingBulletin(false);
-  assert.equal(serviceTrends.length, 3);
+test('trend generation surfaces provider failure instead of silently returning curated trends', async () => {
+  await assert.rejects(aiService.getTrendingBulletin({ forceRefresh: true }), { statusCode: 503 });
 });
 

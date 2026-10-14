@@ -886,13 +886,11 @@ Tuyệt đối KHÔNG trả về markdown ngoài mảng JSON.`;
         lastTrendsFetchTime = Date.now();
         return cachedTrends;
       }
-    } catch (err) {
-      console.warn('[AI Trend Scout Notice] Using curated default trends fallback:', err.message);
+    } catch {
+      throw new AppError('Không thể tạo xu hướng marketing từ dịch vụ AI. Vui lòng thử lại sau.', 503);
     }
 
-    cachedTrends = CURATED_DEFAULT_TRENDS;
-    lastTrendsFetchTime = Date.now();
-    return cachedTrends;
+    throw new AppError('Dịch vụ AI không trả về xu hướng marketing hợp lệ.', 502);
   }
 }
 
