@@ -1,5 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const fs = require('node:fs');
 const { auditRecords } = require('../src/services/storageReferenceAudit');
 
 test('classifies avatar post marketing plan and JSON references', () => {
@@ -31,4 +32,11 @@ test('redacts URL credentials signed tokens and user content', () => {
   });
   const output = JSON.stringify(report);
   for (const secret of ['password', 'secret', 'private campaign words', 'token=']) assert.equal(output.includes(secret), false);
+});
+
+test('read-only inventory queries current Prisma URL-bearing fields only', () => {
+  const script = fs.readFileSync(require.resolve('../scripts/audit-storage-references'), 'utf8');
+  assert.match(script, /tx\.template\.findMany\(\{ select: \{ id: true, fileUrl: true, previewImage: true \} \}\)/);
+  assert.doesNotMatch(script, /tx\.businessProfile\.findMany/);
+  assert.match(script, /SET TRANSACTION READ ONLY/);
 });

@@ -183,16 +183,17 @@
 **Files:**
 
 - Modify `frontend/src/api/mediaApi.js`, `frontend/src/api/uploadApi.js`, `frontend/src/api/authApi.js`, `frontend/src/api/scheduledPostApi.js`, `frontend/src/api/marketingPlanApi.js`.
-- Add `frontend/src/hooks/useMediaAssetUrl.js` (or follow the repository's existing media hook convention).
+- Add `frontend/src/hooks/useAuthorizedMediaUrl.js` and `frontend/src/components/media/AuthorizedMediaImage.jsx`.
 - Modify `frontend/src/pages/user/MediaLibrary.jsx`, `frontend/src/components/media/SocialImageGeneratorModal.jsx`, `frontend/src/pages/user/QuickEditor.jsx`, `frontend/src/pages/user/ContentCalendar.jsx`, `frontend/src/pages/user/MarketingResult.jsx`, `frontend/src/components/layout/Header.jsx`, and `frontend/src/pages/admin/ManageUsers.jsx`.
-- Add frontend coverage in `frontend/test/private-media-ui.test.js` or the existing `frontend/test/ui-ux-functional.test.js`.
+- Modify `frontend/src/pages/user/UserSettings.jsx` and `frontend/src/api/adminApi.js`; add `GET /api/admin/users/:id/avatar-access` in `backend/src/routes/adminRoutes.js` and `backend/src/controllers/adminController.js`.
+- Add frontend coverage in `frontend/test/private-media-access.test.js` and backend avatar-role/ownership tests.
 
 **Steps:**
 
-1. Add failing UI tests that a library page does not request URLs for off-screen/unselected assets, visible asset access is fetched on demand, one expired image retries once, downloads use the authorized endpoint, and copied URLs are labeled temporary.
-2. Implement per-item access requests and one bounded refresh attempt. Keep signed URLs in transient component state only; do not place them in durable editor or plan payloads.
-3. Cover missing/deleted assets, disabled sessions, and failed signing with an explicit unavailable preview state; avoid infinite retry loops.
-4. Run the established browser verification workflow for Media Library, AI image studio, Quick Editor, Content Calendar, avatar/profile, and Marketing Plan previews.
+1. Add coverage that Media Library does not request URLs for off-screen assets, that visible asset access is fetched on demand, expired images refresh with a bounded retry, downloads use the authorized endpoint, and copied URLs are labeled temporary.
+2. Implement per-item access requests through IntersectionObserver and one bounded image retry. Keep signed URLs in transient component memory only; generation and attachment responses/payloads retain MediaAsset IDs, not URLs.
+3. Cover missing/deleted assets, disabled requesters, and signing failures with an unavailable preview state; avoid infinite retry loops. Admin/Staff access must resolve through the target user's avatar FK and must not expose an arbitrary cross-user asset endpoint.
+4. Run a browser workflow against mocked Storage if the repository has an isolated browser harness; do not use the real-DB browser E2E harness in Code Ready.
 
 **Acceptance:** Large library responses do not trigger bulk signing; all supported screens use authorized IDs and temporary URLs.
 
@@ -202,6 +203,7 @@
 
 **Files:**
 
+- Add `backend/src/services/storageBackup.js` for checksum manifests, AES-GCM encryption, verification, and resumable asset copy.
 - Add `backend/scripts/backup-storage-metadata.js`, `backend/scripts/backup-storage-objects.js`, and `backend/scripts/verify-storage-backup.js`.
 - Add `backend/scripts/migrate-legacy-storage.js` in dry-run-by-default mode.
 - Add `docs/superpowers/plans/storage-privacy-cloud-change-set.md` with exact Dashboard bucket settings, policy inventory/removal checklist, and verification commands. Do not edit or execute the pre-existing untracked `backend/scripts/restrict-storage-policies.sql`.
@@ -209,10 +211,10 @@
 
 **Steps:**
 
-1. Test manifest generation, checksum mismatch detection, incomplete copy recovery, dry-run default, and refusal to delete a source object or legacy row.
-2. Implement an approved protected backup of the relevant PostgreSQL rows/legacy references and an encrypted external backup of actual object bytes. The object manifest includes source bucket/path, byte length, content type, checksum, backup key, and timestamp, but excludes secrets and signed URLs. Verify backups by checksum and restore into an isolated test bucket, then download and compare bytes and metadata.
-3. Implement verified copy of exact bucket/path only after ownership inventory approval. Reconcile reference counts and update references transactionally; classify legacy URL rows only after verification; preserve source bytes and old fields. Make migration resumable and idempotent.
-4. Document exact Cloud work: create the two private buckets with current size/content-type limits, no anonymous/authenticated object policies, service-role backend access; inspect/remove any broad public SELECT only at Milestone B. Cloud package is descriptive and unapplied.
+1. Test manifest generation, AES-256-GCM byte round-trip, checksum mismatch detection, matching-destination resume, dry-run default, and refusal to delete source objects or legacy rows.
+2. Implement protected metadata backup plus encrypted external object-byte backup. The object manifest includes source bucket/path, byte length, content type, SHA-256, opaque backup key, and timestamp, but excludes credentials and signed URLs. Verify by decrypting/recomputing checksums and support a separately gated isolated-bucket restore/readback.
+3. Implement verified copy of exact bucket/path only after an approved owner inventory. Under the shared advisory lock, update only the matching active MediaAsset row and retain its old URL field and source object. Do not rewrite arbitrary direct URL references automatically; unresolved User, ScheduledPost, MarketingPlan, Template, or newly discovered references remain explicit reconciliation blockers for Milestone B.
+4. Document exact Cloud work: `campaign-assets-private` at 4 MB and `avatars-private` at 2 MB, both restricted to JPEG/PNG/WebP, no anonymous/authenticated object policies, and backend service-role access. Inspect/remove broad legacy public SELECT only with Milestone B approval. Cloud package is descriptive and unapplied.
 
 **Acceptance:** Byte backup can be restored and independently verified; migration has dry-run, resume, reconciliation, and no-delete guarantees; Cloud changes remain unapplied.
 
@@ -225,7 +227,7 @@
 - `npx prisma validate --schema backend/prisma/schema.prisma` and inspect migration SQL without applying it.
 - `npm test --prefix backend` and `npm test --prefix frontend` for local/unit/mock suites only; exclude or retain the existing guard on real-DB suites. Do not point test configuration at the configured application database.
 - `npm run check --prefix backend`, `npm run lint --prefix frontend`, `npm run build --prefix frontend`, and `npm run check:domain-removal`.
-- Run browser verification against the mocked Storage adapter where supported.
+- Run browser verification against the mocked Storage adapter where supported; report it blocked when no isolated mock browser harness exists.
 - Scan frontend outputs/configuration and application logging to confirm the service-role key is not exposed and signed URLs are not persisted or logged.
 
 **State 1 — Code Ready:** Application code, Prisma migration files, local/mock tests, and Cloud change documentation are prepared. No schema is applied and no Cloud resource is required. Local/mocked results do not claim real Storage privacy enforcement.
@@ -259,4 +261,4 @@ Before Milestone B, rollback by pausing new uploads or deploying a compatible re
 - Covers URL canonicalization, Supabase origin/bucket detection, active-user checks, roles, ID-only signing, and no bulk signing.
 - Separates private upload readiness from the later legacy privacy cutover, with explicit evidence and approval gates.
 - Covers object bytes, checksum validation, isolated restore, idempotent copy, source preservation, and rollback without public buckets.
-- Leaves implementation, DB/Cloud mutation, cutover, and RAG work outside this documentation-only turn.
+- Leaves DB/Cloud mutation, cutover, and RAG work outside Code Ready.
