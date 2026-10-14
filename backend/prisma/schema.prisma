@@ -66,6 +66,18 @@ enum NotificationType {
   support
 }
 
+enum MediaAssetSourceKind {
+  legacy_unverified
+  legacy_internal_verified
+  external_url
+  private_storage
+}
+
+enum MediaAssetLifecycleState {
+  active
+  deleting
+}
+
 model User {
   id           Int           @id @default(autoincrement())
   name         String
@@ -73,6 +85,7 @@ model User {
   passwordHash String        @map("password_hash")
   phone        String?
   avatarUrl    String?       @map("avatar_url")
+  avatarMediaAssetId Int?    @map("avatar_media_asset_id")
   role         UserRole      @default(user)
   status       AccountStatus @default(active)
   createdAt    DateTime      @default(now()) @map("created_at")
@@ -87,7 +100,8 @@ model User {
   notifications    Notification[]
   socialPlatforms  SocialPlatform[]
   scheduledPosts   ScheduledPost[]
-  mediaAssets      MediaAsset[]
+  mediaAssets      MediaAsset[] @relation("MediaAssetOwner")
+  avatarMediaAsset MediaAsset?  @relation("UserAvatarAsset", fields: [id, avatarMediaAssetId], references: [userId, id], onDelete: Restrict)
   aiQuotaUsage     AiQuotaUsage[]
 
   @@map("users")
@@ -144,7 +158,9 @@ model MarketingPlan {
   businessProfile BusinessProfile @relation(fields: [businessProfileId], references: [id])
   reviewedBy      User?           @relation("ReviewedPlans", fields: [reviewedById], references: [id])
   expenses        Expense[]
+  mediaAssets     MarketingPlanAsset[]
 
+  @@unique([userId, id])
   @@map("marketing_plans")
 }
 
@@ -241,6 +257,7 @@ model ScheduledPost {
   title             String
   content           String     @db.Text
   imageUrl          String?    @map("image_url")
+  mediaAssetId      Int?       @map("media_asset_id")
   platform          String // 'Facebook', 'TikTok', 'Instagram', 'Zalo', etc.
   scheduledTime     DateTime?  @map("scheduled_time")
   status            PostStatus @default(pending_approval)
@@ -248,7 +265,8 @@ model ScheduledPost {
   createdAt         DateTime   @default(now()) @map("created_at")
   updatedAt         DateTime   @default(now()) @updatedAt @map("updated_at")
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  mediaAsset MediaAsset? @relation("ScheduledPostAsset", fields: [userId, mediaAssetId], references: [userId, id], onDelete: Restrict)
 
   @@map("scheduled_posts")
 }
@@ -268,18 +286,62 @@ model AiQuotaUsage {
 }
 
 model MediaAsset {
-  id                Int      @id @default(autoincrement())
-  userId            Int      @map("user_id")
-  businessProfileId Int?     @map("business_profile_id")
-  name              String
-  url               String
-  fileType          String   @map("file_type") // 'image', 'video', 'document'
-  sizeBytes         Int?     @map("size_bytes")
-  createdAt         DateTime @default(now()) @map("created_at")
+  id                    Int                     @id @default(autoincrement())
+  userId                Int                     @map("user_id")
+  businessProfileId     Int?                    @map("business_profile_id")
+  name                  String
+  url                   String?
+  sourceKind            MediaAssetSourceKind    @default(legacy_unverified) @map("source_kind")
+  storageBucket         String?                 @map("storage_bucket")
+  storagePath           String?                 @map("storage_path")
+  fileType              String                  @map("file_type")
+  sizeBytes             Int?                    @map("size_bytes")
+  lifecycleState        MediaAssetLifecycleState @default(active) @map("lifecycle_state")
+  deletionOperationId   String?                 @unique @map("deletion_operation_id")
+  deletionStartedAt     DateTime?               @map("deletion_started_at")
+  deletionAttemptCount  Int                     @default(0) @map("deletion_attempt_count")
+  deletionLastError     String?                 @map("deletion_last_error")
+  createdAt             DateTime                @default(now()) @map("created_at")
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user                 User                 @relation("MediaAssetOwner", fields: [userId], references: [id], onDelete: Cascade)
+  avatarFor            User[]               @relation("UserAvatarAsset")
+  scheduledPosts       ScheduledPost[]      @relation("ScheduledPostAsset")
+  marketingPlanAssets  MarketingPlanAsset[]
+  accessLeases         MediaAssetAccessLease[]
 
+  @@unique([userId, id])
+  @@unique([storageBucket, storagePath])
+  @@index([userId, lifecycleState])
   @@map("media_assets")
+}
+
+model MarketingPlanAsset {
+  id              Int          @id @default(autoincrement())
+  userId          Int          @map("user_id")
+  marketingPlanId Int          @map("marketing_plan_id")
+  mediaAssetId    Int          @map("media_asset_id")
+  purpose         String       @default("attachment")
+  createdAt       DateTime     @default(now()) @map("created_at")
+
+  marketingPlan MarketingPlan @relation(fields: [userId, marketingPlanId], references: [userId, id], onDelete: Cascade)
+  mediaAsset    MediaAsset    @relation(fields: [userId, mediaAssetId], references: [userId, id], onDelete: Restrict)
+
+  @@unique([marketingPlanId, mediaAssetId])
+  @@index([userId, mediaAssetId])
+  @@map("marketing_plan_assets")
+}
+
+model MediaAssetAccessLease {
+  id          Int      @id @default(autoincrement())
+  userId      Int      @map("user_id")
+  mediaAssetId Int     @map("media_asset_id")
+  expiresAt   DateTime @map("expires_at")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  mediaAsset MediaAsset @relation(fields: [userId, mediaAssetId], references: [userId, id], onDelete: Cascade)
+
+  @@index([mediaAssetId, expiresAt])
+  @@map("media_asset_access_leases")
 }
 
 model Expense {
