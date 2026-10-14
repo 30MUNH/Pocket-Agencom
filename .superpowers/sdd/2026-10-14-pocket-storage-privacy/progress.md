@@ -1,0 +1,12 @@
+# SDD ledger — plan: docs/superpowers/plans/2026-10-14-pocket-storage-privacy.md
+Ruling: Workspace — work in the current checkout because the user explicitly requires remaining on feat/ui-ux-functional-overhaul and preserving the existing unrelated changes; cost if wrong: lower filesystem isolation than a new worktree.
+Pre-flight: Task 1 inventory produces asset/reference classification consumed by Task 2 schema, Task 3 URL validation, and Task 9 migration tooling — align all consumers on the plan's sourceKind states and never classify URL-only rows as external without verification.
+Pre-flight: Task 2 schema produces MediaAsset identity/lifecycle and plan/post reference tables consumed by Tasks 4–8 — use composite owner constraints and short advisory-locked transactions; no real DB application/tests in Code Ready.
+Pre-flight: Task 3 external URL classifier feeds Task 4 signing and Tasks 5–6 writes — only validated external_url rows bypass signing; URL patterns alone never establish ownership.
+Pre-flight: Task 4 upload/access produces ID-based access consumed by Tasks 5–8 — keep bucket/path server-only and private mode default disabled; no public fallback.
+Pre-flight: Tasks 5–6 add/remove persisted references consumed by Task 7 deletion — all writers must share the lifecycle lock/reference protocol; old markers/JSON remain blocking references.
+Pre-flight: Task 7 signing leases/lifecycle consumed by Task 4 signing and Task 8 refresh — existing signed URLs remain bearer-accessible until expiry; no new lease after deleting.
+Pre-flight: Task 1 inventory and Task 2 schema feed Task 9 backup/migration — tools stay dry-run by default and must preserve source bytes/rows.
+Pre-flight: Task 9 tool/docs output feeds Task 10 gates — Code Ready is local/mock only; Staging and Milestones A/B require separate approvals and real evidence.
+Task 1: Ruling: the available brief helper does not parse the plan's `### 1.` heading form and task-start/task-done are absent; used the approved plan section directly and manual ledger evidence — cost if wrong: completion bookkeeping is less automated.
+Task 1: Ruling: URL host/bucket recognition is only an internal-object candidate, not ownership verification; left every existing MediaAsset as legacy_unverified and did not run the DB inventory because no isolated approved DB was provided — cost if wrong: inventory requires a later protected read-only pass before legacy classification.
