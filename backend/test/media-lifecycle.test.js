@@ -14,7 +14,15 @@ function setup({ asset, references = {}, leases = [], removeResult = null } = {}
     user: { async count() { return references.avatars || 0; } },
     scheduledPost: { async count() { return references.posts || 0; } },
     marketingPlanAsset: { async count() { return references.planRelations || 0; } },
-    marketingPlan: { async findMany() { return references.plans || []; } },
+    marketingPlan: {
+      async findMany({ where }) {
+        const candidates = where?.OR || [];
+        return (references.plans || []).filter((plan) => candidates.some((candidate) => {
+          const [field, condition] = Object.entries(candidate)[0] || [];
+          return field && String(plan[field] ?? '').includes(condition?.contains ?? '\0');
+        }));
+      },
+    },
     template: { async count() { return references.templates || 0; } },
     mediaAssetAccessLease: {
       async deleteMany({ where }) { calls.push(['expired-leases', where]); return { count: 0 }; },
@@ -49,6 +57,12 @@ test('legacy image markers and ScheduledPost references block cleanup', async ()
 
 test('serialized JSON asset-ID references block row and object deletion', async () => {
   const state = setup({ asset: privateAsset(), references: { plans: [{ contentIdeas: '{\"mediaAssetId\": 12}' }] } });
+  await assert.rejects(state.service.deleteOwnedAsset(4, 12), { statusCode: 409 });
+  assert.equal(state.calls.some(([name]) => name === 'remove-object'), false);
+});
+
+test('pretty-printed serialized JSON asset-ID references with arbitrary key spacing block deletion', async () => {
+  const state = setup({ asset: privateAsset(), references: { plans: [{ contentIdeas: '{\n  \"mediaAssetId\"  :  12\n}' }] } });
   await assert.rejects(state.service.deleteOwnedAsset(4, 12), { statusCode: 409 });
   assert.equal(state.calls.some(([name]) => name === 'remove-object'), false);
 });

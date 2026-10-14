@@ -57,12 +57,14 @@ function containsReference(value, needles, assetId) {
 async function countReferences(tx, asset) {
   const needles = referenceNeedles(asset);
   const urlContains = (field) => needles.map((needle) => ({ [field]: { contains: needle } }));
+  const planCandidateNeedles = [...needles, '"mediaAssetId"', '"assetId"'];
+  const planUrlContains = (field) => planCandidateNeedles.map((needle) => ({ [field]: { contains: needle } }));
   const [avatarRefs, postRefs, planAssetRefs, plans, templateRefs] = await Promise.all([
     tx.user.count({ where: { OR: [{ avatarMediaAssetId: asset.id }, ...urlContains('avatarUrl')] } }),
     tx.scheduledPost.count({ where: { OR: [{ mediaAssetId: asset.id }, ...urlContains('imageUrl'), ...urlContains('content')] } }),
     tx.marketingPlanAsset.count({ where: { mediaAssetId: asset.id } }),
     tx.marketingPlan.findMany({
-      where: { OR: PLAN_FIELDS.flatMap((field) => urlContains(field)) },
+      where: { OR: PLAN_FIELDS.flatMap((field) => planUrlContains(field)) },
       select: Object.fromEntries(['id', ...PLAN_FIELDS].map((field) => [field, true])),
     }),
     tx.template.count({ where: { OR: [...urlContains('fileUrl'), ...urlContains('previewImage')] } }),
