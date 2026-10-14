@@ -1,5 +1,6 @@
 const prisma = require('../config/prisma');
 const { AppError } = require('../middleware/errorHandler');
+const { validateExternalMediaUrl } = require('./externalMediaUrl');
 
 /**
  * Uploads/records a media asset in the library.
@@ -9,12 +10,14 @@ async function uploadMediaAsset(userId, { name, url, fileType = 'image', sizeByt
     throw new AppError('Tên tập tin và URL media là bắt buộc.', 400);
   }
 
+  const canonicalUrl = validateExternalMediaUrl(url);
   return prisma.mediaAsset.create({
     data: {
       userId,
       businessProfileId: businessProfileId ? Number(businessProfileId) : null,
       name,
-      url,
+      url: canonicalUrl,
+      sourceKind: 'external_url',
       fileType,
       sizeBytes: Number(sizeBytes) || 0
     }
