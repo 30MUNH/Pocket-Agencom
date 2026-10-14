@@ -174,6 +174,24 @@ test('OpenRouter empty responses fall through to the next text provider', async 
   }
 });
 
+test('OpenRouter reports the underlying routed model returned by the provider', async () => {
+  const originalPost = axios.post;
+  axios.post = async () => ({
+    data: {
+      model: 'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free',
+      choices: [{ message: { role: 'assistant', content: 'Nội dung thử nghiệm.' } }],
+      usage: { total_tokens: 10, cost: 0 },
+    },
+  });
+  try {
+    const provider = new OpenRouterProvider('test-key', 'openrouter/free');
+    const result = await provider.generateText({ prompt: 'Viết một câu tiếng Việt.' });
+    assert.equal(result.model, 'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free');
+  } finally {
+    axios.post = originalPost;
+  }
+});
+
 test('AI Architecture: throws explicit error when all providers fail without returning mock plan data', async () => {
   const customService = new aiService.AIService();
 
@@ -265,6 +283,7 @@ test('FREE_ONLY_MODE blocks account-unverified providers and unknown Cloudflare 
 
   assert.equal(config.isModelFree('groq', 'openai/gpt-oss-120b'), false);
   assert.equal(config.isModelFree('gemini', 'gemini-2.5-flash'), false);
+  assert.equal(config.isModelFree('gemini', 'gemini-2.5-flash-pro'), false);
   assert.equal(config.isModelFree('cloudflare', '@cf/black-forest-labs/flux-1-schnell'), false);
   assert.equal(config.isModelFree('cloudflare', '@cf/vendor/metered-model'), false);
   assert.equal(config.isModelFree('openrouter', 'openrouter/free'), true);
@@ -283,6 +302,7 @@ test('FREE_ONLY_MODE permits listed providers only after explicit account free-t
 
   assert.equal(config.isModelFree('groq', 'openai/gpt-oss-120b'), true);
   assert.equal(config.isModelFree('gemini', 'gemini-2.5-flash'), true);
+  assert.equal(config.isModelFree('gemini', 'gemini-2.5-flash-pro'), false);
   assert.equal(config.isModelFree('cloudflare', '@cf/black-forest-labs/flux-1-schnell'), true);
   assert.equal(config.isModelFree('cloudflare', '@cf/vendor/metered-model'), false);
 });
@@ -422,6 +442,33 @@ test('AI quota increments atomically and never exceeds the configured limit', as
   assert.equal(results.filter((result) => result.status === 'fulfilled').length, limit);
   assert.equal(results.filter((result) => result.status === 'rejected' && result.reason.statusCode === 429).length, 5);
   assert.equal((await aiService.getUserQuotaStatus(userId)).text.used, limit);
+});
+
+test('Quick Editor, image-prompt, and plan-refinement text actions each consume one daily quota unit', async () => {
+  const userId = 501;
+  const dateKey = new Date().toISOString().slice(0, 10);
+  prismaFixture.__fixture.resetQuota(userId, dateKey, 'text');
+  const service = new aiService.AIService();
+  service.getTextProvidersInPriority = () => [{
+    name: 'test-provider',
+    instance: {
+      generateText: async ({ jsonMode }) => ({
+        text: jsonMode
+          ? JSON.stringify({ contentIdeas: [], videoScripts: [], checklist: [], playbook: [], seoKeywords: [], revisionSummary: 'Đã rút gọn kế hoạch.' })
+          : 'Ghé quán trước 10 giờ để thưởng thức mẻ cà phê rang mới nhé!',
+        provider: 'test-provider',
+        model: 'test-model',
+      }),
+    },
+  }];
+
+  await service.generateDetailedPost({ userId, ideaTitle: 'Mẻ rang mới', ideaDescription: 'Cà phê rang thủ công', platform: 'Facebook' });
+  await service.generateImagePrompt({ userId, postContent: 'Mời bạn ghé thử cà phê rang mới.', platform: 'Facebook' });
+  await service.refineMarketingPlan({ userId, plan: { goal: 'Tăng lượt khách', contentIdeas: [], videoScripts: [], checklist: [], playbook: [] }, instruction: 'Rút gọn' });
+
+  const status = await aiService.getUserQuotaStatus(userId);
+  assert.equal(status.text.used, 3);
+  prismaFixture.__fixture.resetQuota(userId, dateKey, 'text');
 });
 
 test('Persistence: scheduled post format extracts embedded image URLs without schema drift', () => {

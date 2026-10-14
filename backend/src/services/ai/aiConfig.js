@@ -75,6 +75,7 @@ const aiConfig = {
   embedding: {
     model: process.env.GEMINI_EMBEDDING_MODEL || 'gemini-embedding-2',
     dimensions: parseInt(process.env.GEMINI_EMBEDDING_DIMENSIONS || '768', 10),
+    verifiedFreeModels: ['gemini-embedding-2'],
   },
 
   // Operational limits & daily user quota
@@ -124,7 +125,7 @@ const aiConfig = {
     }
 
     if (p === 'gemini') {
-      return this.freeTierConfirmed.gemini && this.verifiedFreeModels.gemini.some((freeModel) => m.startsWith(freeModel));
+      return this.freeTierConfirmed.gemini && this.verifiedFreeModels.gemini.includes(m);
     }
 
     if (p === 'cloudflare') {

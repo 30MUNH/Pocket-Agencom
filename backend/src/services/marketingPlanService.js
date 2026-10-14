@@ -305,6 +305,7 @@ async function generateDetailedPost(user, { ideaTitle, ideaDescription, platform
   const usp = profile?.usp || 'Sản phẩm/dịch vụ chất lượng cao, giá thành hợp lý, phục vụ tận tâm';
 
   return aiService.generateDetailedPost({
+    userId: user.id,
     ideaTitle,
     ideaDescription,
     platform,
@@ -329,6 +330,7 @@ async function generateDetailedPostWithImage(user, { ideaTitle, ideaDescription,
   }
 
   return aiService.generateDetailedPostWithImage({
+    userId: user.id,
     ideaTitle,
     ideaDescription,
     platform,
@@ -358,7 +360,7 @@ async function refinePlan(id, userId, { instruction }) {
     throw new AppError('Access denied', 403);
   }
 
-  const refinedData = await aiService.refineMarketingPlan({ plan, instruction });
+  const refinedData = await aiService.refineMarketingPlan({ userId, plan, instruction });
   assertNoInternalStorageUrls(refinedData);
 
   const updated = await prisma.marketingPlan.update({
@@ -399,6 +401,7 @@ async function generateImagePrompt(userId, { postContent, platform, businessProf
   }
 
   return aiService.generateImagePrompt({
+    userId,
     postContent,
     platform: platform || 'Facebook',
     brandContext,

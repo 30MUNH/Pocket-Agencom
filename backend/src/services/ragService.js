@@ -1,5 +1,6 @@
 const prisma = require('../config/prisma');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
+const aiConfig = require('./ai/aiConfig');
 
 let embeddingModelInstance = null;
 
@@ -8,9 +9,12 @@ function getEmbeddingModel() {
   if (!apiKey || apiKey.trim().length === 0) {
     throw new Error('GEMINI_API_KEY is not configured for RAG embeddings.');
   }
+  if (!aiConfig.freeTierConfirmed.gemini || !aiConfig.embedding.verifiedFreeModels.includes(aiConfig.embedding.model)) {
+    throw new Error('Gemini free-tier eligibility is not confirmed for the configured RAG embedding model.');
+  }
   if (!embeddingModelInstance) {
     const genAI = new GoogleGenerativeAI(apiKey);
-    embeddingModelInstance = genAI.getGenerativeModel({ model: 'gemini-embedding-2' });
+    embeddingModelInstance = genAI.getGenerativeModel({ model: aiConfig.embedding.model });
   }
   return embeddingModelInstance;
 }
@@ -20,12 +24,12 @@ async function generateEmbedding(text) {
   const model = getEmbeddingModel();
   const result = await model.embedContent({
     content: { parts: [{ text }] },
-    outputDimensionality: 768,
+    outputDimensionality: aiConfig.embedding.dimensions,
   });
 
   const values = result?.embedding?.values;
-  if (!Array.isArray(values) || values.length !== 768) {
-    throw new Error(`Invalid embedding dimensions: expected 768, got ${values?.length}`);
+  if (!Array.isArray(values) || values.length !== aiConfig.embedding.dimensions) {
+    throw new Error(`Invalid embedding dimensions: expected ${aiConfig.embedding.dimensions}, got ${values?.length}`);
   }
 
   return values;
@@ -35,8 +39,8 @@ async function generateEmbedding(text) {
 async function saveToKnowledgeBase(content, metadata = {}) {
   const enrichedMetadata = {
     ...metadata,
-    embeddingModel: 'gemini-embedding-2',
-    dimensions: 768,
+    embeddingModel: aiConfig.embedding.model,
+    dimensions: aiConfig.embedding.dimensions,
     createdAt: new Date().toISOString(),
   };
 
@@ -57,7 +61,7 @@ async function saveToKnowledgeBase(content, metadata = {}) {
 
 // Top-N closest strategies by cosine distance (<=>). Returns [] on any failure
 // so callers can always proceed without RAG context.
-// Isolates vector space by filtering to gemini-embedding-2 embeddings.
+// Isolates vector space by filtering to the configured embedding model.
 async function findSimilarStrategies(userQuery, limit = 3) {
   try {
     const embedding = await generateEmbedding(userQuery);
@@ -69,7 +73,7 @@ async function findSimilarStrategies(userQuery, limit = 3) {
       FROM knowledge_base
       WHERE embedding IS NOT NULL
         AND (
-          metadata->>'embeddingModel' = 'gemini-embedding-2'
+          metadata->>'embeddingModel' = ${aiConfig.embedding.model}
           OR metadata->>'embeddingModel' IS NULL
         )
       ORDER BY embedding <=> ${vector}::vector
@@ -92,15 +96,15 @@ async function reindexKnowledgeBase() {
     for (const record of records) {
       try {
         const meta = typeof record.metadata === 'object' && record.metadata !== null ? record.metadata : {};
-        if (meta.embeddingModel === 'gemini-embedding-2') {
+        if (meta.embeddingModel === aiConfig.embedding.model) {
           continue; // Already on current model
         }
 
         const embedding = await generateEmbedding(record.content);
         const updatedMetadata = {
           ...meta,
-          embeddingModel: 'gemini-embedding-2',
-          dimensions: 768,
+          embeddingModel: aiConfig.embedding.model,
+          dimensions: aiConfig.embedding.dimensions,
           reindexedAt: new Date().toISOString(),
         };
 

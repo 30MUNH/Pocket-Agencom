@@ -1,5 +1,6 @@
 const marketingPlanService = require('../services/marketingPlanService');
 const mediaAccessService = require('../services/mediaAccessService').createMediaAccessService();
+const aiService = require('../services/ai/aiService');
 const { AppError } = require('../middleware/errorHandler');
 const { generatePostWithImageSchema } = require('../validators/marketingPlan.validator');
 const { success } = require('../utils/response');
@@ -81,6 +82,10 @@ async function generatePostWithImage(req, res, next) {
         message: i.message,
       }));
       throw new AppError('Validation failed', 422, details);
+    }
+
+    if (!aiService.gemini.isAvailable()) {
+      throw new AppError('Gemini Vision is unavailable because free-tier eligibility is not confirmed.', 503);
     }
 
     // Persist the image privately and pass its ID with the in-memory bytes to Gemini Vision.

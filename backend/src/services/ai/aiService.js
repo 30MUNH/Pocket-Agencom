@@ -339,6 +339,7 @@ class AIService {
 
     for (const { name, instance } of providers) {
       for (let attempt = 0; attempt <= aiConfig.limits.maxRetries; attempt++) {
+        const attemptStartedAt = Date.now();
         try {
           const result = await instance.generateText({
             prompt,
@@ -360,7 +361,11 @@ class AIService {
           return result;
         } catch (err) {
           lastError = err;
-          console.warn(`[AI Service] ${name} attempt ${attempt + 1} failed:`, err.message || err);
+          const status = err.response?.status || err.status || err.statusCode || null;
+          const code = err.code || err.cause?.code || null;
+          console.warn(
+            `[AI Service] ${name} attempt ${attempt + 1}/${aiConfig.limits.maxRetries + 1} failed after ${Date.now() - attemptStartedAt}ms (status=${status ?? 'none'}, code=${code ?? 'none'}).`
+          );
 
           // If retry-after header exists, respect it bounded
           const retryAfterSec = parseInt(err.response?.headers?.['retry-after'], 10);
@@ -381,11 +386,14 @@ class AIService {
       type: 'text',
       durationMs: Date.now() - startTime,
       success: false,
-      error: lastError?.message,
+      error: {
+        status: lastError?.response?.status || lastError?.status || lastError?.statusCode || null,
+        code: lastError?.code || lastError?.cause?.code || null,
+      },
     });
 
     throw new AppError(
-      `Tất cả các dịch vụ AI đều không thể phản hồi: ${lastError?.message || 'Quá tải hoặc hết hạn ngạch'}`,
+      'Các dịch vụ AI chưa phản hồi sau số lần thử có giới hạn. Vui lòng thử lại sau.',
       503
     );
   }
@@ -518,6 +526,7 @@ YÊU CẦU NỘI DUNG:
    * Generates a Detailed Social Post for a specific platform & trend
    */
   async generateDetailedPost({
+    userId,
     ideaTitle,
     ideaDescription,
     platform,
@@ -545,6 +554,8 @@ Chỉ trả về nội dung bài viết dạng văn bản thuần túy, không t
 - Tài nguyên: ${resources}
 - Lý do/Bối cảnh: ${reason}`;
 
+    if (userId) await checkAndIncrementUserQuota(userId, 'text');
+
     const result = await this.generateText({
       prompt,
       systemPrompt: SYSTEM_PROMPT,
@@ -558,6 +569,7 @@ Chỉ trả về nội dung bài viết dạng văn bản thuần túy, không t
    * Multi-modal generation: Post + Design tips from uploaded image
    */
   async generateDetailedPostWithImage({
+    userId,
     ideaTitle,
     ideaDescription,
     platform,
@@ -580,6 +592,8 @@ Người dùng gửi cho bạn ảnh sản phẩm thô. Hãy trả về CHÍNH X
 - Mô tả: ${ideaDescription}
 - USP: ${usp}
 - Brand Voice: ${brandVoice}`;
+
+    if (userId) await checkAndIncrementUserQuota(userId, 'text');
 
     // Use Gemini Vision if Gemini key is available
     if (this.gemini.isAvailable()) {
@@ -609,7 +623,8 @@ Người dùng gửi cho bạn ảnh sản phẩm thô. Hãy trả về CHÍNH X
    * Real Marketing Plan Revision Assistant
    * Refines existing marketing plan based on natural language user feedback
    */
-  async refineMarketingPlan({ plan, instruction }) {
+  async refineMarketingPlan({ userId, plan, instruction }) {
+    if (userId) await checkAndIncrementUserQuota(userId, 'text');
     const SYSTEM_PROMPT = `Bạn là Trợ lý Chiến lược Marketing AI.
 Người dùng đang có một kế hoạch marketing và muốn điều chỉnh nó theo yêu cầu cụ thể.
 Nhiệm vụ của bạn là nhận kế hoạch hiện tại và chỉ dẫn điều chỉnh, sau đó cập nhật kế hoạch phù hợp với chỉ dẫn.
@@ -654,7 +669,7 @@ Hãy áp dụng yêu cầu trên để cập nhật lại các phần trong kế
   /**
    * Derives an Image Prompt / Creative Brief from post content & campaign brief
    */
-  async generateImagePrompt({ postContent, platform, brandContext = '' }) {
+  async generateImagePrompt({ userId, postContent, platform, brandContext = '' }) {
     const SYSTEM_PROMPT = `You are an elite Commercial Advertising Visual Director specializing in image generation prompts for diffusion models like FLUX and Midjourney.
 Your task is to analyze a Vietnamese social media marketing post and craft a detailed English prompt for generating a stunning, high-converting commercial photograph or graphic.
 
@@ -668,6 +683,8 @@ CRITICAL RULES:
 Brand & Business Context: ${brandContext}
 Post Content:
 ${postContent.slice(0, 1000)}`;
+
+    if (userId) await checkAndIncrementUserQuota(userId, 'text');
 
     const result = await this.generateText({
       prompt,

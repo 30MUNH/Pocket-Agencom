@@ -81,7 +81,8 @@ class OpenRouterProvider {
     return {
       text,
       provider: this.name,
-      model: this.textModel,
+      // Meta-routes such as openrouter/free return the concrete selected model.
+      model: response.data?.model || this.textModel,
       usage: response.data?.usage || null,
     };
   }
