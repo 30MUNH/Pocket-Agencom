@@ -83,3 +83,64 @@ Local commits:
 
 - `34bf6c8` — `fix(storage): repair private media access and locking`
 - `60e1588` — `fix(ai): gate free-only providers by account eligibility`
+
+## Continuation — 2026-10-14
+
+This continuation records a fresh real-DB attempt and the current working-tree fixes. It does not change the NOT RELEASE READY verdict above.
+
+### Fresh real-service evidence
+
+- A read-only pre-run snapshot verified the authorized project and captured 15 public tables / 1,486 rows. The real API suite then passed authentication, profile, password change, archived-account rejection, and persistent concurrent quota enforcement after backend restart.
+- A bounded OpenRouter plan-generation request (one provider attempt, runner invoked with `AI_REQUEST_TIMEOUT_MS=30000`) failed. The provider attempt returned HTTP 502 after 53,418 ms; the API returned a generic 503 after 78,824 ms. No successful provider payload arrived, so no selected underlying model was observable for this request. A separate process parsed the 30-second setting, but the test child did not emit its effective timeout value; the 53.4-second provider attempt leaves timeout propagation/enforcement unresolved. No prompt, response content, key, or raw upstream error was logged.
+- Because generation failed, refinement, save/review, and the later scheduled-post/media/support subtest did not complete in that run; the suite's 180-second parent timeout closed its local API before the later subtest could run. This is a harness timeout consequence, not evidence that those features failed in the application.
+- A fresh read-only post-run snapshot matched the pre-run counts exactly: 1,486 rows, including 217 users, 1,011 plans, 2 media assets, 24 notifications, 1 scheduled post, 4 social platforms, and the 7 existing knowledge records. Run-owned users and quota rows were cleaned. No Storage object or legacy record was modified.
+- Earlier live OpenRouter probes recorded HTTP 200 with `$0` reported cost but unusable structured responses (reasoning-only output or invalid JSON), and a pinned free model returned HTTP 429. These are distinct provider results; the historical 120-second browser timeout still cannot be attributed to one layer from the earlier run. Current evidence confirms an upstream 502 plus an observed timeout/config mismatch, not a browser abort.
+- Cloudflare account/billing endpoints returned 403, so its account-level free allowance and billing mode remain unverified. Gemini free-tier eligibility also remains unverified. No image inference, Vision call, or embedding inference was sent. No paid inference was made.
+
+### Current focused fixes and verification
+
+- Quick Editor caption generation, image-prompt generation, plan refinement, and image-input text generation now pass the owning user ID to the persistent daily quota guard. One operation reserves one unit before provider work, including a failed provider request; a failed request does not silently bypass quota accounting.
+- OpenRouter results now expose the selected concrete model when the response contains it. Provider-failure logs record elapsed time, status, and code only; terminal API errors no longer include raw provider messages.
+- Text-generation frontend calls now use a 180-second request timeout to allow three 45-second attempts plus bounded retry-after waits. The observed 53.4-second attempt exceeded the runner's requested 30-second setting, so provider/client timeout propagation remains a release blocker until its effective value is instrumented and verified.
+- Gemini text eligibility now matches the verified model allowlist exactly; a prefix such as `gemini-2.5-flash-pro` is rejected. RAG model construction requires explicit Gemini free-tier confirmation and the exact configured embedding allowlist. The seven existing rows were neither embedded nor reindexed; their provenance/ownership question remains a separate follow-up.
+- Image-input generation rejects before private asset creation when Gemini Vision is unavailable due to unconfirmed free-tier eligibility.
+- Social analysis and trend refresh no longer substitute curated text when AI fails. Social analysis now reserves the user's persistent text quota and propagates provider/validation errors; this prevents static advice from being presented as generated analysis.
+- Backend isolated suite with loopback enabled: **108 passed, 0 failed**. This is unit/mock coverage, not external-provider or real-DB acceptance. Frontend suite: **18 passed, 0 failed**. Frontend production build succeeded.
+- The complete real-DB suite was **not a pass**: two nested checks passed; real plan generation failed on upstream 502; the scheduled-post/media/support subtest was prevented from running by the parent timeout. The exact post-run database reconciliation passed.
+
+### Updated feature acceptance table
+
+| Feature / UI route | Real service and persistence evidence | Observed result | Status |
+|---|---|---|---|
+| Registration, login, password change, archived account `/register`, `/login`, `/settings` | Real Express API and PostgreSQL; backend restart in the isolated run | Registration/login/profile/password change and archived-account rejection passed; browser logout and browser password-change interaction remain unverified | **PARTIAL** |
+| Dashboard/profile analytics `/dashboard`, `/business-profile` | Earlier browser E2E; PostgreSQL-backed profile | Profile persistence passed previously. New API suite verified profile persistence. Analytics display/data accuracy remains unverified against the browser | **PARTIAL** |
+| Marketing Plan `/marketing-kit`, `/marketing-kit/result`, `/plans` | Real OpenRouter route and PostgreSQL | Earlier run persisted one successful plan and retrieved it after backend restart. Fresh real attempt returned HTTP 502 and API 503; revision did not run in the failed suite | **FAIL — provider reliability / structured-output acceptance** |
+| Quick Editor AI `/user/quick-editor` | Real provider route not successfully exercised for this action; deterministic code path now quota-metered | Draft save passed in earlier browser E2E; real AI caption/content success remains unverified | **BLOCKED — provider** |
+| Image-input caption generation | Gemini Vision gated by explicit account eligibility; preflight before upload | Account eligibility not confirmed; request safely returns 503 without storing an asset | **BLOCKED — account eligibility** |
+| AI image generation and persisted attachment `/media-library`, image studio, `/calendar` | Cloudflare Workers AI account could not be verified; private Storage remains available | No image generation request or image bytes were created; no MediaAsset ID/preview/attachment acceptance | **BLOCKED — billing verification** |
+| Social account create/list/analyze/delete `/settings`, `/business-profile` | Social API uses scraper plus AI advice; provider errors now propagate and analysis uses the owner's AI quota | Prior run did not exercise live scraping or real analysis. CRUD/analyze remains outstanding; configured scraper eligibility was not verified | **NOT VERIFIED** |
+| Calendar posts and media attachments `/calendar` | Earlier real browser/API/PostgreSQL plus private Storage tests | Browser CRUD passed previously. Fresh real suite did not reach its post/media/support subtest; private asset authorization/deletion/concurrency evidence remains as recorded above | **PARTIAL** |
+| Budget and expenses / dashboard | PostgreSQL-backed expense API | No fresh real persistence workflow completed; safe contract coverage exists | **NOT VERIFIED** |
+| Notifications and actions/settings | PostgreSQL notification rows; staff-review notification exercised previously | Automatic staff notification was previously observed. User notification list/action browser flow was not exercised | **PARTIAL** |
+| Templates `/templates` | Earlier browser E2E | Template selection passed; database-backed template CRUD is not present in the observed workflow and the live templates table was empty | **PARTIAL** |
+| Support tickets `/help` | Prior real browser; PostgreSQL persistence | Browser ticket submission passed previously; fresh API subtest was cut off by the real-suite parent timeout | **PARTIAL** |
+| Avatar upload, preview, Admin/Staff access `/settings`, `/admin/users` | Private bucket path and authorization tests; earlier schema-guard regression coverage | Real browser avatar bytes/access workflow remains unverified | **NOT VERIFIED** |
+| Signed URL refresh, expiry, deletion/cache | Earlier real private Storage tests | 600-second expiry, denied new signing after deletion, cross-user/disabled denial passed. Previously issued bearer URL remained usable until expiry; immediate revocation is not provided | **PASS with documented lifecycle limit** |
+| RAG embeddings, similarity and context use | Existing PostgreSQL knowledge base inspected; Gemini inference remains gated | Seven records are global (no owner/business identifiers in metadata), 768 dimensions, missing embedding-model provenance. No new record or real retrieval/inference was made | **BLOCKED / separate follow-up** |
+| Legacy Storage privacy | `avatars`, `campaign-assets`, `media-assets` inventory and encrypted byte backup | Legacy avatars remain public; ownership of the one referenced avatar remains ambiguous. No source changed or cutover performed | **NOT COMPLETE — legacy assets remain publicly accessible** |
+
+### Release blockers
+
+1. Make provider timeout propagation deterministic and reproduce the real API response within the configured bound. Verify at least one successful structured plan result, revision, and Quick Editor output through the real browser with persistence/refresh.
+2. Obtain account-level confirmation of Cloudflare free capacity/billing configuration, or an owner-confirmed free image provider, before image inference.
+3. Verify Gemini free eligibility before Vision or embeddings. Do not infer account eligibility from model names or prefixes.
+4. Finish live browser coverage for logout, avatar, social, analytics, budget/expenses, notification actions, and signed-link refresh after expiry.
+5. Keep the seven-row RAG provenance/ownership issue as the separate follow-up; no reindex was performed.
+6. Legacy public buckets remain public. Ownership/reference ambiguity prevents a safe migration and privacy cutover; do not claim full privacy completion.
+
+### Git and cleanup
+
+The branch remains `feat/ui-ux-functional-overhaul`. No migration, bucket, Cloud policy, legacy object, cutover, deployment, push, merge, or PR operation occurred. Existing unrelated dirty files were preserved. The exact post-run database row counts match the pre-run snapshot; private Storage inventories and legacy sources were not modified in this continuation.
+
+Focused local implementation commit: `d7f8864` — `fix(ai): enforce eligibility and account for text usage`.
+Additional focused local commits: `21da85b` — `fix(frontend): align AI request deadline with retry budget`; `a38ed7d` — `fix(ai): surface provider failures for social insights`.
