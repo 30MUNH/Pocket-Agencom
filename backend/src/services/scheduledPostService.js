@@ -41,7 +41,7 @@ function parseMediaAssetId(value) {
 
 async function withOwnedActiveAsset(userId, assetId, operation) {
   return prisma.$transaction(async (tx) => {
-    await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`media-asset:${assetId}`}, 0))`;
+    await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`media-asset:${assetId}`}, 0))::text`;
     const asset = await tx.mediaAsset.findUnique({ where: { id: assetId } });
     if (!asset || asset.userId !== userId || asset.lifecycleState !== 'active') {
       throw new AppError('Media asset not found.', 404);

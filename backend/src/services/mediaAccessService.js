@@ -55,7 +55,7 @@ function createMediaAccessService(options = {}) {
     const id = validAssetId(assetId);
     if (!id || !requester?.id) throw new AppError(NOT_FOUND, 404);
     const result = await prismaClient.$transaction(async (tx) => {
-      await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`media-asset:${id}`}, 0))`;
+      await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`media-asset:${id}`}, 0))::text`;
       const asset = await tx.mediaAsset.findUnique({ where: { id } });
       if (!asset || Number(asset.userId) !== Number(requester.id) || asset.lifecycleState !== 'active') return { denied: true };
       const owner = await tx.user.findUnique({ where: { id: asset.userId }, select: { id: true, status: true } });
@@ -98,9 +98,9 @@ function createMediaAccessService(options = {}) {
       });
       if (!target || target.status !== 'active' || !target.avatarMediaAssetId) return { denied: true };
       const id = Number(target.avatarMediaAssetId);
-      await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`media-asset:${id}`}, 0))`;
+      await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`media-asset:${id}`}, 0))::text`;
       const asset = await tx.mediaAsset.findUnique({ where: { id } });
-      if (!asset || Number(asset.userId) !== targetId || asset.purpose !== 'avatar' || asset.sourceKind !== 'private_storage' || asset.lifecycleState !== 'active') return { denied: true };
+      if (!asset || Number(asset.userId) !== targetId || asset.sourceKind !== 'private_storage' || asset.lifecycleState !== 'active') return { denied: true };
       if (asset.storageBucket !== PRIVATE_BUCKETS.avatars || !asset.storagePath) return { denied: true };
       const lease = await tx.mediaAssetAccessLease.create({
         data: { userId: targetId, mediaAssetId: asset.id, expiresAt: new Date(now().getTime() + LEASE_LIFETIME_MS) },

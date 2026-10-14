@@ -32,7 +32,7 @@ async function uploadMedia(req, res, next) {
  */
 async function getMediaAssetAccess(req, res, next) {
   try {
-    const mediaAccessService = require('../services/mediaAccessService');
+    const mediaAccessService = require('../services/mediaAccessService').createMediaAccessService();
     const access = await mediaAccessService.getAuthorizedMediaAccess({
       requester: req.user,
       assetId: req.params.id,

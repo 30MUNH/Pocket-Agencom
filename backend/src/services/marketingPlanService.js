@@ -429,7 +429,7 @@ async function attachMediaAssets(planId, userId, requestedAssetIds) {
     return Number(text);
   }))].sort((a, b) => a - b);
   return prisma.$transaction(async (tx) => {
-    for (const assetId of assetIds) await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`media-asset:${assetId}`}, 0))`;
+    for (const assetId of assetIds) await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`media-asset:${assetId}`}, 0))::text`;
     const plan = await tx.marketingPlan.findUnique({ where: { id: Number(planId) }, select: { id: true, userId: true } });
     if (!plan || plan.userId !== userId) throw new AppError('Marketing plan not found.', 404);
     for (const assetId of assetIds) {
@@ -449,7 +449,7 @@ async function detachMediaAsset(planId, userId, requestedAssetId) {
   if (!/^[1-9]\d*$/.test(text)) throw new AppError('Invalid media asset ID.', 400);
   const mediaAssetId = Number(text);
   return prisma.$transaction(async (tx) => {
-    await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`media-asset:${mediaAssetId}`}, 0))`;
+    await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`media-asset:${mediaAssetId}`}, 0))::text`;
     const plan = await tx.marketingPlan.findUnique({ where: { id: Number(planId) }, select: { id: true, userId: true } });
     if (!plan || plan.userId !== userId) throw new AppError('Marketing plan not found.', 404);
     const removed = await tx.marketingPlanAsset.deleteMany({ where: { userId, marketingPlanId: plan.id, mediaAssetId } });

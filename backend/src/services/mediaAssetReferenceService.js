@@ -82,7 +82,7 @@ function createMediaAssetReferenceService({
   const storage = storageOperations || DEFAULT_STORAGE().createStorageService();
 
   async function withAssetLock(tx, id, fn) {
-    await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`media-asset:${id}`}, 0))`;
+    await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`media-asset:${id}`}, 0))::text`;
     return fn();
   }
 

@@ -197,7 +197,7 @@ async function updateProfile(userId, data) {
       const assetId = Number(data.avatarMediaAssetId);
       if (!Number.isSafeInteger(assetId) || assetId < 1) throw new AppError('Invalid avatar asset ID.', 400);
       return prisma.$transaction(async (tx) => {
-        await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`media-asset:${assetId}`}, 0))`;
+        await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`media-asset:${assetId}`}, 0))::text`;
         const asset = await tx.mediaAsset.findUnique({ where: { id: assetId } });
         if (!asset || asset.userId !== userId || asset.sourceKind !== 'private_storage' || asset.lifecycleState !== 'active') {
           throw new AppError('Avatar asset not found.', 404);

@@ -5,7 +5,7 @@ const { createMediaAccessService } = require('../src/services/mediaAccessService
 function setup({ asset = { id: 12, userId: 4, sourceKind: 'private_storage', lifecycleState: 'active', storageBucket: 'campaign-assets-private', storagePath: 'opaque.png' }, user = { id: 4, status: 'active' }, mode = 'private' } = {}) {
   const calls = [];
   const tx = {
-    async $queryRaw() { calls.push(['lock']); return []; },
+    async $queryRaw(strings) { assert.match(strings.join(''), /pg_advisory_xact_lock.*::text/s); calls.push(['lock']); return []; },
     mediaAsset: { async findUnique() { calls.push(['asset']); return asset; } },
     user: { async findUnique() { calls.push(['user']); return user; } },
     mediaAssetAccessLease: {
@@ -49,10 +49,10 @@ test('mode disabled and foreign bucket/path overrides never produce signing call
 });
 
 test('admin avatar access is limited to the target user linked avatar and 600 second URL', async () => {
-  const asset = { id: 12, userId: 8, sourceKind: 'private_storage', lifecycleState: 'active', storageBucket: 'avatars-private', storagePath: 'opaque-avatar.png', purpose: 'avatar' };
+  const asset = { id: 12, userId: 8, sourceKind: 'private_storage', lifecycleState: 'active', storageBucket: 'avatars-private', storagePath: 'opaque-avatar.png' };
   const calls = [];
   const tx = {
-    async $queryRaw() { calls.push(['lock']); },
+    async $queryRaw(strings) { assert.match(strings.join(''), /pg_advisory_xact_lock.*::text/s); calls.push(['lock']); },
     user: { async findUnique() { return { id: 8, status: 'active', avatarMediaAssetId: 12 }; } },
     mediaAsset: { async findUnique() { return asset; } },
     mediaAssetAccessLease: { async create() { return { id: 31 }; }, async delete() { return {}; } },
@@ -67,14 +67,14 @@ test('admin avatar access is limited to the target user linked avatar and 600 se
 
 test('non-admin, inactive target, mismatched avatar and non-avatar assets cannot be signed by admin surface', async () => {
   for (const { requester, target, asset } of [
-    { requester: { id: 2, role: 'user' }, target: { id: 8, status: 'active', avatarMediaAssetId: 12 }, asset: { id: 12, userId: 8, purpose: 'avatar', sourceKind: 'private_storage', lifecycleState: 'active', storageBucket: 'avatars-private', storagePath: 'x' } },
-    { requester: { id: 2, role: 'staff' }, target: { id: 8, status: 'inactive', avatarMediaAssetId: 12 }, asset: { id: 12, userId: 8, purpose: 'avatar', sourceKind: 'private_storage', lifecycleState: 'active', storageBucket: 'avatars-private', storagePath: 'x' } },
-    { requester: { id: 2, role: 'admin' }, target: { id: 8, status: 'active', avatarMediaAssetId: 12 }, asset: { id: 12, userId: 9, purpose: 'avatar', sourceKind: 'private_storage', lifecycleState: 'active', storageBucket: 'avatars-private', storagePath: 'x' } },
-    { requester: { id: 2, role: 'admin' }, target: { id: 8, status: 'active', avatarMediaAssetId: 12 }, asset: { id: 12, userId: 8, purpose: 'attachment', sourceKind: 'private_storage', lifecycleState: 'active', storageBucket: 'avatars-private', storagePath: 'x' } },
+    { requester: { id: 2, role: 'user' }, target: { id: 8, status: 'active', avatarMediaAssetId: 12 }, asset: { id: 12, userId: 8, sourceKind: 'private_storage', lifecycleState: 'active', storageBucket: 'avatars-private', storagePath: 'x' } },
+    { requester: { id: 2, role: 'staff' }, target: { id: 8, status: 'inactive', avatarMediaAssetId: 12 }, asset: { id: 12, userId: 8, sourceKind: 'private_storage', lifecycleState: 'active', storageBucket: 'avatars-private', storagePath: 'x' } },
+    { requester: { id: 2, role: 'admin' }, target: { id: 8, status: 'active', avatarMediaAssetId: 12 }, asset: { id: 12, userId: 9, sourceKind: 'private_storage', lifecycleState: 'active', storageBucket: 'avatars-private', storagePath: 'x' } },
+    { requester: { id: 2, role: 'admin' }, target: { id: 8, status: 'active', avatarMediaAssetId: 12 }, asset: { id: 12, userId: 8, sourceKind: 'private_storage', lifecycleState: 'active', storageBucket: 'campaign-assets-private', storagePath: 'x' } },
   ]) {
     const calls = [];
     const tx = {
-      async $queryRaw() {},
+      async $queryRaw(strings) { assert.match(strings.join(''), /pg_advisory_xact_lock.*::text/s); },
       user: { async findUnique() { return target; } },
       mediaAsset: { async findUnique() { return asset; } },
       mediaAssetAccessLease: { async create() { return { id: 31 }; }, async delete() { return {}; } },

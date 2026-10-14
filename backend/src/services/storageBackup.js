@@ -122,7 +122,7 @@ async function migrateVerifiedMediaAssets(items, adapters, { dryRun = true, appr
     }
 
     const updateResult = await adapters.database.$transaction(async (tx) => {
-      await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`media-asset:${Number(item.mediaAssetId)}`}, 0))`;
+      await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`media-asset:${Number(item.mediaAssetId)}`}, 0))::text`;
       return tx.mediaAsset.updateMany({
         where: {
           id: Number(item.mediaAssetId),
