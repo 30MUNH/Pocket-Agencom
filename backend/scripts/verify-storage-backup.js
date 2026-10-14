@@ -19,6 +19,9 @@ async function main() {
       throw new Error('Restore requires --restore --execute, STORAGE_BACKUP_RESTORE_APPROVED=1, and an isolated test bucket name.');
     }
     if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) throw new Error('Isolated test Storage credentials are required.');
+    if (!process.env.STORAGE_RESTORE_PROJECT_URL || process.env.SUPABASE_URL !== process.env.STORAGE_RESTORE_PROJECT_URL) {
+      throw new Error('Configured Supabase URL does not match the separately approved isolated test project URL.');
+    }
     const { createClient } = require('@supabase/supabase-js');
     const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false, autoRefreshToken: false } });
     for (const item of manifest.objects) {

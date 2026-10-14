@@ -4,13 +4,17 @@ const { buildObjectManifest, encryptObjectBytes, decryptObjectBytes, sha256, bac
 
 const REPO_ROOT = path.resolve(__dirname, '../..');
 
-function assertApprovedOutput(directory) {
+async function assertApprovedOutput(directory) {
   if (!process.argv.includes('--execute') || process.env.STORAGE_OBJECT_BACKUP_APPROVED !== '1') {
     throw new Error('Object backup requires --execute and STORAGE_OBJECT_BACKUP_APPROVED=1.');
   }
-  const resolved = path.resolve(directory || '');
-  const relative = path.relative(REPO_ROOT, resolved);
+  const requested = path.resolve(directory || '');
+  const relative = path.relative(REPO_ROOT, requested);
   if (!directory || !relative.startsWith('..') || path.isAbsolute(relative)) throw new Error('Backup directory must be outside the repository.');
+  await fs.mkdir(requested, { recursive: true, mode: 0o700 });
+  const resolved = await fs.realpath(requested);
+  const canonicalRelative = path.relative(await fs.realpath(REPO_ROOT), resolved);
+  if (!canonicalRelative.startsWith('..') || path.isAbsolute(canonicalRelative)) throw new Error('Backup directory must resolve outside the repository.');
   return resolved;
 }
 
@@ -21,7 +25,7 @@ function safeSourceObject(item) {
 }
 
 async function main() {
-  const backupDirectory = assertApprovedOutput(process.env.STORAGE_BACKUP_DIRECTORY);
+  const backupDirectory = await assertApprovedOutput(process.env.STORAGE_BACKUP_DIRECTORY);
   if (!process.env.STORAGE_BACKUP_ENCRYPTION_KEY || !/^[a-f0-9]{64}$/i.test(process.env.STORAGE_BACKUP_ENCRYPTION_KEY)) {
     throw new Error('STORAGE_BACKUP_ENCRYPTION_KEY must be a 32-byte hex key supplied from a secret manager.');
   }
@@ -32,7 +36,6 @@ async function main() {
   const { createClient } = require('@supabase/supabase-js');
   if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) throw new Error('Backend Supabase credentials are required.');
   const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false, autoRefreshToken: false } });
-  await fs.mkdir(backupDirectory, { recursive: true, mode: 0o700 });
   await fs.chmod(backupDirectory, 0o700);
   const timestamp = new Date().toISOString();
   const objects = [];

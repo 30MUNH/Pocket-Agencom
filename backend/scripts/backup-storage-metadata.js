@@ -3,7 +3,7 @@ const path = require('node:path');
 
 const REPO_ROOT = path.resolve(__dirname, '../..');
 
-function requireProtectedDestination(outputPath) {
+async function requireProtectedDestination(outputPath) {
   if (!outputPath) throw new Error('--output is required.');
   const resolved = path.resolve(outputPath);
   const relative = path.relative(REPO_ROOT, resolved);
@@ -11,11 +11,15 @@ function requireProtectedDestination(outputPath) {
   if (!process.argv.includes('--execute') || process.env.STORAGE_METADATA_BACKUP_APPROVED !== '1') {
     throw new Error('Metadata backup requires --execute and STORAGE_METADATA_BACKUP_APPROVED=1.');
   }
-  return resolved;
+  await fs.mkdir(path.dirname(resolved), { recursive: true, mode: 0o700 });
+  const realParent = await fs.realpath(path.dirname(resolved));
+  const canonicalRelative = path.relative(await fs.realpath(REPO_ROOT), realParent);
+  if (!canonicalRelative.startsWith('..') || path.isAbsolute(canonicalRelative)) throw new Error('Backup output must resolve outside the repository.');
+  return path.join(realParent, path.basename(resolved));
 }
 
 async function main() {
-  const outputPath = requireProtectedDestination(process.env.STORAGE_METADATA_BACKUP_FILE);
+  const outputPath = await requireProtectedDestination(process.env.STORAGE_METADATA_BACKUP_FILE);
   const prisma = require('../src/config/prisma');
   try {
     const records = await prisma.$transaction(async (tx) => {

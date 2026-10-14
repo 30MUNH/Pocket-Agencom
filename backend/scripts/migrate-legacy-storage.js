@@ -17,6 +17,9 @@ async function main() {
     throw new Error('Execution requires separate migration approval and explicit isolated-staging environment selection.');
   }
   if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) throw new Error('Backend Supabase credentials are required.');
+  if (!process.env.STORAGE_MIGRATION_PROJECT_URL || process.env.SUPABASE_URL !== process.env.STORAGE_MIGRATION_PROJECT_URL) {
+    throw new Error('Configured Supabase URL does not match the separately approved isolated staging project URL.');
+  }
   const { createClient } = require('@supabase/supabase-js');
   const prisma = require('../src/config/prisma');
   const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false, autoRefreshToken: false } });

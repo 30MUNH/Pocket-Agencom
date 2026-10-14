@@ -34,7 +34,7 @@ Do not make existing buckets private as part of Milestone A. Before requesting M
 5. Review the complete Storage policy inventory for broad public `SELECT` grants. With separate cutover approval, remove only grants proven to expose the legacy buckets; do not remove policies needed by unrelated buckets.
 6. Verify anonymous reads fail after accounting for CDN cache lifetime, while authorized application previews, downloads, ID ownership checks, and recovery still work. Keep original bytes and records throughout.
 
-The Cloud policy inventory and exact SQL must be prepared from the target project's current policy state during the separately approved change window. Do not execute the untracked `backend/scripts/restrict-storage-policies.sql`; it is outside this change set and has not been reviewed here.
+The migration and restore CLIs require the configured Supabase URL to equal a separately approved isolated-project URL. The Cloud policy inventory and exact SQL must be prepared from the target project's current policy state during the separately approved change window. Do not execute the untracked `backend/scripts/restrict-storage-policies.sql`; it is outside this change set and has not been reviewed here.
 
 ## Rollback
 

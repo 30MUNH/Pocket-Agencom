@@ -87,3 +87,10 @@ test('byte-backup scope accepts only inventory-verified exact bucket and object 
   }
   assert.equal(safeSourceObject({ verified: false, sourceBucket: 'legacy-public', sourcePath: 'a.png' }), false);
 });
+
+test('live copy and isolated restore require the exact separately approved project URL', () => {
+  const copyScript = require('node:fs').readFileSync(require.resolve('../scripts/migrate-legacy-storage'), 'utf8');
+  const restoreScript = require('node:fs').readFileSync(require.resolve('../scripts/verify-storage-backup'), 'utf8');
+  assert.match(copyScript, /SUPABASE_URL !== process\.env\.STORAGE_MIGRATION_PROJECT_URL/);
+  assert.match(restoreScript, /SUPABASE_URL !== process\.env\.STORAGE_RESTORE_PROJECT_URL/);
+});
