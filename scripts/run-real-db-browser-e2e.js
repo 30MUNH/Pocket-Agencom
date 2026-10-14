@@ -11,6 +11,7 @@ const bcrypt = require('../backend/node_modules/bcryptjs');
 const puppeteer = require('../node_modules/puppeteer-core');
 
 const optedIn = process.env.PA_REAL_DB_E2E === 'true';
+const skipAi = process.env.PA_REAL_DB_BROWSER_SKIP_AI === 'true';
 const backendEnvPath = path.resolve(__dirname, '../backend/.env');
 dotenv.config({ path: backendEnvPath });
 let backendProcess;
@@ -18,6 +19,7 @@ let frontendProcess;
 let browser;
 let prisma;
 let testStaffNotificationIds = [];
+let planId = null;
 let appLogs = '';
 const apiResponses = [];
 const browserErrors = [];
@@ -160,7 +162,12 @@ async function main() {
   const snapshot = JSON.parse(zlib.gunzipSync(fs.readFileSync(backupInfo.file)).toString('utf8'));
   if (snapshot.target.database !== target.database || snapshot.target.schema !== target.schema) throw new Error('Backup target does not match configured database.');
 
-  const env = { ...process.env, PA_REAL_DB_E2E: 'true', NODE_ENV: 'development', FREE_ONLY_MODE: 'true', AI_ALLOW_PAID_MODELS: 'false' };
+    const env = { ...process.env, PA_REAL_DB_E2E: 'true', NODE_ENV: 'development', FREE_ONLY_MODE: 'true', AI_ALLOW_PAID_MODELS: 'false' };
+    if (skipAi) {
+      env.OPENROUTER_API_KEY = '';
+      env.GROQ_API_KEY = '';
+      env.GEMINI_API_KEY = '';
+    }
   delete env.PA_TEST_DATABASE_URL;
   const apiPort = await listenOnFreePort();
   const frontPort = await listenOnFreePort();
@@ -254,6 +261,7 @@ async function main() {
     );
     await page.screenshot({ path: path.join(outputDir, '02-business-profile.png'), fullPage: true });
 
+    if (!skipAi) {
     await page.goto(`${frontUrl}/marketing-kit`, { waitUntil: 'networkidle2' });
     try {
       await page.waitForSelector('#campaign-business-type', { timeout: 10000 });
@@ -279,7 +287,7 @@ async function main() {
     if (generated.waitError) throw new Error(`Marketing plan request was not observed: ${generated.waitError}`);
     if (!generated.ok()) throw new Error(`Marketing plan API returned HTTP ${generated.status()}.`);
     const generatedPayload = await generated.json();
-    const planId = generatedPayload?.data?.id;
+    planId = generatedPayload?.data?.id;
     if (!planId) throw new Error('Marketing plan API did not return a persisted plan ID.');
     await page.waitForFunction(() => location.pathname.includes('/marketing-kit/result'), { timeout: 30000 });
     try {
@@ -318,6 +326,7 @@ async function main() {
     });
     testStaffNotificationIds = newStaffNotifications.map(({ id }) => id);
     await page.screenshot({ path: path.join(outputDir, '04-plan-saved.png'), fullPage: true });
+    }
 
     await page.goto(`${frontUrl}/templates`, { waitUntil: 'networkidle2' });
     await page.waitForFunction(() => document.body.innerText.includes('Thư viện'));
@@ -429,6 +438,11 @@ async function main() {
     backendProcess = null;
     appLogs = '';
     await startBackend(apiPort, env, frontUrl);
+    let staff = null;
+    let admin = null;
+    let denied = null;
+    let editedUser = null;
+    if (!skipAi) {
     await page.goto(`${frontUrl}/marketing-kit/result?planId=${planId}`, { waitUntil: 'networkidle2' });
     await page.reload({ waitUntil: 'networkidle2' });
     await page.waitForFunction(() => document.body.innerText.length > 100, { timeout: 20000 });
@@ -442,10 +456,10 @@ async function main() {
     const testUser = await prisma.user.findUnique({ where: { email }, select: { id: true } });
     const staffEmail = `${runPrefix}-staff@example.test`;
     const adminEmail = `${runPrefix}-admin@example.test`;
-    const staff = await prisma.user.create({ data: { name: `${runPrefix} Staff`, email: staffEmail, passwordHash: await bcrypt.hash(staffPassword, 10), role: 'staff', status: 'active' } });
-    const admin = await prisma.user.create({ data: { name: `${runPrefix} Admin`, email: adminEmail, passwordHash: await bcrypt.hash(adminPassword, 10), role: 'admin', status: 'active' } });
+    staff = await prisma.user.create({ data: { name: `${runPrefix} Staff`, email: staffEmail, passwordHash: await bcrypt.hash(staffPassword, 10), role: 'staff', status: 'active' } });
+    admin = await prisma.user.create({ data: { name: `${runPrefix} Admin`, email: adminEmail, passwordHash: await bcrypt.hash(adminPassword, 10), role: 'admin', status: 'active' } });
 
-    const denied = await page.evaluate(async ({ apiUrl, id }) => {
+    denied = await page.evaluate(async ({ apiUrl, id }) => {
       const token = JSON.parse(localStorage.getItem('pocket-agencom-auth')).state.token;
       const response = await fetch(`${apiUrl}/api/admin/users/${id}/role`, { method: 'PATCH', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ role: 'staff' }) });
       return response.status;
@@ -501,14 +515,23 @@ async function main() {
     await page.waitForFunction(() => !document.body.innerText.includes('Phân quyền Người dùng'), { timeout: 15000 });
     await page.reload({ waitUntil: 'networkidle2' });
     await page.waitForFunction((value) => document.body.innerText.includes(value), { timeout: 15000 }, email);
-    const editedUser = await prisma.user.findUnique({ where: { id: testUser.id } });
+    editedUser = await prisma.user.findUnique({ where: { id: testUser.id } });
     if (editedUser.role !== 'staff' || editedUser.status !== 'inactive') throw new Error('Admin role/status edit did not persist in PostgreSQL.');
     await page.screenshot({ path: path.join(outputDir, '15-admin-user-edited.png'), fullPage: true });
+    }
 
-    const failedApi = apiResponses.filter((item) => item.status >= 400 && !(item.status === 403 && item.path.includes('/api/admin/users/')));
+    if (skipAi) {
+      await page.goto(`${frontUrl}/dashboard`, { waitUntil: 'networkidle2' });
+      await page.click('button[aria-label="Đăng xuất"]');
+      await page.waitForFunction(() => location.pathname === '/login', { timeout: 15000 });
+      const authState = await page.evaluate(() => JSON.parse(localStorage.getItem('pocket-agencom-auth') || '{}').state || null);
+      if (authState?.token || authState?.isAuthenticated) throw new Error('Logout left the browser session authenticated.');
+    }
+
+    const failedApi = apiResponses.filter((item) => item.status >= 400 && !(item.status === 403 && item.path.includes('/api/admin/users/')) && !(skipAi && item.status === 503 && item.path === '/api/marketing-plans/trends'));
     if (failedApi.length) throw new Error(`Real API returned unexpected errors: ${JSON.stringify(failedApi)}`);
     if (browserErrors.length) throw new Error(`Browser console/page errors: ${safe(browserErrors.join(' | '))}`);
-    console.log(JSON.stringify({ target: { host: target.host, port: target.port, database: target.database, schema: target.schema }, runPrefix, planId, staffId: staff.id, adminId: admin.id, roleStatusAfterAdmin: { role: editedUser.role, status: editedUser.status }, unauthorizedAdminStatus: denied, apiResponses, screenshots: outputDir, backup: backupInfo.file, verified: true }, null, 2));
+    console.log(JSON.stringify({ target: { host: target.host, port: target.port, database: target.database, schema: target.schema }, runPrefix, aiSkipped: skipAi, planId, staffId: staff?.id || null, adminId: admin?.id || null, roleStatusAfterAdmin: editedUser ? { role: editedUser.role, status: editedUser.status } : null, unauthorizedAdminStatus: denied, apiResponses, screenshots: outputDir, backup: backupInfo.file, verified: true }, null, 2));
   } finally {
     if (browser) {
       const browserProcess = browser.process();
