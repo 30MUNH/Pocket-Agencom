@@ -226,10 +226,18 @@ export default function SocialLinksManager({ initialLinks = [], onChange }) {
       formattedUrl = `https://${formattedUrl}`;
     }
 
-    // Auto-detect matching platform and select it in the dropdown
-    const detected = detectPlatformFromUrl(formattedUrl);
-    if (detected && detected !== selectedPlatform) {
-      setSelectedPlatform(detected);
+    // Determine target platform: prefer selected platform if valid, else auto-detect
+    let targetPlatform = null;
+    if (validateSocialUrl(selectedPlatform, formattedUrl).isValid) {
+      targetPlatform = selectedPlatform;
+    } else {
+      targetPlatform = detectPlatformFromUrl(formattedUrl);
+    }
+
+    if (targetPlatform) {
+      e.preventDefault();
+      setSelectedPlatform(targetPlatform);
+      addLinkItem(targetPlatform, formattedUrl);
     }
   };
 
@@ -371,7 +379,7 @@ export default function SocialLinksManager({ initialLinks = [], onChange }) {
             <div className="relative">
               <input
                 type="text"
-                placeholder={`Nhập đường dẫn ${PLATFORM_VALIDATION_RULES[selectedPlatform]?.name}...`}
+                placeholder={`Dán hoặc nhập đường dẫn ${PLATFORM_VALIDATION_RULES[selectedPlatform]?.name}...`}
                 value={urlInput}
                 onChange={handleUrlChange}
                 onPaste={handlePaste}
