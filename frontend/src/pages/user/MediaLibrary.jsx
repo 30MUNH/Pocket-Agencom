@@ -198,11 +198,11 @@ export default function MediaLibrary() {
           <div className="flex items-center gap-3 shrink-0">
             <button
               onClick={() => setIsAiModalOpen(true)}
-              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-on-primary transition-colors hover:bg-blue-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-on-primary transition-colors hover:bg-primary/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
             >
               <Sparkles size={16} /> Tạo ảnh AI
             </button>
-            <label className="cursor-pointer inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-on-primary hover:bg-blue-700 focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-primary transition-colors">
+            <label className="cursor-pointer inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-on-primary hover:bg-primary/90 focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-primary transition-colors">
               <Upload size={16} /> Tải ảnh lên
               <input type="file" onChange={handleDirectUpload} className="sr-only" accept="image/jpeg,image/png,image/webp" />
             </label>

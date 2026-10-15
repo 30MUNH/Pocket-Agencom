@@ -236,7 +236,7 @@ export default function ManageUsers() {
                         user.role === 'admin'
                           ? 'bg-purple-100 text-purple-800 dark:bg-purple-950/40 dark:text-purple-300'
                           : user.role === 'staff'
-                          ? 'bg-blue-100 text-blue-800 dark:bg-blue-950/40 dark:text-blue-300'
+                          ? 'bg-pink-100 text-pink-800 dark:bg-pink-950/40 dark:text-pink-300'
                           : 'bg-surface-container text-on-surface-variant'
                       }`}>
                         {user.role}
@@ -268,7 +268,7 @@ export default function ManageUsers() {
                         <button
                           onClick={() => handleOpenDetail(user)}
                           title="Xem Chi tiết"
-                          className="p-2 text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 hover:bg-blue-500/10 rounded-full transition-colors"
+                          className="p-2 text-pink-600 hover:text-pink-800 dark:text-pink-400 dark:hover:text-pink-300 hover:bg-pink-500/10 rounded-full transition-colors"
                         >
                           <Eye size={18} />
                         </button>

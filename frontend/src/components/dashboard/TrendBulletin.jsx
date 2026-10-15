@@ -213,7 +213,7 @@ export default function TrendBulletin() {
                   e.stopPropagation();
                   handleCreateScript(trend);
                 }}
-                className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-primary py-3.5 text-sm font-semibold text-on-primary transition-colors hover:bg-blue-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-primary py-3.5 text-sm font-semibold text-on-primary transition-colors hover:bg-primary/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
               >
                 <span>{trend.trendScope === 'SIMPLE_POST' ? 'Soạn thảo nhanh' : 'Tạo kịch bản'}</span>
                 <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform animate-bounce-horizontal" />

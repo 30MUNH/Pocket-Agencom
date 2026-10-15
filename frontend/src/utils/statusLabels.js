@@ -1,6 +1,6 @@
 export const PLAN_STATUS_LABELS = {
   draft: { label: 'Bản nháp', color: 'bg-outline' },
-  saved: { label: 'Đã lưu', color: 'bg-blue-500' },
+  saved: { label: 'Đã lưu', color: 'bg-pink-500' },
   reviewed: { label: 'Đang duyệt', color: 'bg-amber-500' },
   approved: { label: 'Đã duyệt', color: 'bg-green-500' },
   need_revision: { label: 'Cần chỉnh sửa', color: 'bg-orange-500' },

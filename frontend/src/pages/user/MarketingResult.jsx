@@ -879,7 +879,7 @@ export default function MarketingResult() {
                             {phase.phaseName}
                           </h4>
                           {phase.duration && (
-                            <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800 text-xs font-bold shrink-0 self-start sm:self-auto">
+                            <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-pink-50 text-pink-700 border border-pink-200 dark:bg-pink-900/30 dark:text-pink-300 dark:border-pink-800 text-xs font-bold shrink-0 self-start sm:self-auto">
                               <Clock size={12} />
                               {phase.duration}
                             </span>
