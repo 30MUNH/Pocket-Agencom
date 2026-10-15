@@ -12,7 +12,7 @@ Active application roles are `user`, `staff`, and `admin`. The `archived` accoun
 
 ## Local setup
 
-Use Node.js 20.19 or newer and PostgreSQL with the `vector` extension.
+Use Node.js 22.23.3 (as specified in `.nvmrc`) and PostgreSQL with the `vector` extension. Run `nvm use` before installing dependencies or starting the app.
 
 ```bash
 npm run install:all

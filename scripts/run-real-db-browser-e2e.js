@@ -12,6 +12,7 @@ const puppeteer = require('../node_modules/puppeteer-core');
 
 const optedIn = process.env.PA_REAL_DB_E2E === 'true';
 const skipAi = process.env.PA_REAL_DB_BROWSER_SKIP_AI === 'true';
+const frontendDev = process.env.PA_REAL_DB_BROWSER_FRONTEND_DEV === 'true';
 const backendEnvPath = path.resolve(__dirname, '../backend/.env');
 dotenv.config({ path: backendEnvPath });
 let backendProcess;
@@ -23,6 +24,7 @@ let planId = null;
 let fixtureBudgetPlanId = null;
 let testAvatarAssetId = null;
 let staffUser = null;
+let expectedCrossUserMedia404Path = null;
 let appLogs = '';
 const apiResponses = [];
 const browserErrors = [];
@@ -96,6 +98,9 @@ async function cleanup() {
   const plans = await prisma.marketingPlan.findMany({ where: { userId: { in: ids } }, select: { id: true } });
   const planIds = plans.map(({ id }) => id);
   if (planIds.length) await prisma.expense.deleteMany({ where: { marketingPlanId: { in: planIds } } });
+  await prisma.marketingPlanAsset.deleteMany({ where: { userId: { in: ids } } });
+  await prisma.marketingPlan.deleteMany({ where: { userId: { in: ids } } });
+  await prisma.scheduledPost.deleteMany({ where: { userId: { in: ids } } });
   const privateAssets = await prisma.mediaAsset.findMany({
     where: { userId: { in: ids }, sourceKind: 'private_storage' },
     select: { id: true, userId: true },
@@ -123,8 +128,6 @@ async function cleanup() {
       }
     }
   }
-  await prisma.marketingPlan.deleteMany({ where: { userId: { in: ids } } });
-  await prisma.scheduledPost.deleteMany({ where: { userId: { in: ids } } });
   await prisma.mediaAsset.deleteMany({ where: { userId: { in: ids }, sourceKind: 'external_url' } });
   await prisma.supportTicket.deleteMany({ where: { userId: { in: ids } } });
   await prisma.supportTicket.deleteMany({ where: { assignedStaffId: { in: ids } } });
@@ -154,6 +157,22 @@ async function clickText(page, text) {
     return true;
   }, text);
   if (!found) throw new Error(`Visible control not found: ${text}`);
+}
+
+async function clickTextWithPointer(page, text) {
+  const controls = await page.$$('button,a,[role="button"]');
+  for (const control of controls) {
+    const details = await control.evaluate((element) => ({
+      text: element.innerText?.trim() || '',
+      visible: element.getClientRects().length > 0,
+      disabled: Boolean(element.disabled),
+    }));
+    if (details.visible && !details.disabled && details.text.includes(text)) {
+      await control.click();
+      return;
+    }
+  }
+  throw new Error(`Visible enabled control not found: ${text}`);
 }
 
 async function replaceInput(page, selector, value) {
@@ -187,6 +206,32 @@ async function browserApi(page, apiUrl, method, route, body) {
   }, { apiUrl, method, route, body });
 }
 
+async function loadMediaPreview(page, name) {
+  await page.waitForFunction((label) => Boolean([...document.querySelectorAll('[role="img"], img')]
+    .find((element) => element.getAttribute('aria-label') === label || element.alt === label)), { timeout: 20000 }, name);
+  await page.evaluate((label) => {
+    const image = [...document.querySelectorAll('[role="img"], img')]
+      .find((element) => element.getAttribute('aria-label') === label || element.alt === label);
+    image?.scrollIntoView({ block: 'center' });
+  }, name);
+  await page.waitForFunction((label) => [...document.images].some((img) => img.alt === label)
+    || [...document.querySelectorAll('[role="img"]')].some((element) => element.getAttribute('aria-label') === label && element.innerText.includes('Ảnh không khả dụng')),
+  { timeout: 30000 }, name);
+  const previewState = await page.evaluate((label) => {
+    const image = [...document.images].find((img) => img.alt === label);
+    const placeholder = [...document.querySelectorAll('[role="img"]')]
+      .find((element) => element.getAttribute('aria-label') === label);
+    return {
+      imageFound: Boolean(image),
+      imageLoaded: Boolean(image?.complete && image.naturalWidth > 0),
+      imageStatus: image ? { complete: image.complete, naturalWidth: image.naturalWidth } : null,
+      placeholderText: placeholder?.innerText || null,
+    };
+  }, name);
+  if (!previewState.imageFound) throw new Error(`Authorized Media Library preview was unavailable: ${JSON.stringify(previewState)}`);
+  await page.waitForFunction((label) => [...document.images].some((img) => img.alt === label && img.complete && img.naturalWidth > 0), { timeout: 30000 }, name);
+}
+
 async function main() {
   if (!optedIn) throw new Error('Real browser E2E is disabled. Set PA_REAL_DB_E2E=true explicitly.');
   const appEnv = dotenv.parse(fs.readFileSync(backendEnvPath));
@@ -213,6 +258,7 @@ async function main() {
       env.OPENROUTER_API_KEY = '';
       env.GROQ_API_KEY = '';
       env.GEMINI_API_KEY = '';
+      env.CLOUDFLARE_API_TOKEN = '';
     }
   delete env.PA_TEST_DATABASE_URL;
   const apiPort = await listenOnFreePort();
@@ -226,9 +272,9 @@ async function main() {
 
   try {
     await startBackend(apiPort, env, frontUrl);
-    const build = spawnSync('npm', ['run', 'build', '--prefix', 'frontend'], {
+    const build = frontendDev ? { status: 0 } : spawnSync('npm', ['run', 'build', '--prefix', 'frontend'], {
       cwd: path.resolve(__dirname, '..'),
-      env: { ...env, VITE_API_URL: `${apiUrl}/api` },
+      env: { ...env, NODE_ENV: 'production', VITE_API_URL: `${apiUrl}/api` },
       encoding: 'utf8',
       timeout: 180000,
       maxBuffer: 4 * 1024 * 1024,
@@ -237,9 +283,9 @@ async function main() {
     if (build.stderr) process.stderr.write(build.stderr);
     if (build.error || build.status !== 0) throw new Error(`Frontend production build failed: ${safe(build.error?.message || 'build exited nonzero')}`);
 
-    frontendProcess = launch(process.execPath, [path.resolve(__dirname, '../frontend/node_modules/vite/bin/vite.js'), 'preview', '--host', '127.0.0.1', '--port', String(frontPort), '--strictPort'], {
+    frontendProcess = launch(process.execPath, [path.resolve(__dirname, '../frontend/node_modules/vite/bin/vite.js'), frontendDev ? 'dev' : 'preview', '--host', '127.0.0.1', '--port', String(frontPort), '--strictPort'], {
       cwd: path.resolve(__dirname, '../frontend'),
-      env,
+      env: { ...env, VITE_API_URL: `${apiUrl}/api` },
     });
     await waitUntilReady(`${frontUrl}/register`, frontendProcess, 'Vite frontend');
 
@@ -520,11 +566,129 @@ async function main() {
     });
     testStaffNotificationIds = newStaffNotifications.map(({ id }) => id);
     await page.screenshot({ path: path.join(outputDir, '04-plan-saved.png'), fullPage: true });
+
+    const refineResponse = await browserApi(page, apiUrl, 'POST', `/marketing-plans/${planId}/refine`, {
+      instruction: 'Điều chỉnh kế hoạch để nhấn mạnh ưu đãi dùng thử tại cửa hàng trong tuần đầu tiên.',
+    });
+    const refinedPlan = await prisma.marketingPlan.findUnique({ where: { id: Number(planId) } });
+    if (refineResponse.status !== 200 || !refineResponse.payload?.data?.revisionSummary || !refinedPlan?.contentIdeas) {
+      throw new Error(`Real Marketing Plan refinement failed (HTTP ${refineResponse.status}).`);
+    }
+
+    const imagePromptResponse = await browserApi(page, apiUrl, 'POST', '/marketing-plans/generate-image-prompt', {
+      postContent: `${runPrefix}: cà phê Việt Nam dùng thử cho nhân viên văn phòng quanh cửa hàng.`,
+      platform: 'Instagram',
+      businessProfileId: testOwner.businessProfile.id,
+    });
+    const generatedImagePrompt = imagePromptResponse.payload?.data?.imagePrompt;
+    if (imagePromptResponse.status !== 200 || typeof generatedImagePrompt !== 'string' || generatedImagePrompt.trim().length < 20) {
+      throw new Error(`Real image-prompt generation failed (HTTP ${imagePromptResponse.status}).`);
+    }
+
+    const generatedImage = await browserApi(page, apiUrl, 'POST', '/media/generate-image', {
+      prompt: generatedImagePrompt,
+      aspectRatio: '1:1',
+      platform: 'Instagram',
+      businessProfileId: testOwner.businessProfile.id,
+    });
+    const generatedImageAssetId = generatedImage.payload?.data?.mediaAssetId;
+    if (generatedImage.status !== 201 || !generatedImageAssetId) {
+      throw new Error(`Real FLUX image generation or private-storage persistence failed (HTTP ${generatedImage.status}).`);
+    }
+    const imageAsset = await prisma.mediaAsset.findUnique({ where: { id: Number(generatedImageAssetId) } });
+    if (!imageAsset || imageAsset.userId !== testOwner.id || imageAsset.sourceKind !== 'private_storage'
+      || imageAsset.storageBucket !== 'campaign-assets-private' || !imageAsset.storagePath
+      || imageAsset.url !== null || imageAsset.sizeBytes <= 0) {
+      throw new Error('Generated FLUX image did not persist as an owned private Storage MediaAsset.');
+    }
+
+    const inlineAccess = await browserApi(page, apiUrl, 'GET', `/media/${generatedImageAssetId}/access`);
+    if (inlineAccess.status !== 200 || !inlineAccess.payload?.data?.temporary || !inlineAccess.payload?.data?.url
+      || new Date(inlineAccess.payload.data.expiresAt).getTime() < Date.now() + 8 * 60 * 1000) {
+      throw new Error('Generated image did not return a 10-minute owner-only signed preview URL.');
+    }
+    const imageDownload = await fetch(inlineAccess.payload.data.url);
+    const imageBytes = Buffer.from(await imageDownload.arrayBuffer());
+    const isPng = imageBytes.length >= 8 && imageBytes.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]));
+    const isJpeg = imageBytes.length >= 3 && imageBytes[0] === 255 && imageBytes[1] === 216 && imageBytes[2] === 255;
+    if (!imageDownload.ok || !imageDownload.headers.get('content-type')?.startsWith('image/')
+      || imageBytes.length !== imageAsset.sizeBytes || (!isPng && !isJpeg)) {
+      throw new Error('Signed preview did not return the persisted generated image bytes.');
+    }
+    const attachmentAccess = await browserApi(page, apiUrl, 'GET', `/media/${generatedImageAssetId}/access?download=true`);
+    if (attachmentAccess.status !== 200 || !attachmentAccess.payload?.data?.url) {
+      throw new Error('Generated image download signing was rejected for its owner.');
+    }
+    const attachment = await fetch(attachmentAccess.payload.data.url);
+    const attachmentBytes = Buffer.from(await attachment.arrayBuffer());
+    if (!attachment.ok || !attachment.headers.get('content-disposition')?.toLowerCase().includes('attachment')
+      || attachmentBytes.length !== imageAsset.sizeBytes) {
+      throw new Error('Owner signed download did not return the generated image as an attachment.');
+    }
+
+    await page.goto(`${frontUrl}/media-library`, { waitUntil: 'networkidle2' });
+    await loadMediaPreview(page, imageAsset.name);
+    const previewAccessCount = apiResponses.filter(({ path }) => path === `/api/media/${generatedImageAssetId}/access`).length;
+    await page.reload({ waitUntil: 'networkidle2' });
+    await loadMediaPreview(page, imageAsset.name);
+    const refreshedAsset = await prisma.mediaAsset.findUnique({ where: { id: Number(generatedImageAssetId) } });
+    const refreshedAccessCount = apiResponses.filter(({ path }) => path === `/api/media/${generatedImageAssetId}/access`).length;
+    if (!refreshedAsset || refreshedAsset.id !== imageAsset.id || refreshedAsset.url !== null
+      || refreshedAccessCount <= previewAccessCount) {
+      throw new Error('Generated MediaAsset or authorized preview did not survive a browser refresh.');
+    }
+    await page.screenshot({ path: path.join(outputDir, '03a-private-ai-image-preview.png'), fullPage: true });
+
+    const scheduledImagePost = await browserApi(page, apiUrl, 'POST', '/scheduled-posts', {
+      title: `${runPrefix} generated image schedule`,
+      content: 'Bài đăng thử nghiệm ảnh AI riêng tư.',
+      platform: 'Instagram',
+      scheduledTime: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+      businessProfileId: testOwner.businessProfile.id,
+      mediaAssetId: generatedImageAssetId,
+    });
+    const attachedPost = await prisma.scheduledPost.findFirst({ where: { userId: testOwner.id, title: `${runPrefix} generated image schedule` } });
+    if (scheduledImagePost.status !== 201 || scheduledImagePost.payload?.data?.mediaAssetId !== generatedImageAssetId
+      || attachedPost?.mediaAssetId !== generatedImageAssetId || attachedPost.imageUrl !== null) {
+      throw new Error(`Scheduled-post attachment did not persist the private asset ID (HTTP ${scheduledImagePost.status}).`);
+    }
+
+    await loginAs(page, frontUrl, staffUser.email, staffPassword);
+    expectedCrossUserMedia404Path = `/api/media/${generatedImageAssetId}/access`;
+    const crossUserImageAccess = await browserApi(page, apiUrl, 'GET', `/media/${generatedImageAssetId}/access`);
+    if (crossUserImageAccess.status !== 404 || crossUserImageAccess.payload?.data?.url) {
+      throw new Error(`A different user's media access returned HTTP ${crossUserImageAccess.status}, expected 404.`);
+    }
+    await loginAs(page, frontUrl, email, userPassword);
+    console.log(JSON.stringify({
+      event: 'real-ai-private-image-verified',
+      provider: generatedImage.payload.data.provider,
+      model: generatedImage.payload.data.model,
+      mediaAssetId: generatedImageAssetId,
+      imageBytes: imageAsset.sizeBytes,
+      previewRefresh: true,
+      download: true,
+      scheduledPostId: attachedPost.id,
+      crossUserDenied: true,
+    }));
     }
 
     await page.goto(`${frontUrl}/templates`, { waitUntil: 'networkidle2' });
     await page.waitForFunction(() => document.body.innerText.includes('Thư viện'));
     await page.screenshot({ path: path.join(outputDir, '05-template-library.png'), fullPage: true });
+    const quickEditorAiResponse = skipAi ? null : page.waitForResponse(
+      (response) => response.url().endsWith('/api/marketing-plans/generate-post') && response.request().method() === 'POST',
+      { timeout: 180000 },
+    ).catch(async (error) => ({
+      waitError: error.message,
+      pageState: await page.evaluate(() => ({
+        path: location.pathname,
+        textareaLength: document.querySelector('textarea')?.value.length || 0,
+        buttons: [...document.querySelectorAll('button')].map((button) => button.innerText.trim()).filter(Boolean).slice(0, 12),
+      })).catch(() => null),
+      apiResponses: apiResponses.slice(-20),
+      browserErrors: browserErrors.slice(-10),
+    }));
     await clickText(page, 'Dùng Mẫu này');
     await page.waitForFunction(() => location.pathname === '/user/quick-editor', { timeout: 15000 });
     try {
@@ -536,6 +700,30 @@ async function main() {
       const editorState = await page.evaluate(() => ({ url: location.href, text: document.body.innerText.slice(0, 1200) })).catch((error) => ({ error: error.message }));
       await page.screenshot({ path: path.join(outputDir, 'quick-editor-failure.png'), fullPage: true }).catch(() => {});
       throw new Error(`Quick Editor did not render after template selection: ${JSON.stringify({ editorState, browserErrors, apiResponses })}`);
+    }
+    const quickEditorContext = await page.evaluate(() => {
+      const state = window.history.state?.usr || {};
+      return {
+        stateKeys: Object.keys(state),
+        hasTemplate: Boolean(state.template),
+        hasTrend: Boolean(state.trend),
+        initialContentLength: typeof state.initialContent === 'string' ? state.initialContent.length : 0,
+      };
+    });
+    console.log(JSON.stringify({ event: 'quick-editor-context', ...quickEditorContext }));
+    if (skipAi) {
+      if (quickEditorContext.initialContentLength < 40) throw new Error('Quick Editor template content was missing.');
+    } else {
+      await clickTextWithPointer(page, 'Bắt trend với AI');
+      const quickEditorAi = await quickEditorAiResponse;
+      if (quickEditorAi.waitError) throw new Error(`Quick Editor AI request was not observed: ${JSON.stringify(quickEditorAi)}`);
+      if (!quickEditorAi.ok()) throw new Error(`Quick Editor AI generation returned HTTP ${quickEditorAi.status()}.`);
+      const quickEditorPayload = await quickEditorAi.json();
+      const quickEditorContent = quickEditorPayload?.data?.content;
+      if (typeof quickEditorContent !== 'string' || quickEditorContent.trim().length < 40) {
+        throw new Error('Quick Editor AI returned no meaningful post content.');
+      }
+      await page.waitForFunction((content) => document.querySelector('textarea')?.value === content, { timeout: 15000 }, quickEditorContent);
     }
     await page.screenshot({ path: path.join(outputDir, '06-quick-editor.png'), fullPage: true });
     const draftResponse = page.waitForResponse((response) => response.url().endsWith('/api/scheduled-posts') && response.request().method() === 'POST')
@@ -646,15 +834,11 @@ async function main() {
     await page.waitForFunction(() => document.body.innerText.length > 100, { timeout: 20000 });
 
     const persisted = await prisma.marketingPlan.findUnique({ where: { id: Number(planId) } });
-    if (!persisted || persisted.userId !== generatedPayload.data.userId) {
-      const user = await prisma.user.findUnique({ where: { email }, select: { id: true } });
-      if (!persisted || persisted.userId !== user?.id) throw new Error('Browser-generated plan did not persist after backend restart.');
-    }
-
     const testUser = await prisma.user.findUnique({ where: { email }, select: { id: true } });
-    const staffEmail = `${runPrefix}-staff@example.test`;
+    if (!persisted || persisted.userId !== testUser?.id) throw new Error('Browser-generated plan did not persist after backend restart.');
+    const staffEmail = staffUser.email;
     const adminEmail = `${runPrefix}-admin@example.test`;
-    staff = await prisma.user.create({ data: { name: `${runPrefix} Staff`, email: staffEmail, passwordHash: await bcrypt.hash(staffPassword, 10), role: 'staff', status: 'active' } });
+    staff = staffUser;
     admin = await prisma.user.create({ data: { name: `${runPrefix} Admin`, email: adminEmail, passwordHash: await bcrypt.hash(adminPassword, 10), role: 'admin', status: 'active' } });
 
     denied = await page.evaluate(async ({ apiUrl, id }) => {
@@ -727,11 +911,15 @@ async function main() {
     }
 
     const timeoutLog = appLogs.split('\n').find((line) => line.startsWith('[AI timeout config]')) || null;
-    const failedApi = apiResponses.filter((item) => item.status >= 400 && !(item.status === 403 && item.path.includes('/api/admin/users/')) && !(skipAi && item.status === 503 && item.path === '/api/marketing-plans/trends'));
-    const verified = workflowFailures.length === 0 && failedApi.length === 0 && browserErrors.length === 0;
+    const failedApi = apiResponses.filter((item) => item.status >= 400
+      && !(item.status === 403 && item.path.includes('/api/admin/users/'))
+      && !(item.status === 404 && item.path === expectedCrossUserMedia404Path)
+      && !(skipAi && item.status === 503 && item.path === '/api/marketing-plans/trends'));
+    const verified = workflowFailures.length === 0 && failedApi.length === 0 && browserErrors.length === 0 && browserWarnings.length === 0;
     console.log(JSON.stringify({ target: { host: target.host, port: target.port, database: target.database, schema: target.schema }, runPrefix, aiSkipped: skipAi, runtimeAiTimeoutConfig: timeoutLog, planId, fixtureBudgetPlanId, avatarAssetId: testAvatarAssetId, staffId: staffUser?.id || null, adminId: staff?.id || null, roleStatusAfterAdmin: editedUser ? { role: editedUser.role, status: editedUser.status } : null, unauthorizedAdminStatus: denied, workflowFailures, failedApi, browserErrors, browserWarnings, apiResponses, screenshots: outputDir, backup: backupInfo.file, verified }, null, 2));
     if (failedApi.length) throw new Error(`Real API returned unexpected errors: ${JSON.stringify(failedApi)}`);
     if (browserErrors.length) throw new Error(`Browser console/page errors: ${safe(browserErrors.join(' | '))}`);
+    if (browserWarnings.length) throw new Error(`Browser React warnings: ${safe(browserWarnings.join(' | '))}`);
     if (workflowFailures.length) throw new Error(`One or more independent browser workflows failed: ${workflowFailures.join(' | ')}`);
   } finally {
     if (browser) {

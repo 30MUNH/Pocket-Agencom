@@ -6,6 +6,7 @@ import { useUpdateProfile, useUpdateBusinessProfile } from '../../hooks/useAuth'
 import { uploadApi } from '../../api/uploadApi';
 import { authApi } from '../../api/authApi';
 import { toast } from '../../store/toastStore';
+import { toggleNotificationPreference } from '../../utils/notificationPreferences';
 import AuthorizedMediaImage from '../../components/media/AuthorizedMediaImage';
 
 export default function UserSettings() {
@@ -144,12 +145,10 @@ export default function UserSettings() {
   };
 
   const handleToggleNotif = (key) => {
-    setNotifSettings((prev) => {
-      const updated = { ...prev, [key]: !prev[key] };
-      localStorage.setItem('pocket_notif_settings', JSON.stringify(updated));
-      toast.success('Đã cập nhật tùy chọn thông báo!');
-      return updated;
-    });
+    const updated = toggleNotificationPreference(notifSettings, key);
+    setNotifSettings(updated);
+    localStorage.setItem('pocket_notif_settings', JSON.stringify(updated));
+    toast.success('Đã cập nhật tùy chọn thông báo!');
   };
 
   return (

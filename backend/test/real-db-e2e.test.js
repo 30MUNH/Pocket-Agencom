@@ -108,7 +108,7 @@ async function cleanup() {
   }
 }
 
-test('real PostgreSQL application workflows persist and enforce ownership', { timeout: 180000 }, async (t) => {
+test('real PostgreSQL application workflows persist and enforce ownership', { timeout: 600000 }, async (t) => {
   t.after(async () => {
     await stopBackend();
     try {

@@ -110,7 +110,11 @@ export default function SocialImageGeneratorModal({
 
       if (res?.mediaAssetId) {
         setGeneratedResult({ mediaAssetId: res.mediaAssetId, prompt: res.prompt, aspectRatio: res.aspectRatio || aspectRatio });
-        toast.success('Tạo ảnh AI thành công! Đã lưu vào Media Library.');
+        if (res.originalSaveFailed) {
+          toast.info('Ảnh đã lưu vào Media Library. Bản gốc chưa lưu được; bạn vẫn có thể dùng ảnh đã tạo.');
+        } else {
+          toast.success('Tạo ảnh AI thành công! Đã lưu vào Media Library.');
+        }
       } else {
         toast.error('Không nhận được hình ảnh từ dịch vụ AI.');
       }
@@ -141,7 +145,6 @@ export default function SocialImageGeneratorModal({
       link.href = access.url;
       link.target = '_blank';
       link.rel = 'noopener noreferrer';
-      link.download = `agencom-ai-${platform.toLowerCase()}-${aspectRatio.replace(':', 'x')}-${Date.now()}.jpg`;
       document.body.appendChild(link);
       link.click();
       link.remove();

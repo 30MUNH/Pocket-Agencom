@@ -318,7 +318,7 @@ export default function QuickEditor() {
             {/* AI Generator Action Row */}
             <div className="pt-2 grid grid-cols-1 sm:grid-cols-2 gap-3">
               <button
-                onClick={handleGenerateContent}
+                onClick={() => handleGenerateContent()}
                 disabled={generatePostMutation.isPending}
                 className="w-full bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 active:scale-[0.98] text-white py-3.5 rounded-2xl font-bold text-xs shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 disabled:opacity-60"
               >
