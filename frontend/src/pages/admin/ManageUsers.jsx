@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Search, Eye, Edit2, Ban, AlertTriangle, X, Check, Loader2, Shield, RefreshCw, UserCheck, Phone, Mail, Building2, Calendar } from 'lucide-react';
+import { Search, Eye, Edit2, Ban, AlertTriangle, X, Check, Loader2, Shield, RefreshCw, UserCheck, Phone, Mail, Building2, Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
 import { adminApi } from '../../api/adminApi';
 import { toast } from '../../store/toastStore';
 import AuthorizedMediaImage from '../../components/media/AuthorizedMediaImage';
@@ -10,6 +10,7 @@ export default function ManageUsers() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [roleFilter, setRoleFilter] = useState('all');
 
   // Modals state
   const [selectedUser, setSelectedUser] = useState(null);
@@ -21,12 +22,17 @@ export default function ManageUsers() {
   const [editForm, setEditForm] = useState({ role: 'user', status: 'active' });
   const [isSubmittingEdit, setIsSubmittingEdit] = useState(false);
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
   const fetchUsers = useCallback(async () => {
     try {
       setLoading(true);
       const res = await adminApi.getUsers({
         search: search.trim() || undefined,
         status: statusFilter !== 'all' ? statusFilter : undefined,
+        role: roleFilter !== 'all' ? roleFilter : undefined,
       });
 
       if (res) {
@@ -39,7 +45,7 @@ export default function ManageUsers() {
     } finally {
       setLoading(false);
     }
-  }, [search, statusFilter]);
+  }, [search, statusFilter, roleFilter]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -47,6 +53,28 @@ export default function ManageUsers() {
     }, 250);
     return () => clearTimeout(timer);
   }, [fetchUsers]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, statusFilter, roleFilter]);
+
+  const totalPages = Math.max(1, Math.ceil(users.length / pageSize));
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+  const startIndex = (safeCurrentPage - 1) * pageSize;
+  const paginatedUsers = users.slice(startIndex, startIndex + pageSize);
+
+  const getPageNumbers = () => {
+    if (totalPages <= 5) {
+      return Array.from({ length: totalPages }, (_, i) => i + 1);
+    }
+    if (safeCurrentPage <= 3) {
+      return [1, 2, 3, 4, '...', totalPages];
+    }
+    if (safeCurrentPage >= totalPages - 2) {
+      return [1, '...', totalPages - 3, totalPages - 2, totalPages - 1, totalPages];
+    }
+    return [1, '...', safeCurrentPage - 1, safeCurrentPage, safeCurrentPage + 1, '...', totalPages];
+  };
 
   const handleDeactivateClick = (user) => {
     setSelectedUser(user);
@@ -146,14 +174,29 @@ export default function ManageUsers() {
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant" size={18} />
             <input
               type="text"
-              placeholder="Tìm kiếm theo tên hoặc email..."
+              placeholder="Tìm kiếm theo tên, email, vai trò, trạng thái..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full bg-surface-container-low dark:bg-surface-variant/20 border-none rounded-full py-3 pl-12 pr-4 text-body-md font-body-md text-on-surface dark:text-inverse-primary focus:ring-2 focus:ring-secondary-container placeholder:text-outline outline-none transition-all"
             />
           </div>
           {/* Filters */}
-          <div className="flex gap-3 w-full sm:w-auto">
+          <div className="flex flex-wrap sm:flex-nowrap gap-3 w-full sm:w-auto">
+            {/* Role Filter */}
+            <div className="relative w-full sm:w-48">
+              <select
+                value={roleFilter}
+                onChange={(e) => setRoleFilter(e.target.value)}
+                className="w-full appearance-none bg-surface-container-low dark:bg-surface-variant/20 border-none rounded-full py-3 pl-4 pr-10 text-body-md font-body-md text-on-surface focus:ring-2 focus:ring-secondary-container outline-none cursor-pointer dark:text-inverse-primary"
+              >
+                <option value="all">Tất cả Vai trò</option>
+                <option value="user">Khách hàng (User)</option>
+                <option value="staff">Nhân viên (Staff)</option>
+                <option value="admin">Quản trị viên (Admin)</option>
+              </select>
+            </div>
+
+            {/* Status Filter */}
             <div className="relative w-full sm:w-48">
               <select
                 value={statusFilter}
@@ -205,7 +248,7 @@ export default function ManageUsers() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-surface-container dark:divide-outline-variant/10">
-                {users.map((user) => (
+                {paginatedUsers.map((user) => (
                   <tr key={user.id} className="hover:bg-surface-container-low/30 dark:hover:bg-surface-variant/20 transition-colors group">
                     <td className="py-4 px-6 md:px-8">
                       <div className="flex items-center gap-3">
@@ -299,11 +342,73 @@ export default function ManageUsers() {
           )}
         </div>
 
-        {/* Footer */}
-        <div className="p-4 md:p-6 border-t border-surface-container dark:border-outline-variant/20 bg-surface-container-lowest dark:bg-tertiary-container flex flex-col sm:flex-row justify-between items-center gap-4">
-          <p className="text-label-sm font-label-sm text-on-surface-variant">
-            Tổng cộng: <strong>{totalUsers}</strong> người dùng trong hệ thống
-          </p>
+        {/* Footer with Pagination */}
+        <div className="p-4 md:p-6 border-t border-surface-container dark:border-outline-variant/20 bg-surface-container-lowest dark:bg-tertiary-container flex flex-col md:flex-row justify-between items-center gap-4">
+          <div className="flex flex-wrap items-center gap-4 text-label-sm font-label-sm text-on-surface-variant">
+            <span>
+              Hiển thị <strong>{users.length === 0 ? 0 : startIndex + 1}</strong> - <strong>{Math.min(startIndex + pageSize, users.length)}</strong> trên tổng số <strong>{users.length}</strong> người dùng
+            </span>
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs text-on-surface-variant">Mỗi trang:</span>
+              <select
+                value={pageSize}
+                onChange={(e) => {
+                  setPageSize(Number(e.target.value));
+                  setCurrentPage(1);
+                }}
+                className="bg-surface-container-low dark:bg-surface-variant/30 border border-surface-container-high rounded-lg px-2 py-1 text-xs text-primary font-medium focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer"
+              >
+                <option value={8}>8</option>
+                <option value={10}>10</option>
+                <option value={20}>20</option>
+                <option value={50}>50</option>
+              </select>
+            </div>
+          </div>
+
+          {totalPages > 1 && (
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={safeCurrentPage === 1}
+                className="p-2 rounded-lg border border-surface-container text-on-surface-variant hover:bg-surface-container-low disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                title="Trang trước"
+              >
+                <ChevronLeft size={16} />
+              </button>
+
+              <div className="flex items-center gap-1">
+                {getPageNumbers().map((page, idx) =>
+                  page === '...' ? (
+                    <span key={`dots-${idx}`} className="px-2 py-1 text-xs text-on-surface-variant">
+                      ...
+                    </span>
+                  ) : (
+                    <button
+                      key={page}
+                      onClick={() => setCurrentPage(page)}
+                      className={`min-w-[32px] h-8 rounded-lg text-xs font-semibold transition-all ${
+                        safeCurrentPage === page
+                          ? 'bg-primary text-on-primary shadow-sm'
+                          : 'text-on-surface-variant hover:bg-surface-container-low'
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  )
+                )}
+              </div>
+
+              <button
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                disabled={safeCurrentPage === totalPages}
+                className="p-2 rounded-lg border border-surface-container text-on-surface-variant hover:bg-surface-container-low disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                title="Trang sau"
+              >
+                <ChevronRight size={16} />
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
