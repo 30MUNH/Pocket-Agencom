@@ -11,10 +11,10 @@ export default {
       colors: {
         "primary":                    "#be185d",
         "on-primary":                 "#ffffff",
-        "primary-container":          "#fce7f3",
+        "primary-container":          "#ffffff",
         "on-primary-container":       "#831843",
-        "primary-fixed":              "#fbcfe8",
-        "primary-fixed-dim":          "#f9a8d4",
+        "primary-fixed":              "#ffffff",
+        "primary-fixed-dim":          "#ffffff",
         "on-primary-fixed":           "#500724",
         "on-primary-fixed-variant":   "#9d174d",
         "secondary":                  "#9d174d",
