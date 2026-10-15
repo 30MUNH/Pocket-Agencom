@@ -79,7 +79,7 @@ export default function UserDashboard() {
     switch (status) {
       case 'approved': return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300';
       case 'need_revision': return 'bg-rose-100 text-rose-800 dark:bg-rose-950/40 dark:text-rose-300';
-      case 'reviewed': return 'bg-blue-100 text-blue-800 dark:bg-blue-950/40 dark:text-blue-300';
+      case 'reviewed': return 'bg-pink-100 text-pink-800 dark:bg-pink-950/40 dark:text-pink-300';
       default: return 'bg-secondary-container text-on-secondary-container';
     }
   };
@@ -102,7 +102,7 @@ export default function UserDashboard() {
       >
         <Link
           to="/marketing-kit"
-          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-on-primary transition-colors hover:bg-blue-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-on-primary transition-colors hover:bg-primary/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
         >
           <Sparkles size={16} aria-hidden="true" />
           Tạo kế hoạch
@@ -165,7 +165,7 @@ export default function UserDashboard() {
                 <ClipboardList size={24} aria-hidden="true" className="mb-3 text-on-surface-variant" />
                 <p className="text-sm font-medium text-on-surface">Chưa có kế hoạch marketing</p>
                 <p className="mt-1 max-w-sm text-sm text-on-surface-variant">Tạo kế hoạch đầu tiên để bắt đầu quản lý chiến dịch tại đây.</p>
-                <Link to="/marketing-kit" className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-on-primary hover:bg-blue-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+                <Link to="/marketing-kit" className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-on-primary hover:bg-primary/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
                   <Sparkles size={16} aria-hidden="true" /> Tạo kế hoạch
                 </Link>
               </div>
@@ -245,7 +245,7 @@ export default function UserDashboard() {
               </div>
               <Link
                 to="/templates"
-                className="mt-4 flex min-h-11 w-full items-center justify-center rounded-lg bg-primary-container px-4 py-2 text-sm font-semibold text-primary transition-colors hover:bg-blue-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                className="mt-4 flex min-h-11 w-full items-center justify-center rounded-lg bg-primary-container px-4 py-2 text-sm font-semibold text-primary transition-colors hover:bg-primary-fixed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
               >
                 Khám phá Thư viện
               </Link>

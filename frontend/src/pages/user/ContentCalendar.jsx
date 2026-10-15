@@ -42,7 +42,7 @@ function getStatusBadge(status) {
     case 'approved':
       return { label: 'Đã duyệt', class: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300 border-emerald-300' };
     case 'published':
-      return { label: 'Đã đăng', class: 'bg-blue-100 text-blue-800 dark:bg-blue-950/40 dark:text-blue-300 border-blue-300' };
+      return { label: 'Đã đăng', class: 'bg-pink-100 text-pink-800 dark:bg-pink-950/40 dark:text-pink-300 border-pink-300' };
     case 'draft':
       return { label: 'Bản nháp', class: 'bg-surface-container text-on-surface-variant border-surface-variant' };
     case 'pending_approval':

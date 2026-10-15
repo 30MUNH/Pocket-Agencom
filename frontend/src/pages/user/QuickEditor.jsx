@@ -426,7 +426,7 @@ export default function QuickEditor() {
               <button
                 onClick={handlePublishAndShare}
                 disabled={!generatedContent || generatePostMutation.isPending}
-                className="min-h-11 rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-on-primary transition-colors hover:bg-blue-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-50 flex items-center justify-center gap-1.5"
+                className="min-h-11 rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-on-primary transition-colors hover:bg-primary/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-50 flex items-center justify-center gap-1.5"
               >
                 <Share2 size={16} />
                 <span>Chia sẻ tại {platform}</span>

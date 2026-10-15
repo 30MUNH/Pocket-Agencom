@@ -56,7 +56,7 @@ const CATEGORIES = [
 
 const STATUS_MAP = {
   open: { label: 'Đang mở', color: 'bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300' },
-  in_progress: { label: 'Đang xử lý', color: 'bg-blue-100 text-blue-800 dark:bg-blue-950/40 dark:text-blue-300' },
+  in_progress: { label: 'Đang xử lý', color: 'bg-pink-100 text-pink-800 dark:bg-pink-950/40 dark:text-pink-300' },
   resolved: { label: 'Đã giải quyết', color: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300' },
   escalated: { label: 'Chuyển cấp', color: 'bg-purple-100 text-purple-800 dark:bg-purple-950/40 dark:text-purple-300' },
   closed: { label: 'Đã đóng', color: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300' },
