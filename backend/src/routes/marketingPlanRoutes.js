@@ -19,6 +19,8 @@ router.use(authMiddleware);
 router.get('/', marketingPlanController.list);
 router.get('/trends', marketingPlanController.getTrends);
 router.post('/trends/refresh', requireRole('user', 'admin'), marketingPlanController.refreshTrends);
+router.put('/:id/assets', marketingPlanController.updateMediaAssets);
+router.delete('/:id/assets/:assetId', marketingPlanController.removeMediaAsset);
 router.get('/:id', marketingPlanController.getById);
 router.post(
   '/generate',

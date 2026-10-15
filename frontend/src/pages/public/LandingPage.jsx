@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { toast } from '../../store/toastStore';
 import {
   CheckCircle2,
   UserX,
@@ -540,7 +541,7 @@ export default function LandingPage() {
                 Bắt đầu miễn phí
               </button>
               <button
-                onClick={() => alert('Đang giả lập đặt lịch gọi demo...')}
+                onClick={() => toast.success('Cảm ơn bạn! Đội ngũ tư vấn chiến lược của Pocket Agencom sẽ liên hệ trong 24 giờ.')}
                 className="bg-white/10 backdrop-blur-md text-white border border-white/20 px-10 py-4.5 rounded-full font-bold text-lg hover:bg-white/20 transition-all uppercase tracking-wider"
               >
                 Đăng ký tư vấn

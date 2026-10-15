@@ -1,5 +1,6 @@
 const marketingPlanService = require('../services/marketingPlanService');
-const { uploadCampaignAsset } = require('../services/storageService');
+const mediaAccessService = require('../services/mediaAccessService').createMediaAccessService();
+const aiService = require('../services/ai/aiService');
 const { AppError } = require('../middleware/errorHandler');
 const { generatePostWithImageSchema } = require('../validators/marketingPlan.validator');
 const { success } = require('../utils/response');
@@ -68,6 +69,7 @@ async function generatePost(req, res, next) {
 }
 
 async function generatePostWithImage(req, res, next) {
+  let imageAsset;
   try {
     if (!req.file) {
       throw new AppError('Vui lòng đính kèm ảnh sản phẩm hoặc ảnh feedback', 400);
@@ -83,19 +85,38 @@ async function generatePostWithImage(req, res, next) {
       throw new AppError('Validation failed', 422, details);
     }
 
-    // 1) Persist the raw image to Supabase Storage (bucket: campaign-assets)
-    const { publicUrl } = await uploadCampaignAsset(req.file, `user-${req.user.id}`);
+    if (!aiService.gemini.isAvailable()) {
+      throw new AppError('Gemini Vision is unavailable because free-tier eligibility is not confirmed.', 503);
+    }
 
-    // 2) Send the image buffer + brand context to Gemini Vision
+    const profile = await marketingPlanService.requireOwnedBusinessProfile(req.user.id, parsed.data.businessProfileId);
+
+    // Persist the image privately and pass its ID with the in-memory bytes to Gemini Vision.
+    imageAsset = await mediaAccessService.createOwnedMediaAsset({
+      ownerId: req.user.id,
+      file: req.file,
+      purpose: 'campaign',
+      metadata: { name: req.file.originalname, businessProfileId: profile.id },
+    });
+
+    // The Vision call consumes bytes directly; no public or signed URL enters prompt content.
     const post = await marketingPlanService.generateDetailedPostWithImage(
       req.user,
       parsed.data,
       req.file,
-      publicUrl
+      imageAsset.id
     );
 
-    return success(res, post, 200);
+    return success(res, { ...post, mediaAssetId: imageAsset.id }, 200);
   } catch (err) {
+    if (imageAsset) {
+      try {
+        const cleanup = await mediaAccessService.deleteOwnedMediaAsset(req.user.id, imageAsset.id);
+        if (!cleanup.deleted) throw new Error('Asset deletion is pending');
+      } catch {
+        return next(new AppError('Image generation failed and asset cleanup is pending recovery.', 503));
+      }
+    }
     next(err);
   }
 }
@@ -125,6 +146,20 @@ async function generateSocialImage(req, res, next) {
   } catch (err) {
     next(err);
   }
+}
+
+async function updateMediaAssets(req, res, next) {
+  try {
+    const result = await marketingPlanService.attachMediaAssets(req.params.id, req.user.id, req.body.mediaAssetIds);
+    return success(res, result);
+  } catch (err) { next(err); }
+}
+
+async function removeMediaAsset(req, res, next) {
+  try {
+    const result = await marketingPlanService.detachMediaAsset(req.params.id, req.user.id, req.params.assetId);
+    return success(res, result);
+  } catch (err) { next(err); }
 }
 
 async function getTrends(req, res, next) {
@@ -157,6 +192,8 @@ module.exports = {
   refine,
   generateImagePrompt,
   generateSocialImage,
+  updateMediaAssets,
+  removeMediaAsset,
   getTrends,
   refreshTrends,
 };

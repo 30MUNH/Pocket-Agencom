@@ -4,23 +4,23 @@ import {
   Upload, 
   Image as ImageIcon, 
   Film, 
-  FileText, 
   Copy, 
   Check, 
   Trash2, 
   Plus, 
-  ExternalLink, 
   HardDrive, 
   Sparkles, 
   RefreshCw,
   Search,
-  Filter,
-  X
+  X,
+  Eye,
+  Download
 } from 'lucide-react';
 import { mediaApi } from '../../api/mediaApi';
 import { uploadApi } from '../../api/uploadApi';
 import { toast } from '../../store/toastStore';
 import SocialImageGeneratorModal from '../../components/media/SocialImageGeneratorModal';
+import AuthorizedMediaImage from '../../components/media/AuthorizedMediaImage';
 
 export default function MediaLibrary() {
   const [assets, setAssets] = useState([]);
@@ -28,6 +28,7 @@ export default function MediaLibrary() {
   const [filterType, setFilterType] = useState('all'); // 'all', 'image', 'video'
   const [searchQuery, setSearchQuery] = useState('');
   const [copiedId, setCopiedId] = useState(null);
+  const [previewAsset, setPreviewAsset] = useState(null);
   
   // New Asset Upload Form State
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
@@ -54,14 +55,38 @@ export default function MediaLibrary() {
     fetchAssets();
   }, []);
 
-  const handleCopyUrl = async (id, url) => {
+  const handleCopyUrl = async (asset) => {
     try {
+      const access = asset.sourceKind === 'private_storage'
+        ? await mediaApi.getAssetAccess(asset.id)
+        : { url: asset.url };
+      if (!access?.url) throw new Error('Media URL is unavailable.');
+      const url = access.url;
       await navigator.clipboard.writeText(url);
-      setCopiedId(id);
-      toast.success('Đã sao chép liên kết media vào bộ nhớ tạm!');
+      setCopiedId(asset.id);
+      toast.success(access.temporary ? 'Đã sao chép liên kết tạm thời (có hiệu lực trong 10 phút).' : 'Đã sao chép liên kết media vào bộ nhớ tạm!');
       setTimeout(() => setCopiedId(null), 2000);
-    } catch (err) {
+    } catch {
       toast.error('Không thể sao chép liên kết.');
+    }
+  };
+
+  const handleDownload = async (asset) => {
+    try {
+      const access = asset.sourceKind === 'private_storage'
+        ? await mediaApi.getAssetAccess(asset.id, { download: true })
+        : { url: asset.url };
+      if (!access?.url) throw new Error('Media URL is unavailable.');
+      const link = document.createElement('a');
+      link.href = access.url;
+      link.download = asset.name;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch {
+      toast.error('Không thể tải tập tin xuống.');
     }
   };
 
@@ -70,7 +95,7 @@ export default function MediaLibrary() {
       await mediaApi.deleteAsset(id);
       setAssets(prev => prev.filter(a => a.id !== id));
       toast.success('Đã xóa tập tin media.');
-    } catch (err) {
+    } catch {
       toast.error('Không thể xóa tập tin.');
     }
   };
@@ -78,25 +103,37 @@ export default function MediaLibrary() {
   const handleDirectUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      toast.error('Chỉ hỗ trợ ảnh JPEG, PNG hoặc WebP.');
+      e.target.value = '';
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('Ảnh vượt quá giới hạn 2 MB.');
+      e.target.value = '';
+      return;
+    }
 
     try {
       setIsUploading(true);
       const uploadRes = await uploadApi.uploadSingle(file);
-      const fileUrl = uploadRes?.url || URL.createObjectURL(file);
-      const detectedType = file.type.startsWith('video') ? 'video' : 'image';
+      if (!uploadRes?.mediaAssetId) throw new Error('Dịch vụ lưu trữ không trả về mã tài sản.');
 
-      const newAsset = await mediaApi.uploadAsset({
-        name: file.name,
-        url: fileUrl,
-        fileType: detectedType,
-        sizeBytes: file.size
-      });
+      const newAsset = {
+        id: uploadRes.mediaAssetId,
+        name: uploadRes.name || file.name,
+        url: null,
+        sourceKind: 'private_storage',
+        fileType: uploadRes.fileType || 'image',
+        sizeBytes: uploadRes.sizeBytes || file.size,
+        createdAt: new Date().toISOString(),
+      };
 
       setAssets(prev => [newAsset, ...prev]);
       toast.success(`Tải lên ${file.name} thành công!`);
     } catch (err) {
       console.error('[Upload Error]', err);
-      toast.error('Tải lên thất bại. Đã thêm với định dạng preview.');
+      toast.error(err.message || 'Tải ảnh lên thất bại. Vui lòng thử lại.');
     } finally {
       setIsUploading(false);
     }
@@ -123,7 +160,7 @@ export default function MediaLibrary() {
       setAssetName('');
       setAssetUrl('');
       setIsUploadModalOpen(false);
-    } catch (err) {
+    } catch {
       toast.error('Không thể lưu tài nguyên media.');
     } finally {
       setIsUploading(false);
@@ -150,9 +187,9 @@ export default function MediaLibrary() {
             <span className="inline-flex items-center gap-1.5 text-xs font-bold text-secondary uppercase tracking-wider mb-1 bg-secondary-container px-3 py-1 rounded-full">
               <FolderKanban size={14} /> Thư viện Thương hiệu Tập trung
             </span>
-            <h2 className="text-2xl font-bold tracking-tight text-primary dark:text-inverse-primary sm:text-3xl">
+            <h1 className="text-2xl font-bold tracking-tight text-primary dark:text-inverse-primary sm:text-3xl">
               Kho dữ liệu Media (Media Library)
-            </h2>
+            </h1>
             <p className="mt-1 text-xs sm:text-sm text-on-surface-variant">
               Lưu trữ tập trung Logo, hình ảnh sản phẩm và video truyền thông cho thương hiệu. AI tự động trích xuất khi lên kịch bản.
             </p>
@@ -161,13 +198,13 @@ export default function MediaLibrary() {
           <div className="flex items-center gap-3 shrink-0">
             <button
               onClick={() => setIsAiModalOpen(true)}
-              className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 px-4 py-2.5 text-xs font-bold text-white shadow-sm transition-opacity"
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-on-primary transition-colors hover:bg-blue-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
             >
               <Sparkles size={16} /> Tạo ảnh AI
             </button>
-            <label className="cursor-pointer inline-flex items-center justify-center gap-2 rounded-full bg-primary text-on-primary hover:opacity-90 px-4 py-2.5 text-xs font-bold shadow-sm transition-opacity">
-              <Upload size={16} /> Tải tập tin lên
-              <input type="file" onChange={handleDirectUpload} className="hidden" accept="image/*,video/*" />
+            <label className="cursor-pointer inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-on-primary hover:bg-blue-700 focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-primary transition-colors">
+              <Upload size={16} /> Tải ảnh lên
+              <input type="file" onChange={handleDirectUpload} className="sr-only" accept="image/jpeg,image/png,image/webp" />
             </label>
             <button
               onClick={() => setIsUploadModalOpen(true)}
@@ -236,7 +273,9 @@ export default function MediaLibrary() {
         {/* Search Field */}
         <div className="relative w-full sm:w-64">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-on-surface-variant/60" />
+          <label htmlFor="media-search" className="sr-only">Tìm tên tập tin media</label>
           <input
+            id="media-search"
             type="text"
             placeholder="Tìm tên tập tin..."
             value={searchQuery}
@@ -274,21 +313,32 @@ export default function MediaLibrary() {
               className="group relative overflow-hidden rounded-3xl border border-surface-variant/40 bg-surface-container-lowest dark:bg-tertiary-container p-4 shadow-ambient hover:shadow-ambient-hover transition-all duration-300 hover:-translate-y-1"
             >
               {/* Media Thumbnail */}
-              <div className="relative aspect-video w-full overflow-hidden rounded-2xl bg-surface-container-high">
+              <div
+                onClick={() => setPreviewAsset(asset)}
+                className="relative aspect-video w-full overflow-hidden rounded-2xl bg-surface-container-high cursor-pointer group/thumb"
+                title="Nhấp để xem trước kích thước lớn"
+              >
                 {asset.fileType === 'video' ? (
                   <div className="relative h-full w-full">
-                    <img src={asset.url} alt={asset.name} className="h-full w-full object-cover opacity-80" />
+                    <AuthorizedMediaImage assetId={asset.sourceKind === 'private_storage' ? asset.id : null} legacyUrl={asset.url} alt={asset.name} className="h-full w-full object-cover opacity-80" />
                     <div className="absolute inset-0 flex items-center justify-center bg-primary/40">
                       <Film className="h-8 w-8 text-white" />
                     </div>
                   </div>
                 ) : (
-                  <img
-                    src={asset.url}
+                  <AuthorizedMediaImage
+                    assetId={asset.sourceKind === 'private_storage' ? asset.id : null}
+                    legacyUrl={asset.url}
                     alt={asset.name}
                     className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                   />
                 )}
+
+                <div className="absolute inset-0 bg-primary/30 opacity-0 group-hover/thumb:opacity-100 flex items-center justify-center transition-opacity">
+                  <span className="p-2 rounded-full bg-white/80 dark:bg-black/60 text-primary dark:text-white shadow-sm">
+                    <Eye size={18} />
+                  </span>
+                </div>
 
                 <span className="absolute left-2.5 top-2.5 rounded-full bg-primary/80 px-2.5 py-0.5 text-[10px] font-bold text-on-primary uppercase">
                   {asset.fileType}
@@ -307,7 +357,7 @@ export default function MediaLibrary() {
 
                 <div className="mt-3 flex items-center justify-between gap-2 border-t border-surface-variant/20 pt-2.5">
                   <button
-                    onClick={() => handleCopyUrl(asset.id, asset.url)}
+                    onClick={() => handleCopyUrl(asset)}
                     className="inline-flex items-center gap-1 rounded-full border border-surface-variant/40 bg-secondary-container px-3 py-1 text-[11px] font-bold text-secondary hover:bg-secondary-container/80 transition-colors"
                   >
                     {copiedId === asset.id ? <Check size={12} className="text-emerald-600" /> : <Copy size={12} />}
@@ -330,14 +380,16 @@ export default function MediaLibrary() {
 
       {/* Add URL Modal */}
       {isUploadModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-primary/40 backdrop-blur-sm animate-fade-in">
-          <div className="relative w-full max-w-md overflow-hidden rounded-[2.5rem] border border-surface-variant/40 bg-surface-container-lowest dark:bg-tertiary-container p-6 sm:p-8 shadow-ambient text-primary dark:text-inverse-primary">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-primary/40 animate-fade-in">
+          <div role="dialog" aria-modal="true" aria-labelledby="media-url-dialog-title" className="relative w-full max-w-md max-h-[90vh] overflow-y-auto rounded-2xl border border-surface-variant bg-white p-5 sm:p-7 shadow-xl text-primary">
             
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold text-primary dark:text-inverse-primary">Thêm URL tài nguyên Media</h3>
+              <h3 id="media-url-dialog-title" className="text-lg font-bold text-primary">Thêm URL tài nguyên Media</h3>
               <button
                 onClick={() => setIsUploadModalOpen(false)}
-                className="rounded-full p-1 text-on-surface-variant hover:bg-surface-container-high"
+                type="button"
+                aria-label="Đóng biểu mẫu"
+                className="inline-flex h-11 w-11 items-center justify-center rounded-lg text-on-surface-variant hover:bg-surface-container-high focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
               >
                 <X size={20} />
               </button>
@@ -345,33 +397,36 @@ export default function MediaLibrary() {
             
             <form onSubmit={handleCreateAssetUrl} className="space-y-4">
               <div>
-                <label className="block text-xs font-bold uppercase text-on-surface-variant mb-1">Tên tài nguyên</label>
+                <label htmlFor="media-asset-name" className="mb-1 block text-sm font-semibold text-on-surface">Tên tài nguyên</label>
                 <input
+                  id="media-asset-name"
                   type="text"
                   placeholder="Ví dụ: Banner_Khuyen_Mai_Thang7.png"
                   value={assetName}
                   onChange={(e) => setAssetName(e.target.value)}
-                  className="w-full rounded-2xl border border-surface-variant/40 bg-surface-container-low dark:bg-surface-variant/20 p-3 text-xs text-primary dark:text-inverse-primary focus:outline-none focus:ring-2 focus:ring-secondary/40"
+                  className="w-full rounded-lg border border-surface-variant bg-white p-3 text-base text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold uppercase text-on-surface-variant mb-1">Đường dẫn URL media</label>
+                <label htmlFor="media-asset-url" className="mb-1 block text-sm font-semibold text-on-surface">Đường dẫn URL media</label>
                 <input
+                  id="media-asset-url"
                   type="url"
                   placeholder="https://..."
                   value={assetUrl}
                   onChange={(e) => setAssetUrl(e.target.value)}
-                  className="w-full rounded-2xl border border-surface-variant/40 bg-surface-container-low dark:bg-surface-variant/20 p-3 text-xs text-primary dark:text-inverse-primary focus:outline-none focus:ring-2 focus:ring-secondary/40"
+                  className="w-full rounded-lg border border-surface-variant bg-white p-3 text-base text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold uppercase text-on-surface-variant mb-1">Loại định dạng</label>
+                <label htmlFor="media-asset-type" className="mb-1 block text-sm font-semibold text-on-surface">Loại định dạng</label>
                 <select
+                  id="media-asset-type"
                   value={assetType}
                   onChange={(e) => setAssetType(e.target.value)}
-                  className="w-full rounded-2xl border border-surface-variant/40 bg-surface-container-low dark:bg-surface-variant/20 p-3 text-xs text-primary dark:text-inverse-primary focus:outline-none focus:ring-2 focus:ring-secondary/40"
+                  className="w-full rounded-lg border border-surface-variant bg-white p-3 text-base text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
                 >
                   <option value="image">Hình ảnh (PNG, JPG, WEBP)</option>
                   <option value="video">Video (MP4, MOV)</option>
@@ -410,6 +465,76 @@ export default function MediaLibrary() {
           fetchAssets();
         }}
       />
+
+      {/* Media Lightbox Preview Modal */}
+      {previewAsset && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-primary/60 backdrop-blur-md animate-fade-in">
+          <div className="relative w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-[2.5rem] border border-surface-variant/40 bg-surface-container-lowest dark:bg-tertiary-container p-6 sm:p-8 shadow-ambient text-primary dark:text-inverse-primary animate-scale-in">
+            
+            <div className="flex items-center justify-between pb-4 border-b border-surface-variant/30 mb-4">
+              <div>
+                <span className="inline-block bg-secondary-container text-on-secondary-container px-3 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider mb-1">
+                  {previewAsset.fileType}
+                </span>
+                <h3 className="text-lg font-bold text-primary dark:text-inverse-primary truncate max-w-md sm:max-w-lg">
+                  {previewAsset.name}
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setPreviewAsset(null)}
+                className="rounded-full p-2 text-on-surface-variant hover:bg-surface-container-high transition-colors"
+                aria-label="Đóng"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Preview Display */}
+            <div className="rounded-2xl overflow-hidden bg-black/5 dark:bg-black/40 border border-surface-variant/30 flex items-center justify-center min-h-[300px] max-h-[500px] mb-4">
+              {previewAsset.fileType === 'video' ? (
+                <video src={previewAsset.url} controls className="max-h-[480px] w-full rounded-2xl" autoPlay />
+              ) : (
+                <AuthorizedMediaImage
+                  assetId={previewAsset.sourceKind === 'private_storage' ? previewAsset.id : null}
+                  legacyUrl={previewAsset.url}
+                  alt={previewAsset.name}
+                  className="max-h-[480px] w-auto max-w-full object-contain rounded-2xl"
+                />
+              )}
+            </div>
+
+            {/* Details & Actions */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-2 border-t border-surface-variant/30">
+              <div className="text-xs text-on-surface-variant space-y-0.5">
+                <p>Kích thước: <strong>{((previewAsset.sizeBytes || 0) / (1024 * 1024)).toFixed(2)} MB</strong></p>
+                <p>Ngày tải lên: <strong>{new Date(previewAsset.createdAt).toLocaleString('vi-VN')}</strong></p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleCopyUrl(previewAsset)}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-surface-variant/40 bg-secondary-container px-4 py-2 text-xs font-bold text-secondary hover:bg-secondary-container/80 transition-colors"
+                >
+                  {copiedId === previewAsset.id ? <Check size={14} className="text-emerald-600" /> : <Copy size={14} />}
+                  <span>{copiedId === previewAsset.id ? 'Đã copy URL' : 'Sao chép URL'}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleDownload(previewAsset)}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-primary text-on-primary hover:opacity-90 px-4 py-2 text-xs font-bold shadow-sm transition-opacity"
+                >
+                  <Download size={14} />
+                  <span>Tải xuống</span>
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      )}
     </div>
   );
 }

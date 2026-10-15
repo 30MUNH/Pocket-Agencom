@@ -13,19 +13,19 @@ export default function Footer() {
         <div className="flex gap-5">
           <Link
             to="/privacy"
-            className="text-[11px] text-on-surface-variant hover:text-primary transition-colors"
+            className="inline-flex min-h-6 items-center text-[11px] text-on-surface-variant hover:text-primary transition-colors"
           >
             Chính sách Bảo mật
           </Link>
           <Link
             to="/terms"
-            className="text-[11px] text-on-surface-variant hover:text-primary transition-colors"
+            className="inline-flex min-h-6 items-center text-[11px] text-on-surface-variant hover:text-primary transition-colors"
           >
             Điều khoản Dịch vụ
           </Link>
           <Link
             to="/contact"
-            className="text-[11px] text-on-surface-variant hover:text-primary transition-colors"
+            className="inline-flex min-h-6 items-center text-[11px] text-on-surface-variant hover:text-primary transition-colors"
           >
             Liên hệ chúng tôi
           </Link>

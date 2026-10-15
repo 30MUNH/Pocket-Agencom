@@ -97,7 +97,7 @@ export default function MyPlans() {
           {filteredPlans.length === 0 && (
             <div className="col-span-full text-center py-16 text-on-surface-variant">
               Chưa có kế hoạch nào.{' '}
-              <Link to="/marketing-kit" className="text-primary font-bold">Tạo ngay</Link>
+              <Link to="/marketing-kit" className="inline-flex min-h-11 items-center px-1 text-primary font-bold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">Tạo ngay</Link>
             </div>
           )}
         </div>

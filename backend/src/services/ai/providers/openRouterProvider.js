@@ -34,6 +34,7 @@ class OpenRouterProvider {
     maxTokens = aiConfig.limits.maxTokens,
     jsonMode = false,
     timeoutMs = aiConfig.limits.requestTimeoutMs,
+    signal,
   }) {
     if (!this.apiKey || this.apiKey.trim().length === 0) {
       throw new AppError('OpenRouter API Key is not configured.', 400);
@@ -71,14 +72,19 @@ class OpenRouterProvider {
         'X-Title': 'Pocket Agencom Marketing SaaS',
       },
       timeout: timeoutMs,
+      signal,
     });
 
     const choice = response.data?.choices?.[0];
-    const text = choice?.message?.content || '';
+    const text = choice?.message?.content;
+    if (typeof text !== 'string' || !text.trim()) {
+      throw new AppError('OpenRouter returned an empty response.', 502);
+    }
     return {
       text,
       provider: this.name,
-      model: this.textModel,
+      // Meta-routes such as openrouter/free return the concrete selected model.
+      model: response.data?.model || this.textModel,
       usage: response.data?.usage || null,
     };
   }

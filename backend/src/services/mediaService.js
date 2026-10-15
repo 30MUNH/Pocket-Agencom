@@ -1,8 +1,9 @@
 const prisma = require('../config/prisma');
 const { AppError } = require('../middleware/errorHandler');
-
-// In-memory fallback store in case database tables are not migrated yet
-let demoMediaAssetsStore = [];
+const { validateExternalMediaUrl } = require('./externalMediaUrl');
+const { requireOwnedBusinessProfile } = require('./businessProfileAccess');
+const { createMediaAssetReferenceService } = require('./mediaAssetReferenceService');
+const mediaAssetReferenceService = createMediaAssetReferenceService();
 
 /**
  * Uploads/records a media asset in the library.
@@ -12,77 +13,37 @@ async function uploadMediaAsset(userId, { name, url, fileType = 'image', sizeByt
     throw new AppError('Tên tập tin và URL media là bắt buộc.', 400);
   }
 
-  try {
-    const asset = await prisma.mediaAsset.create({
-      data: {
-        userId,
-        businessProfileId: businessProfileId ? Number(businessProfileId) : null,
-        name,
-        url,
-        fileType,
-        sizeBytes: Number(sizeBytes) || 0
-      }
-    });
-    return asset;
-  } catch (err) {
-    console.warn('[Prisma Fallback] MediaAsset create fallback to memory store:', err.message);
-    const asset = {
-      id: Date.now(),
+  const canonicalUrl = validateExternalMediaUrl(url);
+  const profile = businessProfileId == null ? null : await requireOwnedBusinessProfile(userId, businessProfileId, prisma);
+  return prisma.mediaAsset.create({
+    data: {
       userId,
-      businessProfileId: businessProfileId ? Number(businessProfileId) : null,
+      businessProfileId: profile?.id || null,
       name,
-      url,
+      url: canonicalUrl,
+      sourceKind: 'external_url',
       fileType,
-      sizeBytes: Number(sizeBytes) || 0,
-      createdAt: new Date().toISOString()
-    };
-    demoMediaAssetsStore.unshift(asset);
-    return asset;
-  }
+      sizeBytes: Number(sizeBytes) || 0
+    }
+  });
 }
 
 /**
  * Gets all media assets for a user.
  */
 async function getMediaAssets(userId) {
-  try {
-    const assets = await prisma.mediaAsset.findMany({
-      where: { userId },
-      orderBy: { createdAt: 'desc' },
-    });
-    return assets || [];
-  } catch (err) {
-    console.warn('[Prisma Warning] Could not retrieve media assets:', err.message);
-    return [];
-  }
+  const assets = await prisma.mediaAsset.findMany({
+    where: { userId, lifecycleState: 'active' },
+    orderBy: { createdAt: 'desc' },
+  });
+  return (assets || []).map(({ id, name, url, sourceKind, fileType, sizeBytes, createdAt }) => ({ id, name, url: sourceKind === 'private_storage' ? null : url, sourceKind, fileType, sizeBytes, createdAt }));
 }
 
 /**
  * Deletes a media asset by ID with strict user ownership verification.
  */
 async function deleteMediaAsset(userId, assetId) {
-  const idNum = parseInt(assetId, 10);
-
-  try {
-    const existing = await prisma.mediaAsset.findUnique({ where: { id: idNum } });
-    if (!existing || existing.userId !== userId) {
-      throw new AppError('Không tìm thấy tài sản truyền thông hoặc bạn không có quyền xóa.', 404);
-    }
-
-    await prisma.mediaAsset.delete({
-      where: { id: idNum }
-    });
-    return { deleted: true };
-  } catch (err) {
-    if (err instanceof AppError) throw err;
-    console.warn('[Prisma Fallback] Deleting media asset in memory store:', err.message);
-    const target = demoMediaAssetsStore.find(a => a.id === idNum);
-    if (!target || target.userId !== userId) {
-      throw new AppError('Không tìm thấy tài sản truyền thông hoặc bạn không có quyền xóa.', 404);
-    }
-    demoMediaAssetsStore = demoMediaAssetsStore.filter(a => a.id !== idNum);
-    return { deleted: true };
-  }
+  return mediaAssetReferenceService.deleteOwnedAsset(userId, assetId);
 }
 
 module.exports = {

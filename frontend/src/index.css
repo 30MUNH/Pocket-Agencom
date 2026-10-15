@@ -7,6 +7,8 @@ body {
   margin: 0;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  color: #182230;
+  background: #f7f9fc;
 }
 
 /* ─── Material Symbols Configuration ─── */
@@ -14,28 +16,36 @@ body {
   font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
 }
 
-/* ─── Reusable Glass Panel (Stitch design pattern) ─── */
+/* ─── Shared surfaces ─── */
 @layer components {
   .glass-panel {
-    background: rgba(255, 255, 255, 0.85);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    box-shadow: 0 4px 24px rgba(255, 143, 163, 0.08);
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06), 0 8px 24px rgba(15, 23, 42, 0.04);
   }
+}
 
-  .ambient-glow {
-    position: absolute;
-    width: 600px;
-    height: 600px;
-    background: radial-gradient(
-      circle,
-      rgba(247, 220, 222, 0.4) 0%,
-      rgba(255, 255, 255, 0) 70%
-    );
-    border-radius: 50%;
-    z-index: -1;
-    pointer-events: none;
+:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+
+@media (max-width: 640px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }
 

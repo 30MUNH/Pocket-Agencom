@@ -23,6 +23,7 @@ function createAuthMiddleware(prismaClient = prisma) {
         role: true,
         status: true,
         avatarUrl: true,
+        avatarMediaAssetId: true,
         phone: true,
       },
     });

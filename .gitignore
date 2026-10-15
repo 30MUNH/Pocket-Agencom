@@ -46,3 +46,12 @@ Thumbs.db
 # Temporary build/cache directories
 %TEMP%/
 **/%TEMP%/
+
+# Local AI Agent Skills & Personal Tooling
+/.agents/
+/agent/
+/.claude/
+/.codex/
+/AGENTS.md
+/skills-lock.json
+/backend/skills-lock.json

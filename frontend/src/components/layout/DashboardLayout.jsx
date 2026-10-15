@@ -40,11 +40,11 @@ export default function DashboardLayout() {
   }, [userRole, location.pathname, navigate]);
 
   return (
-    <div className="bg-background text-on-background font-body-md antialiased overflow-x-hidden min-h-screen flex">
+    <div className="min-h-dvh flex overflow-x-hidden bg-background font-body-md text-on-background antialiased">
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} userRole={userRole} />
 
       <div className="flex-1 flex flex-col lg:ml-sidebar-width min-w-0 transition-all duration-300 relative">
-        <Header onMenuClick={() => setSidebarOpen(true)} user={user} userRole={userRole} />
+        <Header onMenuClick={() => setSidebarOpen((open) => !open)} isMenuOpen={sidebarOpen} user={user} userRole={userRole} />
 
         <main className="flex-1 px-gutter py-8 max-w-container-max mx-auto w-full flex flex-col">
           <Outlet context={{ userRole, user }} />

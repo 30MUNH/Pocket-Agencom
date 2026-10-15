@@ -16,6 +16,8 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { useGenerateImagePrompt, useGenerateSocialImage } from '../../hooks/useMarketingPlans';
+import { mediaApi } from '../../api/mediaApi';
+import AuthorizedMediaImage from './AuthorizedMediaImage';
 import { toast } from '../../store/toastStore';
 
 const ASPECT_RATIOS = [
@@ -106,9 +108,13 @@ export default function SocialImageGeneratorModal({
         businessProfileId: businessProfileId ? Number(businessProfileId) : undefined,
       });
 
-      if (res && res.imageUrl) {
-        setGeneratedResult(res);
-        toast.success('Tạo ảnh AI thành công! Đã lưu vào Media Library.');
+      if (res?.mediaAssetId) {
+        setGeneratedResult({ mediaAssetId: res.mediaAssetId, prompt: res.prompt, aspectRatio: res.aspectRatio || aspectRatio });
+        if (res.originalSaveFailed) {
+          toast.info('Ảnh đã lưu vào Media Library. Bản gốc chưa lưu được; bạn vẫn có thể dùng ảnh đã tạo.');
+        } else {
+          toast.success('Tạo ảnh AI thành công! Đã lưu vào Media Library.');
+        }
       } else {
         toast.error('Không nhận được hình ảnh từ dịch vụ AI.');
       }
@@ -119,11 +125,12 @@ export default function SocialImageGeneratorModal({
   };
 
   const handleCopyUrl = async () => {
-    if (!generatedResult?.imageUrl) return;
+    if (!generatedResult?.mediaAssetId) return;
     try {
-      await navigator.clipboard.writeText(generatedResult.imageUrl);
+      const access = await mediaApi.getAssetAccess(generatedResult.mediaAssetId);
+      await navigator.clipboard.writeText(access.url);
       setCopiedUrl(true);
-      toast.success('Đã sao chép liên kết hình ảnh!');
+      toast.success('Đã sao chép liên kết tạm thời (có hiệu lực trong 10 phút).');
       setTimeout(() => setCopiedUrl(false), 2000);
     } catch {
       toast.error('Không thể sao chép liên kết.');
@@ -131,27 +138,24 @@ export default function SocialImageGeneratorModal({
   };
 
   const handleDownload = async () => {
-    if (!generatedResult?.imageUrl) return;
+    if (!generatedResult?.mediaAssetId) return;
     try {
-      const response = await fetch(generatedResult.imageUrl);
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
+      const access = await mediaApi.getAssetAccess(generatedResult.mediaAssetId, { download: true });
       const link = document.createElement('a');
-      link.href = url;
-      link.download = `agencom-ai-${platform.toLowerCase()}-${aspectRatio.replace(':', 'x')}-${Date.now()}.jpg`;
+      link.href = access.url;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
       document.body.appendChild(link);
       link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
+      link.remove();
       toast.success('Đang tải ảnh xuống máy...');
     } catch {
-      // Fallback: open in new tab
-      window.open(generatedResult.imageUrl, '_blank');
+      toast.error('Không thể tải ảnh xuống. Hãy thử lại sau khi làm mới bản xem trước.');
     }
   };
 
   const handleAttachImage = () => {
-    if (!generatedResult?.imageUrl) return;
+    if (!generatedResult?.mediaAssetId) return;
     if (onAttach) {
       onAttach(generatedResult);
       toast.success('Đã đính kèm ảnh vào nội dung!');
@@ -162,19 +166,22 @@ export default function SocialImageGeneratorModal({
   const currentRatio = ASPECT_RATIOS.find((r) => r.id === aspectRatio) || ASPECT_RATIOS[0];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-      <div 
-        className="relative w-full max-w-4xl max-h-[90vh] bg-surface-container-lowest dark:bg-tertiary-container rounded-[2rem] shadow-2xl border border-surface-variant/40 flex flex-col overflow-hidden"
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 animate-fade-in">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="social-image-studio-title"
+        className="relative w-full max-w-4xl max-h-[90vh] bg-white rounded-2xl shadow-xl border border-surface-variant flex flex-col overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="px-6 py-5 border-b border-surface-variant/30 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-pink-500 to-rose-500 text-white flex items-center justify-center shadow-md">
+            <div className="w-10 h-10 rounded-xl bg-primary text-on-primary flex items-center justify-center">
               <Sparkles size={20} />
             </div>
             <div>
-              <h3 className="text-lg font-bold text-primary dark:text-inverse-primary leading-tight">
+              <h3 id="social-image-studio-title" className="text-lg font-bold text-primary leading-tight">
                 Studio Tạo Ảnh AI Mạng Xã Hội
               </h3>
               <p className="text-xs text-on-surface-variant">
@@ -184,7 +191,9 @@ export default function SocialImageGeneratorModal({
           </div>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-full hover:bg-surface-container flex items-center justify-center text-on-surface-variant transition-colors"
+            type="button"
+            aria-label="Đóng Studio tạo ảnh"
+            className="inline-flex h-11 w-11 items-center justify-center rounded-lg text-on-surface-variant hover:bg-surface-container focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary transition-colors"
           >
             <X size={18} />
           </button>
@@ -314,7 +323,7 @@ export default function SocialImageGeneratorModal({
             <button
               onClick={handleGenerateImage}
               disabled={generateImageMutation.isPending || !prompt.trim()}
-              className="w-full py-3.5 rounded-xl bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 active:scale-[0.98] text-white text-xs font-bold shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+              className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-3.5 text-sm font-semibold text-on-primary transition-colors hover:bg-blue-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-50"
             >
               {generateImageMutation.isPending ? (
                 <>
@@ -349,11 +358,11 @@ export default function SocialImageGeneratorModal({
                   </p>
                 </div>
               </div>
-            ) : generatedResult?.imageUrl ? (
+            ) : generatedResult?.mediaAssetId ? (
               <div className="w-full flex flex-col items-center space-y-4">
                 <div className={`w-full max-h-[320px] rounded-xl overflow-hidden shadow-lg border border-secondary-container/40 relative group ${currentRatio.cssAspect}`}>
-                  <img
-                    src={generatedResult.imageUrl}
+                  <AuthorizedMediaImage
+                    assetId={generatedResult.mediaAssetId}
                     alt={generatedResult.prompt || 'Generated AI Social Image'}
                     className="w-full h-full object-cover"
                   />

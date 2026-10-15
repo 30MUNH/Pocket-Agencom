@@ -11,5 +11,6 @@ router.post('/login', validate(loginSchema), authController.login);
 router.get('/me', authMiddleware, authController.me);
 router.put('/business-profile', authMiddleware, authController.updateBusinessProfile);
 router.put('/profile', authMiddleware, authController.updateProfile);
+router.put('/change-password', authMiddleware, authController.changePassword);
 
 module.exports = router;

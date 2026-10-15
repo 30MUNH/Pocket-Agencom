@@ -1,137 +1,183 @@
 const prisma = require('../config/prisma');
+const { randomUUID } = require('node:crypto');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
+const { AppError } = require('../middleware/errorHandler');
+const aiConfig = require('./ai/aiConfig');
 
+const PROVIDER = 'gemini';
+const VERSION = 'mrl-768-v1';
 let embeddingModelInstance = null;
 
 function getEmbeddingModel() {
   const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey || apiKey.trim().length === 0) {
-    throw new Error('GEMINI_API_KEY is not configured for RAG embeddings.');
+  if (!apiKey || !apiKey.trim()) throw new Error('GEMINI_API_KEY is not configured for RAG embeddings.');
+  if (!aiConfig.freeTierConfirmed.gemini || !aiConfig.embedding.verifiedFreeModels.includes(aiConfig.embedding.model)) {
+    throw new Error('Gemini free-tier eligibility is not confirmed for the configured RAG embedding model.');
   }
   if (!embeddingModelInstance) {
-    const genAI = new GoogleGenerativeAI(apiKey);
-    embeddingModelInstance = genAI.getGenerativeModel({ model: 'gemini-embedding-2' });
+    embeddingModelInstance = new GoogleGenerativeAI(apiKey).getGenerativeModel({ model: aiConfig.embedding.model });
   }
   return embeddingModelInstance;
 }
 
-// Returns a 768-dim vector for the given text using Gemini Embedding 2 MRL
 async function generateEmbedding(text) {
-  const model = getEmbeddingModel();
-  const result = await model.embedContent({
-    content: { parts: [{ text }] },
-    outputDimensionality: 768,
+  const result = await getEmbeddingModel().embedContent({
+    content: { parts: [{ text }] }, outputDimensionality: aiConfig.embedding.dimensions,
   });
+  return checkedVector(result?.embedding?.values);
+}
 
-  const values = result?.embedding?.values;
-  if (!Array.isArray(values) || values.length !== 768) {
-    throw new Error(`Invalid embedding dimensions: expected 768, got ${values?.length}`);
+function checkedVector(values) {
+  if (!Array.isArray(values) || values.length !== aiConfig.embedding.dimensions
+    || values.some((value) => !Number.isFinite(value))) {
+    throw new Error(`Invalid embedding dimensions: expected ${aiConfig.embedding.dimensions}, got ${values?.length}`);
   }
-
   return values;
 }
 
-// Insert via Prisma (embedding omitted — Unsupported type), then set the vector with raw SQL
-async function saveToKnowledgeBase(content, metadata = {}) {
-  const enrichedMetadata = {
-    ...metadata,
-    embeddingModel: 'gemini-embedding-2',
-    dimensions: 768,
-    createdAt: new Date().toISOString(),
-  };
-
-  const embedding = await generateEmbedding(content);
-
-  const record = await prisma.knowledgeBase.create({
-    data: { content, metadata: enrichedMetadata },
-  });
-
-  await prisma.$executeRaw`
-    UPDATE knowledge_base
-    SET embedding = ${JSON.stringify(embedding)}::vector
-    WHERE id = ${record.id}::uuid
-  `;
-
-  return record;
+function positiveId(value) {
+  const number = Number(value);
+  return Number.isSafeInteger(number) && number > 0 ? number : null;
 }
 
-// Top-N closest strategies by cosine distance (<=>). Returns [] on any failure
-// so callers can always proceed without RAG context.
-// Isolates vector space by filtering to gemini-embedding-2 embeddings.
-async function findSimilarStrategies(userQuery, limit = 3) {
-  try {
-    const embedding = await generateEmbedding(userQuery);
-    const vector = JSON.stringify(embedding);
-
-    const rows = await prisma.$queryRaw`
-      SELECT id, content, metadata,
-             1 - (embedding <=> ${vector}::vector) AS similarity
-      FROM knowledge_base
-      WHERE embedding IS NOT NULL
-        AND (
-          metadata->>'embeddingModel' = 'gemini-embedding-2'
-          OR metadata->>'embeddingModel' IS NULL
-        )
-      ORDER BY embedding <=> ${vector}::vector
-      LIMIT ${Number(limit)}
-    `;
-
-    return rows;
-  } catch (err) {
-    console.warn('[RAG Notice] Search unavailable:', err.message || err);
-    return [];
-  }
+function actorIds(context) {
+  return { userId: positiveId(context?.userId), businessProfileId: positiveId(context?.businessProfileId) };
 }
 
-// Reindex legacy records or records missing the gemini-embedding-2 model tag
-async function reindexKnowledgeBase() {
-  try {
-    const records = await prisma.knowledgeBase.findMany();
-    let reindexedCount = 0;
+function requirePrivateActor(context) {
+  const ids = actorIds(context);
+  if (!ids.userId || !ids.businessProfileId) throw new AppError('Authenticated business context is required.', 403);
+  return ids;
+}
 
-    for (const record of records) {
-      try {
-        const meta = typeof record.metadata === 'object' && record.metadata !== null ? record.metadata : {};
-        if (meta.embeddingModel === 'gemini-embedding-2') {
-          continue; // Already on current model
-        }
+function contentText(content) {
+  if (typeof content !== 'string' || !content.trim()) throw new AppError('Knowledge content is required.', 400);
+  return content.trim();
+}
 
-        const embedding = await generateEmbedding(record.content);
-        const updatedMetadata = {
-          ...meta,
-          embeddingModel: 'gemini-embedding-2',
-          dimensions: 768,
-          reindexedAt: new Date().toISOString(),
-        };
+function safeMetadata(metadata) {
+  if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) return {};
+  const blocked = new Set(['scope', 'ownerUserId', 'businessProfileId', 'approvedByUserId', 'approvedAt',
+    'embeddingModel', 'embeddingProvider', 'embeddingVersion', 'embeddingDimensions', 'userId']);
+  return Object.fromEntries(Object.entries(metadata).filter(([key]) => !blocked.has(key)));
+}
 
-        await prisma.knowledgeBase.update({
-          where: { id: record.id },
-          data: { metadata: updatedMetadata },
-        });
+function validUuid(id) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(id));
+}
 
-        await prisma.$executeRaw`
-          UPDATE knowledge_base
-          SET embedding = ${JSON.stringify(embedding)}::vector
-          WHERE id = ${record.id}::uuid
-        `;
-        reindexedCount++;
-      } catch (itemErr) {
-        console.warn(`[RAG Reindex] Skipped item ${record.id}:`, itemErr.message);
-      }
+function createRagService({ prismaClient = prisma, embed = generateEmbedding } = {}) {
+  async function findSimilarStrategies(userQuery, context, limit = 3) {
+    const { userId, businessProfileId } = actorIds(context);
+    if (!userId || typeof userQuery !== 'string' || !userQuery.trim()) return [];
+    try {
+      const actor = await prismaClient.$queryRaw`
+        SELECT u.id AS user_id, bp.id AS business_profile_id
+        FROM users u LEFT JOIN business_profiles bp ON bp.user_id = u.id AND bp.id = ${businessProfileId}
+        WHERE u.id = ${userId} AND u.status = 'active'
+      `;
+      if (!actor.length) return [];
+      const vector = JSON.stringify(checkedVector(await embed(userQuery)));
+      const n = Number(limit);
+      const boundedLimit = Number.isSafeInteger(n) ? Math.min(Math.max(n, 1), 10) : 3;
+      return await prismaClient.$queryRaw`
+        SELECT kb.id, kb.content, kb.metadata,
+               1 - (kb.embedding <=> ${vector}::vector) AS similarity
+        FROM knowledge_base kb
+        JOIN users u ON u.id = ${userId} AND u.status = 'active'
+        LEFT JOIN business_profiles bp ON bp.user_id = u.id AND bp.id = ${businessProfileId}
+        WHERE kb.embedding IS NOT NULL
+          AND kb.embedding_provider = ${PROVIDER}
+          AND kb.embedding_model = ${aiConfig.embedding.model}
+          AND kb.embedding_version = ${VERSION}
+          AND kb.embedding_dimensions = ${aiConfig.embedding.dimensions}
+          AND ((kb.scope = 'approved_global' AND kb.approved_by_user_id IS NOT NULL AND kb.approved_at IS NOT NULL)
+            OR (kb.scope = 'tenant_private' AND kb.owner_user_id = u.id AND kb.business_profile_id = bp.id))
+        ORDER BY kb.embedding <=> ${vector}::vector
+        LIMIT ${boundedLimit}
+      `;
+    } catch (error) {
+      console.warn('[RAG Notice] Search unavailable:', error.message || error);
+      return [];
     }
-
-    return { total: records.length, reindexedCount };
-  } catch (err) {
-    console.warn('[RAG Reindex Notice] Table inaccessible:', err.message);
-    return { total: 0, reindexedCount: 0 };
   }
+
+  async function saveToKnowledgeBase(content, metadata = {}, context) {
+    const { userId, businessProfileId } = requirePrivateActor(context);
+    const body = contentText(content);
+    const vector = JSON.stringify(checkedVector(await embed(body)));
+    const rows = await prismaClient.$queryRaw`
+      INSERT INTO knowledge_base (id, content, metadata, embedding, scope, owner_user_id, business_profile_id,
+        embedding_provider, embedding_model, embedding_version, embedding_dimensions)
+      SELECT ${randomUUID()}::uuid, ${body}, ${JSON.stringify(safeMetadata(metadata))}::jsonb, ${vector}::vector,
+        'tenant_private', u.id, bp.id, ${PROVIDER}, ${aiConfig.embedding.model}, ${VERSION}, ${aiConfig.embedding.dimensions}
+      FROM users u JOIN business_profiles bp ON bp.user_id = u.id AND bp.id = ${businessProfileId}
+      WHERE u.id = ${userId} AND u.status = 'active'
+      RETURNING id, content, metadata, scope, owner_user_id, business_profile_id
+    `;
+    if (!rows.length) throw new AppError('Authenticated business context is invalid.', 403);
+    return rows[0];
+  }
+
+  async function saveApprovedGlobalKnowledge(content, metadata = {}, context) {
+    const adminUserId = positiveId(context?.adminUserId);
+    if (!adminUserId) throw new AppError('An active admin is required to approve global knowledge.', 403);
+    const body = contentText(content);
+    const vector = JSON.stringify(checkedVector(await embed(body)));
+    const rows = await prismaClient.$queryRaw`
+      INSERT INTO knowledge_base (id, content, metadata, embedding, scope, approved_by_user_id, approved_at,
+        embedding_provider, embedding_model, embedding_version, embedding_dimensions)
+      SELECT ${randomUUID()}::uuid, ${body}, ${JSON.stringify(safeMetadata(metadata))}::jsonb, ${vector}::vector,
+        'approved_global', u.id, CURRENT_TIMESTAMP, ${PROVIDER}, ${aiConfig.embedding.model}, ${VERSION}, ${aiConfig.embedding.dimensions}
+      FROM users u WHERE u.id = ${adminUserId} AND u.role = 'admin' AND u.status = 'active'
+      RETURNING id, content, metadata, scope, approved_by_user_id
+    `;
+    if (!rows.length) throw new AppError('Only an active admin may approve global knowledge.', 403);
+    return rows[0];
+  }
+
+  async function updateKnowledgeBase(id, content, metadata = {}, context) {
+    const { userId, businessProfileId } = requirePrivateActor(context);
+    if (!validUuid(id)) throw new AppError('Knowledge record not found.', 404);
+    const body = contentText(content);
+    const vector = JSON.stringify(checkedVector(await embed(body)));
+    const rows = await prismaClient.$queryRaw`
+      UPDATE knowledge_base kb
+      SET content = ${body}, metadata = ${JSON.stringify(safeMetadata(metadata))}::jsonb,
+          embedding = ${vector}::vector, embedding_provider = ${PROVIDER},
+          embedding_model = ${aiConfig.embedding.model}, embedding_version = ${VERSION},
+          embedding_dimensions = ${aiConfig.embedding.dimensions}
+      WHERE kb.id = ${id}::uuid AND kb.scope = 'tenant_private'
+        AND kb.owner_user_id = ${userId} AND kb.business_profile_id = ${businessProfileId}
+        AND EXISTS (SELECT 1 FROM users u JOIN business_profiles bp ON bp.user_id = u.id
+          WHERE u.id = ${userId} AND u.status = 'active' AND bp.id = ${businessProfileId})
+      RETURNING id, content, metadata, scope
+    `;
+    if (!rows.length) throw new AppError('Knowledge record not found.', 404);
+    return rows[0];
+  }
+
+  async function deleteKnowledgeBase(id, context) {
+    const { userId, businessProfileId } = requirePrivateActor(context);
+    if (!validUuid(id)) throw new AppError('Knowledge record not found.', 404);
+    const rows = await prismaClient.$queryRaw`
+      DELETE FROM knowledge_base kb
+      WHERE kb.id = ${id}::uuid AND kb.scope = 'tenant_private'
+        AND kb.owner_user_id = ${userId} AND kb.business_profile_id = ${businessProfileId}
+        AND EXISTS (SELECT 1 FROM users u JOIN business_profiles bp ON bp.user_id = u.id
+          WHERE u.id = ${userId} AND u.status = 'active' AND bp.id = ${businessProfileId})
+      RETURNING id
+    `;
+    if (!rows.length) throw new AppError('Knowledge record not found.', 404);
+    return { deleted: true };
+  }
+
+  async function reindexKnowledgeBase() {
+    throw new AppError('Legacy knowledge requires individual review before reindexing.', 403);
+  }
+
+  return { findSimilarStrategies, saveToKnowledgeBase, saveApprovedGlobalKnowledge,
+    updateKnowledgeBase, deleteKnowledgeBase, reindexKnowledgeBase };
 }
 
-module.exports = {
-  generateEmbedding,
-  saveToKnowledgeBase,
-  findSimilarStrategies,
-  reindexKnowledgeBase,
-  getEmbeddingModel,
-};
-
+module.exports = { generateEmbedding, getEmbeddingModel, createRagService, ...createRagService() };

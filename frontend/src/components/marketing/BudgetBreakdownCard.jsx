@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Wallet, Sparkles } from 'lucide-react';
+import { normalizeBudgetChannels } from '../../utils/budgetBreakdown';
 
 const FALLBACK_BUDGET = 20000000;
 
@@ -41,8 +42,8 @@ function ChannelIcon({ name, size = 16 }) {
 /* ── MAIN COMPONENT ──────────────────────────────────────────────────────────── */
 export default function BudgetBreakdownCard({ rawBudget, budgetBreakdown }) {
   const totalBudget = parseBudget(rawBudget);
-  const channels = budgetBreakdown?.channels;
-  const hasDynamic = Array.isArray(channels) && channels.length > 0;
+  const channels = normalizeBudgetChannels(budgetBreakdown?.channels);
+  const hasDynamic = channels.length > 0;
 
   const [activeTabIdx, setActiveTabIdx] = useState(0);
 

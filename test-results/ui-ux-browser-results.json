@@ -1,0 +1,460 @@
+{
+  "mode": "mocked-ui-only",
+  "baseUrl": "http://127.0.0.1:5173",
+  "checks": [
+    {
+      "name": "Login page rendered",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Registration navigation",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Dashboard rendered",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Dashboard 375px",
+      "passed": true,
+      "detail": "scrollWidth 375px"
+    },
+    {
+      "name": "Dashboard 768px",
+      "passed": true,
+      "detail": "scrollWidth 768px"
+    },
+    {
+      "name": "Dashboard 1024px",
+      "passed": true,
+      "detail": "scrollWidth 1024px"
+    },
+    {
+      "name": "Dashboard 1440px",
+      "passed": true,
+      "detail": "scrollWidth 1440px"
+    },
+    {
+      "name": "Template preview opens",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Starter template populates Quick Editor",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Quick Editor saves a draft (mock API)",
+      "passed": true,
+      "detail": "accepted by the browser mock; persistence is not verified"
+    },
+    {
+      "name": "Calendar loaded from intercepted API",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Calendar 375px",
+      "passed": true,
+      "detail": "scrollWidth 375px"
+    },
+    {
+      "name": "Calendar 768px",
+      "passed": true,
+      "detail": "scrollWidth 768px"
+    },
+    {
+      "name": "Calendar 1024px",
+      "passed": true,
+      "detail": "scrollWidth 1024px"
+    },
+    {
+      "name": "Calendar 1440px",
+      "passed": true,
+      "detail": "scrollWidth 1440px"
+    },
+    {
+      "name": "Calendar create dialog opens",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Calendar create submits through API (mock)",
+      "passed": true,
+      "detail": "browser interaction only; database persistence is blocked"
+    },
+    {
+      "name": "AI Image Studio opens",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Admin dashboard renders",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Staff dashboard renders",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "API stayed mocked",
+      "passed": true,
+      "detail": "59 intercepted calls; no backend process started"
+    },
+    {
+      "name": "No page runtime errors",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "No browser console errors",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "No failed browser requests",
+      "passed": true,
+      "detail": ""
+    }
+  ],
+  "screenshots": [
+    "after-dashboard-375.png",
+    "after-dashboard-768.png",
+    "after-dashboard-1024.png",
+    "after-dashboard-1440.png",
+    "after-templates-preview.png",
+    "after-quick-editor.png",
+    "after-calendar.png",
+    "after-marketing-generator.png",
+    "after-marketing-results.png",
+    "after-media-library.png",
+    "after-business-profile.png",
+    "after-settings.png",
+    "after-help-center.png",
+    "after-image-studio.png",
+    "after-admin-dashboard.png",
+    "after-admin-users.png",
+    "after-staff-dashboard.png"
+  ],
+  "apiCalls": [
+    {
+      "method": "GET",
+      "pathname": "/marketing-plans/trends",
+      "body": {}
+    },
+    {
+      "method": "GET",
+      "pathname": "/dashboard/monthly-spend",
+      "body": {}
+    },
+    {
+      "method": "GET",
+      "pathname": "/marketing-plans",
+      "body": {}
+    },
+    {
+      "method": "GET",
+      "pathname": "/marketing-plans/trends",
+      "body": {}
+    },
+    {
+      "method": "GET",
+      "pathname": "/dashboard/monthly-spend",
+      "body": {}
+    },
+    {
+      "method": "GET",
+      "pathname": "/marketing-plans/trends",
+      "body": {}
+    },
+    {
+      "method": "GET",
+      "pathname": "/dashboard/monthly-spend",
+      "body": {}
+    },
+    {
+      "method": "GET",
+      "pathname": "/marketing-plans",
+      "body": {}
+    },
+    {
+      "method": "GET",
+      "pathname": "/marketing-plans/trends",
+      "body": {}
+    },
+    {
+      "method": "GET",
+      "pathname": "/dashboard/monthly-spend",
+      "body": {}
+    },
+    {
+      "method": "GET",
+      "pathname": "/marketing-plans/trends",
+      "body": {}
+    },
+    {
+      "method": "GET",
+      "pathname": "/dashboard/monthly-spend",
+      "body": {}
+    },
+    {
+      "method": "GET",
+      "pathname": "/marketing-plans",
+      "body": {}
+    },
+    {
+      "method": "GET",
+      "pathname": "/marketing-plans/trends",
+      "body": {}
+    },
+    {
+      "method": "GET",
+      "pathname": "/dashboard/monthly-spend",
+      "body": {}
+    },
+    {
+      "method": "GET",
+      "pathname": "/marketing-plans/trends",
+      "body": {}
+    },
+    {
+      "method": "GET",
+      "pathname": "/dashboard/monthly-spend",
+      "body": {}
+    },
+    {
+      "method": "GET",
+      "pathname": "/marketing-plans",
+      "body": {}
+    },
+    {
+      "method": "GET",
+      "pathname": "/marketing-plans/trends",
+      "body": {}
+    },
+    {
+      "method": "GET",
+      "pathname": "/dashboard/monthly-spend",
+      "body": {}
+    },
+    {
+      "method": "GET",
+      "pathname": "/marketing-plans/trends",
+      "body": {}
+    },
+    {
+      "method": "GET",
+      "pathname": "/dashboard/monthly-spend",
+      "body": {}
+    },
+    {
+      "method": "GET",
+      "pathname": "/marketing-plans",
+      "body": {}
+    },
+    {
+      "method": "GET",
+      "pathname": "/marketing-plans/trends",
+      "body": {}
+    },
+    {
+      "method": "GET",
+      "pathname": "/dashboard/monthly-spend",
+      "body": {}
+    },
+    {
+      "method": "GET",
+      "pathname": "/auth/me",
+      "body": {}
+    },
+    {
+      "method": "GET",
+      "pathname": "/auth/me",
+      "body": {}
+    },
+    {
+      "method": "POST",
+      "pathname": "/scheduled-posts",
+      "body": {
+        "title": "Hé lộ Danh sách Mới",
+        "content": "✨ ĐIỀU ĐẶC BIỆT GÌ SẮP XUẤT HIỆN? ✨\n\nSau nhiều tháng ấp ủ và hoàn thiện từng chi tiết nhỏ nhất, chúng mình sắp chính thức công bố bộ sưu tập mới dành riêng cho bạn.\n\n🔍 Bạn đoán xem điều bất ngờ này là gì?\n👇 Hãy để lại dự đoán dưới phần bình luận, 3 bạn đoán đúng sớm nhất sẽ nhận ngay voucher ưu đãi 30% vào ngày mở bán!\n\n#ComingSoon #NewRelease #PocketAgencom #BoSuuTapMoi",
+        "platform": "Facebook",
+        "scheduledTime": "2026-10-13T08:06:49.650Z",
+        "status": "draft",
+        "isGoldenTime": false,
+        "businessProfileId": 10
+      }
+    },
+    {
+      "method": "GET",
+      "pathname": "/scheduled-posts",
+      "body": {}
+    },
+    {
+      "method": "GET",
+      "pathname": "/scheduled-posts",
+      "body": {}
+    },
+    {
+      "method": "GET",
+      "pathname": "/scheduled-posts",
+      "body": {}
+    },
+    {
+      "method": "GET",
+      "pathname": "/scheduled-posts",
+      "body": {}
+    },
+    {
+      "method": "GET",
+      "pathname": "/scheduled-posts",
+      "body": {}
+    },
+    {
+      "method": "GET",
+      "pathname": "/scheduled-posts",
+      "body": {}
+    },
+    {
+      "method": "GET",
+      "pathname": "/scheduled-posts",
+      "body": {}
+    },
+    {
+      "method": "GET",
+      "pathname": "/scheduled-posts",
+      "body": {}
+    },
+    {
+      "method": "GET",
+      "pathname": "/scheduled-posts",
+      "body": {}
+    },
+    {
+      "method": "GET",
+      "pathname": "/scheduled-posts",
+      "body": {}
+    },
+    {
+      "method": "GET",
+      "pathname": "/scheduled-posts",
+      "body": {}
+    },
+    {
+      "method": "GET",
+      "pathname": "/scheduled-posts",
+      "body": {}
+    },
+    {
+      "method": "GET",
+      "pathname": "/scheduled-posts",
+      "body": {}
+    },
+    {
+      "method": "GET",
+      "pathname": "/scheduled-posts",
+      "body": {}
+    },
+    {
+      "method": "POST",
+      "pathname": "/scheduled-posts",
+      "body": {
+        "title": "Browser mock CRUD post",
+        "content": "Content entered through the browser UI.",
+        "platform": "Facebook",
+        "scheduledTime": "2026-10-13T12:30:00.000Z",
+        "status": "pending_approval",
+        "isGoldenTime": true
+      }
+    },
+    {
+      "method": "GET",
+      "pathname": "/auth/me",
+      "body": {}
+    },
+    {
+      "method": "GET",
+      "pathname": "/auth/me",
+      "body": {}
+    },
+    {
+      "method": "GET",
+      "pathname": "/marketing-plans/101",
+      "body": {}
+    },
+    {
+      "method": "GET",
+      "pathname": "/campaigns/101/budget",
+      "body": {}
+    },
+    {
+      "method": "GET",
+      "pathname": "/campaigns/101/budget",
+      "body": {}
+    },
+    {
+      "method": "GET",
+      "pathname": "/media",
+      "body": {}
+    },
+    {
+      "method": "GET",
+      "pathname": "/media",
+      "body": {}
+    },
+    {
+      "method": "GET",
+      "pathname": "/auth/me",
+      "body": {}
+    },
+    {
+      "method": "GET",
+      "pathname": "/auth/me",
+      "body": {}
+    },
+    {
+      "method": "GET",
+      "pathname": "/businesses/10/analytics",
+      "body": {}
+    },
+    {
+      "method": "GET",
+      "pathname": "/businesses/10/analytics",
+      "body": {}
+    },
+    {
+      "method": "GET",
+      "pathname": "/support/tickets",
+      "body": {}
+    },
+    {
+      "method": "GET",
+      "pathname": "/support/tickets",
+      "body": {}
+    },
+    {
+      "method": "GET",
+      "pathname": "/media",
+      "body": {}
+    },
+    {
+      "method": "GET",
+      "pathname": "/media",
+      "body": {}
+    },
+    {
+      "method": "GET",
+      "pathname": "/admin/users",
+      "body": {}
+    }
+  ],
+  "consoleErrors": [],
+  "pageErrors": [],
+  "failedRequests": []
+}

@@ -51,10 +51,10 @@ const generateImagePromptSchema = z.object({
 });
 
 const generateSocialImageSchema = z.object({
-  prompt: z.string().min(5, 'Mô tả hình ảnh (prompt) phải có ít nhất 5 ký tự'),
+  prompt: z.string().trim().min(5, 'Mô tả hình ảnh (prompt) phải có ít nhất 5 ký tự').max(1000),
   aspectRatio: z.enum(['1:1', '4:5', '9:16', '16:9']).optional().default('1:1'),
-  platform: z.string().optional().default('Facebook'),
-  businessProfileId: z.coerce.number().optional(),
+  platform: z.string().trim().min(1).max(40).optional().default('Facebook'),
+  businessProfileId: z.coerce.number().int().positive().max(Number.MAX_SAFE_INTEGER).optional(),
 });
 
 const VALID_PLAN_TRANSITIONS = {

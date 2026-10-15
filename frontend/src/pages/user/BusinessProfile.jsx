@@ -16,6 +16,7 @@ import {
   Award
 } from 'lucide-react';
 import { authApi } from '../../api/authApi';
+import { toast } from '../../store/toastStore';
 import SocialLinksManager from '../../components/ui/SocialLinksManager';
 import CumulativeMediaAnalytics from '../../components/analytics/CumulativeMediaAnalytics';
 
@@ -148,10 +149,10 @@ export default function BusinessProfile() {
       setProfile(updatedProfile);
       setIsEditing(false);
       await fetchProfile();
-      alert('Cập nhật hồ sơ doanh nghiệp thành công!');
+      toast.success('Cập nhật hồ sơ doanh nghiệp thành công!');
     } catch (err) {
       console.error('Failed to update business profile:', err);
-      alert('Có lỗi xảy ra khi lưu thay đổi.');
+      toast.error('Có lỗi xảy ra khi lưu thay đổi.');
     } finally {
       setIsSaving(false);
     }
@@ -213,9 +214,9 @@ export default function BusinessProfile() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-display-lg-mobile md:text-display-lg font-display-lg text-primary">
+          <h1 className="text-display-lg-mobile md:text-display-lg font-display-lg text-primary">
             Hồ sơ Doanh nghiệp
-          </h2>
+          </h1>
           <p className="text-body-lg font-body-lg text-on-surface-variant max-w-2xl mt-1">
             Quản lý định vị thương hiệu và cung cấp dữ liệu chi tiết cho thuật toán AI thiết lập chiến lược tiếp thị.
           </p>
@@ -646,7 +647,7 @@ export default function BusinessProfile() {
                   <p className="text-body-md text-on-surface-variant text-sm">Chưa có kênh liên kết nào hoạt động.</p>
                   <button
                     onClick={() => setIsEditing(true)}
-                    className="text-xs font-bold text-secondary hover:underline"
+                    className="inline-flex min-h-11 items-center px-2 text-xs font-bold text-secondary hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
                   >
                     Liên kết ngay
                   </button>

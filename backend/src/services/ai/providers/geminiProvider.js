@@ -24,6 +24,8 @@ class GeminiProvider {
     temperature = 0.7,
     jsonMode = false,
     model = this.model,
+    timeoutMs = aiConfig.limits.requestTimeoutMs,
+    signal,
   }) {
     if (!this.isAvailable()) {
       throw new Error('Gemini API Key is not configured.');
@@ -51,7 +53,7 @@ class GeminiProvider {
       requestPayload.systemInstruction = { parts: [{ text: systemPrompt }] };
     }
 
-    const result = await genModel.generateContent(requestPayload);
+    const result = await genModel.generateContent(requestPayload, { timeout: timeoutMs, signal });
     const response = await result.response;
     const text = response.text();
 

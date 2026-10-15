@@ -1,9 +1,29 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const axios = require('axios');
 const sharp = require('sharp');
+const prismaFixture = require('./helpers/installPrismaFixture');
 const { generateSocialImageSchema, generateImagePromptSchema, refinePlanSchema } = require('../src/validators/marketingPlan.validator');
 const aiConfig = require('../src/services/ai/aiConfig');
 const aiService = require('../src/services/ai/aiService');
+
+function loadAiConfigWithEnvironment(overrides) {
+  const modulePath = require.resolve('../src/services/ai/aiConfig');
+  const previousModule = require.cache[modulePath];
+  const previousEnvironment = new Map(Object.keys(overrides).map((key) => [key, process.env[key]]));
+  try {
+    for (const [key, value] of Object.entries(overrides)) process.env[key] = value;
+    delete require.cache[modulePath];
+    return require(modulePath);
+  } finally {
+    for (const [key, value] of previousEnvironment) {
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
+    delete require.cache[modulePath];
+    if (previousModule) require.cache[modulePath] = previousModule;
+  }
+}
 const analyticsService = require('../src/services/analyticsService');
 const socialService = require('../src/services/socialService');
 const scheduledPostService = require('../src/services/scheduledPostService');
@@ -12,6 +32,7 @@ const marketingPlanService = require('../src/services/marketingPlanService');
 const CloudflareProvider = require('../src/services/ai/providers/cloudflareProvider');
 const FalProvider = require('../src/services/ai/providers/falProvider');
 const GroqProvider = require('../src/services/ai/providers/groqProvider');
+const OpenRouterProvider = require('../src/services/ai/providers/openRouterProvider');
 
 // Use minimal backoff delay for fast test execution
 aiConfig.limits.backoffBaseMs = 1;
@@ -52,6 +73,53 @@ test('AI Architecture: prompt validators enforce minimum length and required con
   const shortInstruction = refinePlanSchema.safeParse({ instruction: 'no' });
   assert.equal(shortInstruction.success, false);
   assert.match(shortInstruction.error.issues[0].message, /ít nhất 3 ký tự/);
+});
+
+test('direct image service rejects invalid requests before quota or provider use', async () => {
+  const userId = 690;
+  const dateKey = new Date().toISOString().slice(0, 10);
+  prismaFixture.__fixture.resetQuota(userId, dateKey, 'image');
+  const service = new aiService.AIService();
+  let providerCalls = 0;
+  service.getImageProvidersInPriority = () => [{ name: 'fixture', instance: { async generateImage() { providerCalls += 1; } } }];
+  await assert.rejects(service.generateSocialImage({ prompt: 'abc', aspectRatio: '21:9', userId }), { statusCode: 422 });
+  assert.equal(providerCalls, 0);
+  assert.equal((await aiService.getUserQuotaStatus(userId)).image.used, 0);
+});
+
+test('no eligible free image provider leaves quota untouched', async () => {
+  const userId = 691;
+  const dateKey = new Date().toISOString().slice(0, 10);
+  prismaFixture.__fixture.resetQuota(userId, dateKey, 'image');
+  const service = new aiService.AIService();
+  service.getImageProvidersInPriority = () => [];
+  const previousMode = process.env.PRIVATE_STORAGE_MODE;
+  process.env.PRIVATE_STORAGE_MODE = 'private';
+  try {
+    await assert.rejects(service.generateSocialImage({ prompt: 'Coffee launch photo', userId }), { statusCode: 503 });
+    assert.equal((await aiService.getUserQuotaStatus(userId)).image.used, 0);
+  } finally {
+    if (previousMode === undefined) delete process.env.PRIVATE_STORAGE_MODE;
+    else process.env.PRIVATE_STORAGE_MODE = previousMode;
+  }
+});
+
+test('concurrency rejection does not reserve image quota', async () => {
+  const userId = 692;
+  const dateKey = new Date().toISOString().slice(0, 10);
+  prismaFixture.__fixture.resetQuota(userId, dateKey, 'image');
+  const service = new aiService.AIService();
+  service.getImageProvidersInPriority = () => [{ name: 'fixture', instance: {} }];
+  service.acquireConcurrencySlot = async () => { throw Object.assign(new Error('busy'), { statusCode: 429 }); };
+  const previousMode = process.env.PRIVATE_STORAGE_MODE;
+  process.env.PRIVATE_STORAGE_MODE = 'private';
+  try {
+    await assert.rejects(service.generateSocialImage({ prompt: 'Coffee launch photo', userId }), { statusCode: 429 });
+    assert.equal((await aiService.getUserQuotaStatus(userId)).image.used, 0);
+  } finally {
+    if (previousMode === undefined) delete process.env.PRIVATE_STORAGE_MODE;
+    else process.env.PRIVATE_STORAGE_MODE = previousMode;
+  }
 });
 
 test('AI Architecture: transient error detection identifies 429 rate limit, 503, and network timeouts', () => {
@@ -124,6 +192,78 @@ test('AI Architecture: multi-provider priority fallback when primary provider en
   assert.match(result.text, /Success fallback response/);
 });
 
+test('OpenRouter empty responses fall through to the next text provider', async () => {
+  const originalPost = axios.post;
+  axios.post = async () => ({ data: { choices: [{ message: { role: 'assistant', content: '' } }] } });
+  try {
+    const customService = new aiService.AIService();
+    const openrouter = new OpenRouterProvider('test-key', 'openrouter/free');
+    let fallbackCalls = 0;
+    customService.getTextProvidersInPriority = () => [
+      { name: 'openrouter', instance: openrouter },
+      {
+        name: 'gemini',
+        instance: {
+          generateText: async () => {
+            fallbackCalls++;
+            return { text: 'Fallback response', provider: 'gemini', model: 'gemini-2.5-flash' };
+          },
+        },
+      },
+    ];
+
+    const result = await customService.generateText({ prompt: 'Return a short response.' });
+    assert.equal(result.provider, 'gemini');
+    assert.equal(result.text, 'Fallback response');
+    assert.equal(fallbackCalls, 1);
+  } finally {
+    axios.post = originalPost;
+  }
+});
+
+test('free OpenRouter rate limits fall through after one attempt instead of retrying the same route', async () => {
+  const originalPost = axios.post;
+  let openRouterCalls = 0;
+  axios.post = async () => {
+    openRouterCalls++;
+    const error = new Error('rate limited');
+    error.response = { status: 429, headers: {}, data: { error: { message: 'rate limited' } } };
+    throw error;
+  };
+
+  try {
+    const service = new aiService.AIService();
+    service.getTextProvidersInPriority = () => [
+      { name: 'openrouter', instance: new OpenRouterProvider('test-key', 'openrouter/free') },
+      { name: 'secondary', instance: { isAvailable: () => true, generateText: async () => ({ text: 'fallback', provider: 'secondary' }) } },
+    ];
+    const result = await service.generateText({ prompt: 'short' });
+
+    assert.equal(openRouterCalls, 1);
+    assert.equal(result.provider, 'secondary');
+  } finally {
+    axios.post = originalPost;
+  }
+});
+
+test('OpenRouter reports the underlying routed model returned by the provider', async () => {
+  const originalPost = axios.post;
+  axios.post = async () => ({
+    data: {
+      model: 'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free',
+      choices: [{ message: { role: 'assistant', content: 'Nội dung thử nghiệm.' } }],
+      usage: { total_tokens: 10, cost: 0 },
+    },
+  });
+  try {
+    const provider = new OpenRouterProvider('test-key', 'openrouter/free');
+    const result = await provider.generateText({ prompt: 'Viết một câu tiếng Việt.' });
+    assert.equal(result.model, 'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free');
+  } finally {
+    axios.post = originalPost;
+  }
+});
+
 test('AI Architecture: throws explicit error when all providers fail without returning mock plan data', async () => {
   const customService = new aiService.AIService();
 
@@ -187,42 +327,73 @@ test('Honest Data Layer: scheduled posts and media stores return honest empty st
   assert.equal(assets.length, 0, 'Must not return hardcoded Unsplash demo assets');
 });
 
-test('Honest Data Layer: social metrics does not hallucinate follower numbers when scraper is unavailable', async () => {
-  const res = await socialService.analyzeSocialProfile('https://instagram.com/pocket_test', 'instagram');
-  assert.ok(res);
-  // Followers must default to 0 (or null), never a random number from Math.random
-  assert.equal(res.followers, 0);
-  assert.equal(res.engagementRate, 0);
-  assert.ok(Array.isArray(res.strengths));
-  assert.ok(Array.isArray(res.areasToImprove));
+test('social analysis surfaces provider failure instead of presenting static advice as generated output', async () => {
+  const originalGet = axios.get;
+  axios.get = async () => { throw new Error('Deterministic offline scraper fixture'); };
+  try {
+    await assert.rejects(
+      socialService.analyzeSocialProfile('https://instagram.com/pocket_test', 'instagram'),
+      { statusCode: 503 },
+    );
+  } finally {
+    axios.get = originalGet;
+  }
 });
 
-test('Zero-Cost Free Tier: model whitelist verifies zero-cost models and rejects paid ones', () => {
-  // Groq verified free
-  assert.equal(aiConfig.isModelFree('groq', 'openai/gpt-oss-120b'), true);
-  // Groq deprecated or unverified
-  assert.equal(aiConfig.isModelFree('groq', 'llama-3.3-70b-versatile'), false);
-  assert.equal(aiConfig.isModelFree('groq', 'unknown/model'), false);
+test('social analysis consumes one persistent text quota unit for its owner', async () => {
+  const userId = 501;
+  const dateKey = new Date().toISOString().slice(0, 10);
+  prismaFixture.__fixture.resetQuota(userId, dateKey, 'text');
+  const originalGet = axios.get;
+  const originalStructured = aiService.generateStructuredContent;
+  axios.get = async () => { throw new Error('Deterministic offline scraper fixture'); };
+  aiService.generateStructuredContent = async () => ({
+    data: { strengths: ['Định vị rõ ràng'], areasToImprove: ['Thêm lời kêu gọi hành động'] },
+  });
 
-  // OpenRouter verified free
-  assert.equal(aiConfig.isModelFree('openrouter', 'openrouter/free'), true);
-  assert.equal(aiConfig.isModelFree('openrouter', 'meta-llama/llama-3.3-70b-instruct:free'), true);
-  // OpenRouter paid models
-  assert.equal(aiConfig.isModelFree('openrouter', 'openai/gpt-4o'), false);
-  assert.equal(aiConfig.isModelFree('openrouter', 'anthropic/claude-3.5-sonnet'), false);
+  try {
+    await socialService.analyzeSocialProfile('https://instagram.com/pocket_test', 'instagram', userId);
+    assert.equal((await aiService.getUserQuotaStatus(userId)).text.used, 1);
+  } finally {
+    axios.get = originalGet;
+    aiService.generateStructuredContent = originalStructured;
+    prismaFixture.__fixture.resetQuota(userId, dateKey, 'text');
+  }
+});
 
-  // Gemini verified free
-  assert.equal(aiConfig.isModelFree('gemini', 'gemini-2.5-flash'), true);
-  assert.equal(aiConfig.isModelFree('gemini', 'gemini-3.5-flash'), true);
-  assert.equal(aiConfig.isModelFree('gemini', 'gemini-3.8-flash'), true);
-  assert.equal(aiConfig.isModelFree('gemini', 'gemini-2.0-flash'), false); // shut down June 2026
-  assert.equal(aiConfig.isModelFree('gemini', 'gemini-1.5-pro'), false);
+test('FREE_ONLY_MODE blocks account-unverified providers and unknown Cloudflare models', () => {
+  const config = loadAiConfigWithEnvironment({
+    FREE_ONLY_MODE: 'true',
+    AI_ALLOW_PAID_MODELS: 'false',
+    AI_FREE_TIER_CONFIRMED_GROQ: 'false',
+    AI_FREE_TIER_CONFIRMED_GEMINI: 'false',
+    AI_FREE_TIER_CONFIRMED_CLOUDFLARE: 'false',
+  });
 
-  // Cloudflare Workers AI free tier
-  assert.equal(aiConfig.isModelFree('cloudflare', '@cf/black-forest-labs/flux-1-schnell'), true);
+  assert.equal(config.isModelFree('groq', 'openai/gpt-oss-120b'), false);
+  assert.equal(config.isModelFree('gemini', 'gemini-2.5-flash'), false);
+  assert.equal(config.isModelFree('gemini', 'gemini-2.5-flash-pro'), false);
+  assert.equal(config.isModelFree('cloudflare', '@cf/black-forest-labs/flux-1-schnell'), false);
+  assert.equal(config.isModelFree('cloudflare', '@cf/vendor/metered-model'), false);
+  assert.equal(config.isModelFree('openrouter', 'openrouter/free'), true);
+  assert.equal(config.isModelFree('openrouter', 'openai/gpt-4o'), false);
+  assert.equal(config.isModelFree('fal', 'fal-ai/flux/schnell'), false);
+});
 
-  // fal.ai is always paid
-  assert.equal(aiConfig.isModelFree('fal', 'fal-ai/flux/schnell'), false);
+test('FREE_ONLY_MODE permits listed providers only after explicit account free-tier confirmation', () => {
+  const config = loadAiConfigWithEnvironment({
+    FREE_ONLY_MODE: 'true',
+    AI_ALLOW_PAID_MODELS: 'false',
+    AI_FREE_TIER_CONFIRMED_GROQ: 'true',
+    AI_FREE_TIER_CONFIRMED_GEMINI: 'true',
+    AI_FREE_TIER_CONFIRMED_CLOUDFLARE: 'true',
+  });
+
+  assert.equal(config.isModelFree('groq', 'openai/gpt-oss-120b'), true);
+  assert.equal(config.isModelFree('gemini', 'gemini-2.5-flash'), true);
+  assert.equal(config.isModelFree('gemini', 'gemini-2.5-flash-pro'), false);
+  assert.equal(config.isModelFree('cloudflare', '@cf/black-forest-labs/flux-1-schnell'), true);
+  assert.equal(config.isModelFree('cloudflare', '@cf/vendor/metered-model'), false);
 });
 
 test('Zero-Cost Free Tier: fal.ai provider is disabled in FREE_ONLY_MODE', async () => {
@@ -255,6 +426,160 @@ test('Zero-Cost Free Tier: GroqProvider rejects unverified or paid models in FRE
       return true;
     }
   );
+});
+
+test('Cloudflare Workers AI sends a bounded Vietnamese JSON request only for a confirmed free text model', async () => {
+  const previousConfirmation = aiConfig.freeTierConfirmed.cloudflare;
+  const originalPost = axios.post;
+  let request;
+  aiConfig.freeTierConfirmed.cloudflare = true;
+  axios.post = async (url, payload, options) => {
+    request = { url, payload, options };
+    return { data: { result: { response: '{"title":"Ưu đãi cà phê","caption":"Mời bạn ghé quán hôm nay."}' } } };
+  };
+
+  try {
+    const provider = new CloudflareProvider('test-account', 'test-token', undefined, '@cf/zai-org/glm-4.7-flash');
+    const result = await provider.generateText({
+      prompt: 'Viết một caption ngắn cho quán cà phê Việt Nam.',
+      systemPrompt: 'Trả về JSON hợp lệ gồm title và caption.',
+      maxTokens: 96,
+      jsonMode: true,
+      timeoutMs: 2345,
+    });
+
+    assert.deepEqual(result, {
+      text: '{"title":"Ưu đãi cà phê","caption":"Mời bạn ghé quán hôm nay."}',
+      provider: 'cloudflare',
+      model: '@cf/zai-org/glm-4.7-flash',
+      usage: null,
+    });
+    assert.equal(request.url, 'https://api.cloudflare.com/client/v4/accounts/test-account/ai/run/@cf/zai-org/glm-4.7-flash');
+    assert.deepEqual(request.payload.messages, [
+      { role: 'system', content: 'Trả về JSON hợp lệ gồm title và caption.' },
+      { role: 'user', content: 'Viết một caption ngắn cho quán cà phê Việt Nam.' },
+    ]);
+    assert.equal(request.payload.max_tokens, 96);
+    assert.deepEqual(request.payload.response_format, { type: 'json_object' });
+    assert.equal(request.options.timeout, 2345);
+    assert.equal(request.options.headers.Authorization, 'Bearer test-token');
+  } finally {
+    aiConfig.freeTierConfirmed.cloudflare = previousConfirmation;
+    axios.post = originalPost;
+  }
+});
+
+test('Cloudflare GPT-OSS uses Chat Completions with low reasoning effort and bounded JSON output', async () => {
+  const previousConfirmation = aiConfig.freeTierConfirmed.cloudflare;
+  const originalPost = axios.post;
+  let request;
+  aiConfig.freeTierConfirmed.cloudflare = true;
+  axios.post = async (url, payload, options) => {
+    request = { url, payload, options };
+    return { data: { model: '@cf/openai/gpt-oss-20b', choices: [{ message: { content: '{"ok":true,"caption":"Xin chào bạn."}' } }], usage: { neurons: 1.25 } } };
+  };
+
+  try {
+    const provider = new CloudflareProvider('test-account', 'test-token', undefined, '@cf/openai/gpt-oss-20b');
+    const result = await provider.generateText({ prompt: 'Create the requested JSON object.', systemPrompt: 'Return JSON.', maxTokens: 80, jsonMode: true });
+
+    assert.equal(request.url, 'https://api.cloudflare.com/client/v4/accounts/test-account/ai/v1/chat/completions');
+    assert.equal(request.payload.model, '@cf/openai/gpt-oss-20b');
+    assert.equal(request.payload.max_tokens, 80);
+    assert.equal(request.payload.reasoning_effort, 'low');
+    assert.deepEqual(request.payload.response_format, { type: 'json_object' });
+    assert.equal(result.text, '{"ok":true,"caption":"Xin chào bạn."}');
+    assert.deepEqual(result.usage, { neurons: 1.25 });
+  } finally {
+    aiConfig.freeTierConfirmed.cloudflare = previousConfirmation;
+    axios.post = originalPost;
+  }
+});
+
+test('Cloudflare text defaults to the measured structured-output model unless explicitly overridden', () => {
+  assert.equal(
+    aiConfig.defaultTextModels.cloudflare,
+    process.env.CLOUDFLARE_TEXT_MODEL || '@cf/openai/gpt-oss-20b'
+  );
+});
+
+test('AIService routes text generation to Cloudflare when it is the configured confirmed free provider', async () => {
+  const originalPost = axios.post;
+  const previousProvider = aiConfig.textProvider;
+  const previousConfirmation = aiConfig.freeTierConfirmed.cloudflare;
+  aiConfig.textProvider = 'cloudflare';
+  aiConfig.freeTierConfirmed.cloudflare = true;
+  axios.post = async () => ({ data: { result: { response: 'Xin chào từ Cloudflare.' } } });
+
+  try {
+    const service = new aiService.AIService();
+    service.cloudflare = new CloudflareProvider('test-account', 'test-token', undefined, '@cf/zai-org/glm-4.7-flash');
+    const result = await service.generateText({ prompt: 'Trả lời bằng tiếng Việt.', maxTokens: 48 });
+
+    assert.equal(result.provider, 'cloudflare');
+    assert.equal(result.text, 'Xin chào từ Cloudflare.');
+    assert.equal(service.getUsageStats().recent.at(-1).provider, 'cloudflare');
+  } finally {
+    aiConfig.textProvider = previousProvider;
+    aiConfig.freeTierConfirmed.cloudflare = previousConfirmation;
+    axios.post = originalPost;
+  }
+});
+
+test('Cloudflare provider errors do not expose upstream bodies, prompts, or credentials', async () => {
+  const originalPost = axios.post;
+  const previousConfirmation = aiConfig.freeTierConfirmed.cloudflare;
+  aiConfig.freeTierConfirmed.cloudflare = true;
+  axios.post = async () => {
+    const error = new Error('upstream rejected Bearer test-token and private prompt');
+    error.response = {
+      status: 503,
+      data: { errors: [{ message: 'Bearer test-token and private prompt' }] },
+    };
+    throw error;
+  };
+
+  try {
+    const provider = new CloudflareProvider('test-account', 'test-token', '@cf/black-forest-labs/flux-1-schnell', '@cf/zai-org/glm-4.7-flash');
+    for (const operation of [
+      () => provider.generateText({ prompt: 'private prompt' }),
+      () => provider.generateImage({ prompt: 'private prompt' }),
+    ]) {
+      await assert.rejects(operation, (error) => {
+        assert.equal(error.statusCode, 502);
+        assert.doesNotMatch(error.message, /test-token|private prompt|Bearer/);
+        return true;
+      });
+    }
+  } finally {
+    aiConfig.freeTierConfirmed.cloudflare = previousConfirmation;
+    axios.post = originalPost;
+  }
+});
+
+test('free Cloudflare image generation does not repeat a potentially billable inference after a transient error', async () => {
+  const previousStorageMode = process.env.PRIVATE_STORAGE_MODE;
+  process.env.PRIVATE_STORAGE_MODE = 'private';
+  let calls = 0;
+  try {
+    const service = new aiService.AIService();
+    service.getImageProvidersInPriority = () => [{
+      name: 'cloudflare',
+      instance: {
+        generateImage: async () => {
+          calls++;
+          const error = new Error('temporary provider failure');
+          error.response = { status: 503 };
+          throw error;
+        },
+      },
+    }];
+    await assert.rejects(service.generateSocialImage({ prompt: 'simple test image' }), { statusCode: 503 });
+    assert.equal(calls, 1);
+  } finally {
+    if (previousStorageMode === undefined) delete process.env.PRIVATE_STORAGE_MODE;
+    else process.env.PRIVATE_STORAGE_MODE = previousStorageMode;
+  }
 });
 
 test('Zero-Cost Free Tier: Cloudflare Workers AI sharp center-crop produces accurate aspect ratios', async () => {
@@ -305,8 +630,30 @@ test('Zero-Cost Free Tier: Cloudflare Workers AI sharp center-crop produces accu
   assert.match(CloudflareProvider.getCompositionGuidance('16:9'), /wide horizontal landscape/);
 });
 
+test('Cloudflare PNG response retains PNG for square output and labels cropped JPEG separately', async () => {
+  const originalPost = axios.post;
+  const previousConfirmation = aiConfig.freeTierConfirmed.cloudflare;
+  const png = await sharp({ create: { width: 1024, height: 1024, channels: 3, background: '#4d7166' } }).png().toBuffer();
+  axios.post = async () => ({ data: { result: { image: png.toString('base64') } } });
+  aiConfig.freeTierConfirmed.cloudflare = true;
+  try {
+    const provider = new CloudflareProvider('fixture-account', 'fixture-token');
+    const square = await provider.generateImage({ prompt: 'Coffee photo', aspectRatio: '1:1' });
+    assert.equal(square.mimeType, 'image/png');
+    assert.equal(square.originalMimeType, 'image/png');
+    const cropped = await provider.generateImage({ prompt: 'Coffee photo', aspectRatio: '4:5' });
+    assert.equal(cropped.mimeType, 'image/jpeg');
+    assert.equal(cropped.originalMimeType, 'image/png');
+    assert.equal((await sharp(cropped.buffer).metadata()).format, 'jpeg');
+  } finally {
+    axios.post = originalPost;
+    aiConfig.freeTierConfirmed.cloudflare = previousConfirmation;
+  }
+});
+
 test('Zero-Cost Free Tier: user daily quotas enforce limits and reject requests when exhausted (async & sync)', async () => {
   const testUserId = 99991;
+  prismaFixture.__fixture.resetQuota(testUserId, new Date().toISOString().slice(0, 10));
 
   // Consume text quota up to limit
   for (let i = 0; i < aiConfig.userQuotas.dailyGenerationsLimit; i++) {
@@ -338,6 +685,72 @@ test('Zero-Cost Free Tier: user daily quotas enforce limits and reject requests 
   assert.equal(syncRes.allowed, true);
   const syncStatus = aiService.getUserQuotaStatusSync(syncUserId);
   assert.equal(syncStatus.text.used, 1);
+});
+
+test('AI quota fails closed when persistent storage is unavailable', async () => {
+  prismaFixture.__fixture.failNextQuotaOperation();
+  await assert.rejects(
+    aiService.checkAndIncrementUserQuota(99991, 'text'),
+    (error) => error.statusCode === 503,
+  );
+});
+
+test('AI quota increments atomically and never exceeds the configured limit', async () => {
+  const userId = 99992;
+  const dateKey = new Date().toISOString().slice(0, 10);
+  prismaFixture.__fixture.resetQuota(userId, dateKey);
+  const limit = aiConfig.userQuotas.dailyGenerationsLimit;
+  const results = await Promise.allSettled(
+    Array.from({ length: limit + 5 }, () => aiService.checkAndIncrementUserQuota(userId, 'text')),
+  );
+  assert.equal(results.filter((result) => result.status === 'fulfilled').length, limit);
+  assert.equal(results.filter((result) => result.status === 'rejected' && result.reason.statusCode === 429).length, 5);
+  assert.equal((await aiService.getUserQuotaStatus(userId)).text.used, limit);
+});
+
+test('image-prompt generation reserves enough bounded completion tokens for the verified reasoning model', async () => {
+  const service = new aiService.AIService();
+  let request;
+  service.generateText = async (options) => {
+    request = options;
+    return { text: 'Warm Vietnamese coffee shop, soft morning light, editorial commercial photography.' };
+  };
+
+  const result = await service.generateImagePrompt({
+    userId: null,
+    postContent: 'Mời bạn ghé thử cà phê rang mới.',
+    platform: 'Facebook',
+  });
+
+  assert.equal(request.maxTokens, 512);
+  assert.equal(result.imagePrompt, 'Warm Vietnamese coffee shop, soft morning light, editorial commercial photography.');
+});
+
+test('Quick Editor, image-prompt, and plan-refinement text actions each consume one daily quota unit', async () => {
+  const userId = 501;
+  const dateKey = new Date().toISOString().slice(0, 10);
+  prismaFixture.__fixture.resetQuota(userId, dateKey, 'text');
+  const service = new aiService.AIService();
+  service.getTextProvidersInPriority = () => [{
+    name: 'test-provider',
+    instance: {
+      generateText: async ({ jsonMode }) => ({
+        text: jsonMode
+          ? JSON.stringify({ contentIdeas: [{ title: 'Morning coffee', description: 'Invite customers' }], videoScripts: [{ action: 'Show the coffee' }], checklist: ['Prepare a post'], playbook: [{ phaseName: 'Launch' }], seoKeywords: [], revisionSummary: 'Đã rút gọn kế hoạch.' })
+          : 'Ghé quán trước 10 giờ để thưởng thức mẻ cà phê rang mới nhé!',
+        provider: 'test-provider',
+        model: 'test-model',
+      }),
+    },
+  }];
+
+  await service.generateDetailedPost({ userId, ideaTitle: 'Mẻ rang mới', ideaDescription: 'Cà phê rang thủ công', platform: 'Facebook' });
+  await service.generateImagePrompt({ userId, postContent: 'Mời bạn ghé thử cà phê rang mới.', platform: 'Facebook' });
+  await service.refineMarketingPlan({ userId, plan: { goal: 'Tăng lượt khách', contentIdeas: [], videoScripts: [], checklist: [], playbook: [] }, instruction: 'Rút gọn' });
+
+  const status = await aiService.getUserQuotaStatus(userId);
+  assert.equal(status.text.used, 3);
+  prismaFixture.__fixture.resetQuota(userId, dateKey, 'text');
 });
 
 test('Persistence: scheduled post format extracts embedded image URLs without schema drift', () => {
@@ -420,17 +833,7 @@ test('Ownership & Security: scheduled posts and media library prevent cross-user
   assert.equal(deletedAsset.deleted, true);
 });
 
-test('Trend Bulletin: aiService provides trending topics and marketingPlanService delegates gracefully', async () => {
-  const trends = await aiService.getTrendingBulletin({ forceRefresh: false });
-  assert.ok(Array.isArray(trends));
-  assert.equal(trends.length, 3);
-  assert.ok(trends[0].title);
-  assert.ok(trends[0].tags.length > 0);
-  assert.ok(trends[0].teaser);
-  assert.ok(trends[0].prefill);
-
-  // marketingPlanService.getTrendingBulletin returns valid trends
-  const serviceTrends = await marketingPlanService.getTrendingBulletin(false);
-  assert.equal(serviceTrends.length, 3);
+test('trend generation surfaces provider failure instead of silently returning curated trends', async () => {
+  await assert.rejects(aiService.getTrendingBulletin({ forceRefresh: true }), { statusCode: 503 });
 });
 

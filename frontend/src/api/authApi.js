@@ -6,4 +6,5 @@ export const authApi = {
   me: () => axiosClient.get('/auth/me'),
   updateBusinessProfile: (data) => axiosClient.put('/auth/business-profile', data),
   updateProfile: (data) => axiosClient.put('/auth/profile', data),
+  changePassword: (data) => axiosClient.put('/auth/change-password', data),
 };

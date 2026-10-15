@@ -2,6 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const express = require('express');
 const request = require('supertest');
+require('./helpers/installPrismaFixture');
 
 const { registerSchema } = require('../src/validators/auth.validator');
 const { signToken } = require('../src/utils/jwt');

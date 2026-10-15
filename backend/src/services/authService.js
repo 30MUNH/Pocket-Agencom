@@ -78,6 +78,7 @@ async function getMe(userId) {
       role: true,
       status: true,
       avatarUrl: true,
+      avatarMediaAssetId: true,
       phone: true,
       createdAt: true,
       businessProfile: {
@@ -185,9 +186,40 @@ async function updateBusinessProfile(userId, data) {
 
 async function updateProfile(userId, data) {
   const updateData = {};
+  if (data.avatarUrl !== undefined) {
+    throw new AppError('Avatar updates must reference an owned MediaAsset ID.', 400);
+  }
+  if (data.avatarMediaAssetId !== undefined) {
+    if (data.avatarMediaAssetId === null) {
+      updateData.avatarMediaAssetId = null;
+      updateData.avatarUrl = null;
+    } else {
+      const assetId = Number(data.avatarMediaAssetId);
+      if (!Number.isSafeInteger(assetId) || assetId < 1) throw new AppError('Invalid avatar asset ID.', 400);
+      return prisma.$transaction(async (tx) => {
+        await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`media-asset:${assetId}`}, 0))::text`;
+        const asset = await tx.mediaAsset.findUnique({ where: { id: assetId } });
+        if (!asset || asset.userId !== userId || asset.sourceKind !== 'private_storage' || asset.lifecycleState !== 'active') {
+          throw new AppError('Avatar asset not found.', 404);
+        }
+        updateData.avatarMediaAssetId = asset.id;
+        updateData.avatarUrl = null;
+        if (data.name !== undefined) updateData.name = data.name;
+        if (data.phone !== undefined) updateData.phone = data.phone;
+        return tx.user.update({
+          where: { id: userId },
+          data: updateData,
+          select: {
+            id: true, name: true, email: true, role: true, status: true,
+            avatarUrl: true, avatarMediaAssetId: true, phone: true, createdAt: true,
+            businessProfile: { include: { socialPlatforms: true } },
+          },
+        });
+      });
+    }
+  }
   if (data.name !== undefined) updateData.name = data.name;
   if (data.phone !== undefined) updateData.phone = data.phone;
-  if (data.avatarUrl !== undefined) updateData.avatarUrl = data.avatarUrl;
 
   const user = await prisma.user.update({
     where: { id: userId },
@@ -199,6 +231,7 @@ async function updateProfile(userId, data) {
       role: true,
       status: true,
       avatarUrl: true,
+      avatarMediaAssetId: true,
       phone: true,
       createdAt: true,
       businessProfile: {
@@ -212,6 +245,33 @@ async function updateProfile(userId, data) {
   return user;
 }
 
+async function changePassword(userId, currentPassword, newPassword) {
+  if (!currentPassword) {
+    throw new AppError('Vui lòng nhập mật khẩu hiện tại', 400);
+  }
+  if (!newPassword || newPassword.length < 6) {
+    throw new AppError('Mật khẩu mới phải có ít nhất 6 ký tự', 400);
+  }
+
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) {
+    throw new AppError('User not found', 404);
+  }
+
+  const valid = await bcrypt.compare(currentPassword, user.passwordHash);
+  if (!valid) {
+    throw new AppError('Mật khẩu hiện tại không chính xác', 400);
+  }
+
+  const newHash = await bcrypt.hash(newPassword, SALT_ROUNDS);
+  await prisma.user.update({
+    where: { id: userId },
+    data: { passwordHash: newHash },
+  });
+
+  return { message: 'Mật khẩu đã được thay đổi thành công' };
+}
+
 module.exports = {
   register,
   login,
@@ -219,5 +279,6 @@ module.exports = {
   getMe,
   updateBusinessProfile,
   updateProfile,
+  changePassword,
   MANAGED_SOCIAL_PLATFORMS,
 };

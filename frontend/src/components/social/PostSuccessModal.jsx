@@ -18,7 +18,7 @@ export default function PostSuccessModal({ isOpen, onClose, post = null }) {
 
   if (!isOpen) return null;
 
-  const postTitle = post?.title || 'Bài viết đã được tạo thành công';
+  const postTitle = post?.title || 'Bài viết đã sẵn sàng để chia sẻ';
   const postContent = post?.content || '';
   const postUrl = post?.url || window.location.href;
 
@@ -129,13 +129,13 @@ export default function PostSuccessModal({ isOpen, onClose, post = null }) {
             <CheckCircle2 size={32} />
           </div>
           <span className="text-xs font-bold uppercase tracking-wider text-secondary bg-secondary-container px-3 py-1 rounded-full">
-            Tạo bài thành công
+            Sẵn sàng chia sẻ
           </span>
           <h3 className="text-2xl font-bold text-primary dark:text-inverse-primary">
-            Bài viết đã sẵn sàng đăng tải!
+            Bài viết đã sẵn sàng
           </h3>
           <p className="text-xs text-on-surface-variant max-w-sm">
-            Chọn nền tảng mạng xã hội bạn muốn xuất bản bài viết bên dưới.
+            Sao chép nội dung hoặc mở nền tảng để tự đăng. Ứng dụng chưa xuất bản trực tiếp lên mạng xã hội.
           </p>
         </div>
 
@@ -163,7 +163,7 @@ export default function PostSuccessModal({ isOpen, onClose, post = null }) {
         {/* Platform Share Action Buttons */}
         <div className="mt-6 space-y-3">
           <span className="text-xs font-bold uppercase tracking-wider text-on-surface-variant block text-center">
-            Đăng tải lên các nền tảng:
+            Mở nền tảng để chia sẻ:
           </span>
 
           <div className="grid grid-cols-2 gap-3">

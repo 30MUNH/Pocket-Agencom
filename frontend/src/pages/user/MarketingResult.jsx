@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
-import { Lightbulb, Heart, Mail, FileText, ClipboardCheck, Check, PlayCircle, Play, Video, Copy, BookOpen, RefreshCw, Download, Clock, Loader2, Target, Sparkles, Image as ImageIcon, Upload, X, Wand2, Users } from 'lucide-react';
+import { Lightbulb, Heart, ClipboardCheck, Check, PlayCircle, Play, Video, Copy, BookOpen, RefreshCw, Download, Clock, Loader2, Target, Sparkles, Upload, X, Wand2 } from 'lucide-react';
 import { useMarketingPlan, useSavePlan, useGeneratePost, useGeneratePostWithImage } from '../../hooks/useMarketingPlans';
 import { useAuthStore } from '../../store/authStore';
 import { toast } from '../../store/toastStore';
@@ -8,7 +8,9 @@ import BudgetBreakdownCard from '../../components/marketing/BudgetBreakdownCard'
 import RevisionChatPanel from '../../components/marketing/RevisionChatPanel';
 import CampaignBudgetTracker from '../../components/marketing/CampaignBudgetTracker';
 import SocialImageGeneratorModal from '../../components/media/SocialImageGeneratorModal';
+import { marketingPlanApi } from '../../api/marketingPlanApi';
 import { normalizePlanContent } from '../../utils/planContent';
+import AuthorizedMediaImage from '../../components/media/AuthorizedMediaImage';
 
 /**
  * Splits AI Advisor output into { postContent, designTips }.
@@ -56,7 +58,7 @@ function renderBoldText(text) {
   });
 }
 
-function IdeaCard({ idea, index, totalLength, businessProfileId, existingResources, campaignReason }) {
+function IdeaCard({ idea, index, totalLength, businessProfileId, existingResources, campaignReason, planId }) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [detailedContent, setDetailedContent] = useState('');
   const [designTips, setDesignTips] = useState('');
@@ -132,7 +134,9 @@ function IdeaCard({ idea, index, totalLength, businessProfileId, existingResourc
           const { postContent, designTips: tips } = parseAdvisorContent(response.content);
           setDetailedContent(postContent);
           setDesignTips(tips);
-          setUploadedImageUrl(response.imageUrl || '');
+          setUploadedImageUrl('');
+          if (response.mediaAssetId && planId) await marketingPlanApi.attachAssets(planId, [response.mediaAssetId]);
+          setGeneratedAiImage(response.mediaAssetId ? { mediaAssetId: response.mediaAssetId } : null);
           setIsExpanded(true);
         } else {
           toast.error('Không nhận được nội dung từ AI.');
@@ -153,11 +157,15 @@ function IdeaCard({ idea, index, totalLength, businessProfileId, existingResourc
     }
   };
 
-  const handleCopyPost = () => {
-    navigator.clipboard.writeText(detailedContent);
-    setCopied(true);
-    toast.success('Đã sao chép bài đăng!');
-    setTimeout(() => setCopied(false), 2000);
+  const handleCopyPost = async () => {
+    try {
+      await navigator.clipboard.writeText(detailedContent);
+      setCopied(true);
+      toast.success('Đã sao chép bài đăng!');
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast.error('Không thể sao chép bài đăng. Vui lòng cấp quyền clipboard.');
+    }
   };
 
   const isGeneratingPost = generatePostMutation.isPending || generatePostWithImageMutation.isPending;
@@ -253,11 +261,11 @@ function IdeaCard({ idea, index, totalLength, businessProfileId, existingResourc
                       </button>
                     </div>
                     <div className="relative max-h-60 rounded-xl overflow-hidden bg-black/5 dark:bg-black/20 flex items-center justify-center">
-                      <img
-                        src={generatedAiImage?.imageUrl || previewUrl || uploadedImageUrl}
-                        alt="Ảnh bài đăng"
-                        className="max-h-60 w-full object-contain rounded-xl"
-                      />
+                      {generatedAiImage?.mediaAssetId ? (
+                        <AuthorizedMediaImage assetId={generatedAiImage.mediaAssetId} alt="Ảnh bài đăng" className="max-h-60 w-full object-contain rounded-xl" />
+                      ) : (
+                        <img src={previewUrl || uploadedImageUrl} alt="Ảnh bài đăng" className="max-h-60 w-full object-contain rounded-xl" />
+                      )}
                     </div>
                   </div>
                 ) : (
@@ -413,7 +421,13 @@ function IdeaCard({ idea, index, totalLength, businessProfileId, existingResourc
         platform={idea.channel || 'Facebook'}
         businessProfileId={businessProfileId}
         ideaTitle={idea.title}
-        onAttach={(result) => setGeneratedAiImage(result)}
+        onAttach={async (result) => {
+          setGeneratedAiImage(result);
+          if (result?.mediaAssetId && planId) {
+            try { await marketingPlanApi.attachAssets(planId, [result.mediaAssetId]); }
+            catch { toast.error('Ảnh đã lưu vào Media Library nhưng chưa thể gắn vào kế hoạch.'); }
+          }
+        }}
       />
     </div>
   );
@@ -433,11 +447,15 @@ export default function MarketingResult() {
   const videoScripts = plan?.videoScripts || [];
   const seoKeywords = plan?.seoKeywords || [];
 
-  const handleCopyAllKeywords = () => {
+  const handleCopyAllKeywords = async () => {
     if (seoKeywords.length === 0) return;
     const textToCopy = seoKeywords.join(', ');
-    navigator.clipboard.writeText(textToCopy);
-    toast.success('Đã sao chép từ khóa!');
+    try {
+      await navigator.clipboard.writeText(textToCopy);
+      toast.success('Đã sao chép từ khóa!');
+    } catch {
+      toast.error('Không thể sao chép từ khóa. Vui lòng cấp quyền clipboard.');
+    }
   };
 
   const initialChecklist = useMemo(() => {
@@ -469,6 +487,74 @@ export default function MarketingResult() {
     }
   };
 
+  const handleExportPlan = () => {
+    if (!plan) return;
+    try {
+      const title = plan.goal || 'Kế hoạch Marketing';
+      const campaign = typeof plan.playbook === 'string' ? plan.playbook : plan.campaignType || '';
+
+      let md = `# KẾ HOẠCH MARKETING: ${title}\n\n`;
+      if (campaign) md += `> **Chiến dịch:** ${campaign}\n\n`;
+      md += `*Thời gian tạo: ${new Date().toLocaleString('vi-VN')}*\n\n`;
+      md += `---\n\n`;
+
+      if (contentIdeas?.length) {
+        md += `## 1. Ý tưởng Nội dung (${contentIdeas.length})\n\n`;
+        contentIdeas.forEach((idea, i) => {
+          md += `### ${i + 1}. ${idea.title || 'Ý tưởng'}\n`;
+          if (idea.channel) md += `- **Kênh triển khai:** ${idea.channel}\n`;
+          if (idea.description) md += `- **Mô tả:** ${idea.description}\n`;
+          if (idea.rationale) md += `- **Lý do lựa chọn:** ${idea.rationale}\n`;
+          md += `\n`;
+        });
+      }
+
+      if (videoScripts?.length) {
+        md += `## 2. Kịch bản Video ngắn (${videoScripts.length})\n\n`;
+        videoScripts.forEach((vs, i) => {
+          md += `### ${i + 1}. ${vs.title || 'Kịch bản'}\n`;
+          if (vs.duration) md += `- **Thời lượng:** ${vs.duration}\n`;
+          if (vs.hook) md += `- **Hook mở đầu:** ${vs.hook}\n`;
+          if (vs.script) md += `- **Nội dung:**\n\n${vs.script}\n\n`;
+          if (vs.callToAction) md += `- **Kêu gọi hành động (CTA):** ${vs.callToAction}\n`;
+          md += `\n`;
+        });
+      }
+
+      if (seoKeywords?.length) {
+        md += `## 3. Bộ từ khóa SEO gợi ý\n\n`;
+        md += seoKeywords.map(kw => `- ${kw}`).join('\n') + '\n\n';
+      }
+
+      if (checklist?.length) {
+        md += `## 4. Checklist triển khai chiến dịch\n\n`;
+        checklist.forEach((item) => {
+          const checked = item.checked ? '[x]' : '[ ]';
+          md += `- ${checked} ${item.title || item}\n`;
+        });
+        md += `\n`;
+      }
+
+      const blob = new Blob([md], { type: 'text/markdown;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      const sanitizedName = (title || 'ke_hoach_marketing')
+        .toLowerCase()
+        .replace(/[^a-z0-9]/gi, '_')
+        .slice(0, 50);
+      link.download = `${sanitizedName}.md`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      toast.success('Đã xuất file kế hoạch (.md) thành công!');
+    } catch (err) {
+      toast.error('Lỗi khi xuất kế hoạch: ' + (err.message || 'Thử lại sau'));
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-20 gap-2 text-on-surface-variant">
@@ -495,10 +581,15 @@ export default function MarketingResult() {
     );
   };
 
-  const copyToClipboard = (title, text) => {
-    navigator.clipboard.writeText(text);
-    setCopiedScript(title);
-    setTimeout(() => setCopiedScript(null), 2000);
+  const copyToClipboard = async (title, text) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedScript(title);
+      setTimeout(() => setCopiedScript(null), 2000);
+      toast.success('Đã sao chép nội dung!');
+    } catch {
+      toast.error('Không thể sao chép nội dung. Vui lòng cấp quyền clipboard.');
+    }
   };
 
   return (
@@ -514,9 +605,9 @@ export default function MarketingResult() {
               <Clock size={14} /> Vừa xong
             </span>
           </div>
-          <h2 className="text-display-lg-mobile md:text-display-lg font-display-lg text-primary dark:text-inverse-primary max-w-2xl leading-tight">
+          <h1 className="text-display-lg-mobile md:text-display-lg font-display-lg text-primary dark:text-inverse-primary max-w-2xl leading-tight">
             {plan.goal}
-          </h2>
+          </h1>
           <p className="text-body-lg text-on-surface-variant max-w-3xl">
             {typeof plan.playbook === 'string' ? plan.playbook : plan.campaignType}
           </p>
@@ -531,7 +622,7 @@ export default function MarketingResult() {
             Tạo lại
           </Link>}
           <button
-            onClick={() => alert('Xuất kế hoạch thành công!')}
+            onClick={handleExportPlan}
             className="px-5 py-3 rounded-full text-label-sm font-label-sm text-primary dark:text-inverse-primary bg-surface-container-lowest dark:bg-tertiary-container border border-outline-variant hover:border-primary dark:hover:border-primary-fixed transition-colors shadow-sm flex items-center gap-2"
           >
             <Download size={14} />
@@ -552,6 +643,20 @@ export default function MarketingResult() {
         <div className="rounded-2xl border border-amber-300/60 bg-amber-50 dark:bg-amber-950/20 px-5 py-4 text-sm text-amber-900 dark:text-amber-200">
           Kế hoạch lịch sử này có nội dung tham chiếu một tính năng đã ngừng hoạt động. Nội dung gốc được giữ nguyên để đối chiếu; các thao tác tạo lại hoặc tái sử dụng tự động đã được tắt.
         </div>
+      )}
+
+      {plan.mediaAssets?.length > 0 && (
+        <section className="space-y-3" aria-labelledby="plan-media-title">
+          <h2 id="plan-media-title" className="text-headline-md font-bold text-primary dark:text-inverse-primary">Tệp đã lưu cùng kế hoạch</h2>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+            {plan.mediaAssets.map(({ mediaAsset }) => mediaAsset?.fileType === 'image' && (
+              <figure key={mediaAsset.id} className="overflow-hidden rounded-2xl border border-surface-variant/30 bg-surface-container-lowest">
+                <AuthorizedMediaImage assetId={mediaAsset.sourceKind === 'private_storage' ? mediaAsset.id : null} legacyUrl={mediaAsset.url} alt={mediaAsset.name} className="aspect-video w-full object-cover" />
+                <figcaption className="truncate px-3 py-2 text-xs font-medium text-on-surface-variant">{mediaAsset.name}</figcaption>
+              </figure>
+            ))}
+          </div>
+        </section>
       )}
 
       {/* Bento Grid: Content Ideas */}

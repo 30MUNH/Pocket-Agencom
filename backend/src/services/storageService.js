@@ -1,58 +1,75 @@
-const path = require('path');
+const crypto = require('node:crypto');
+const sharp = require('sharp');
 const supabase = require('../config/supabase');
 const { AppError } = require('../middleware/errorHandler');
 
-const CAMPAIGN_BUCKET = 'campaign-assets';
+const PRIVATE_BUCKETS = Object.freeze({ campaign: 'campaign-assets-private', avatars: 'avatars-private' });
+const MIME_EXTENSIONS = Object.freeze({ 'image/jpeg': '.jpg', 'image/png': '.png', 'image/webp': '.webp' });
+const FORMAT_MIME = Object.freeze({ jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp' });
+const SAFE_ERROR = 'Private Storage operation failed.';
 
-/**
- * Uploads a multer memory-storage file to Supabase Storage and returns its public URL.
- * @param {Express.Multer.File} file - file from multer (buffer + mimetype + originalname)
- * @param {string} folder - folder prefix inside the bucket (e.g. `user-12`)
- * @returns {Promise<{ path: string, publicUrl: string }>}
- */
-async function uploadCampaignAsset(file, folder = 'general', bucket = CAMPAIGN_BUCKET) {
-  const fileExt = path.extname(file.originalname) || '.jpg';
-  const fileName = `${Date.now()}-${Math.round(Math.random() * 1e9)}${fileExt}`;
-  const filePath = `${folder}/${fileName}`;
-
-  const { error } = await supabase.storage
-    .from(bucket)
-    .upload(filePath, file.buffer, {
-      contentType: file.mimetype,
-      upsert: false,
-    });
-
-  if (error) {
-    console.error(`[Supabase Upload Error] Failed uploading to bucket ${bucket}:`, error.message);
-    if (bucket === CAMPAIGN_BUCKET) {
-      console.log(`[Supabase Upload] Attempting fallback to 'avatars' bucket...`);
-      try {
-        return await uploadCampaignAsset(file, folder, 'avatars');
-      } catch (fallbackErr) {
-        console.error(`[Supabase Fallback Upload Error]`, fallbackErr.message);
-      }
-    }
-
-    if (error.message && error.message.toLowerCase().includes('row-level security')) {
-      throw new AppError(
-        `Lỗi bảo mật (RLS) của Supabase: Vui lòng truy cập trang quản trị Supabase, chọn mục Storage -> tab Policies của bucket "${bucket}", và thêm chính sách (Policy) cho phép INSERT/SELECT.`,
-        500
-      );
-    }
-    if (error.message && error.message.toLowerCase().includes('bucket not found')) {
-      throw new AppError(
-        `Không tìm thấy Bucket "${bucket}": Vui lòng truy cập trang quản trị Supabase -> Storage -> click "New Bucket" và tạo một public bucket tên là "${bucket}".`,
-        500
-      );
-    }
-    throw new AppError(`Lỗi tải ảnh lên Supabase Storage: ${error.message}`, 500);
+function assertStorageConfiguration(mode, env = process.env) {
+  if (!['disabled', 'private'].includes(mode)) throw new AppError('PRIVATE_STORAGE_MODE must be disabled or private.', 503);
+  if (mode === 'private' && (!env.SUPABASE_URL || !env.SUPABASE_SERVICE_ROLE_KEY)) {
+    throw new AppError('Private Storage is not configured.', 503);
   }
-
-  const { data: urlData } = supabase.storage
-    .from(bucket)
-    .getPublicUrl(filePath);
-
-  return { path: filePath, publicUrl: urlData.publicUrl };
 }
 
-module.exports = { uploadCampaignAsset, CAMPAIGN_BUCKET };
+function createStorageService({ storageClient = supabase, env = process.env } = {}) {
+  const mode = () => env.PRIVATE_STORAGE_MODE || 'disabled';
+  assertStorageConfiguration(mode(), env);
+
+  function requirePrivate() {
+    const selectedMode = mode();
+    assertStorageConfiguration(selectedMode, env);
+    if (selectedMode !== 'private') throw new AppError('Private asset storage is disabled.', 503);
+  }
+
+  async function uploadPrivateObject({ ownerId, file, purpose, onPrepared }) {
+    requirePrivate();
+    if (!Number.isSafeInteger(Number(ownerId)) || Number(ownerId) < 1) throw new AppError('Authenticated owner is required.', 401);
+    const bucket = purpose === 'avatar' ? PRIVATE_BUCKETS.avatars : purpose === 'campaign' ? PRIVATE_BUCKETS.campaign : null;
+    if (!bucket || !MIME_EXTENSIONS[file?.mimetype] || !Buffer.isBuffer(file?.buffer)
+      || file.buffer.length === 0 || file.buffer.length > 8 * 1024 * 1024) {
+      throw new AppError('Unsupported private asset upload.', 400);
+    }
+    let verifiedMime;
+    try {
+      const decoder = sharp(file.buffer, { failOn: 'error', limitInputPixels: 16_000_000 });
+      const metadata = await decoder.metadata();
+      verifiedMime = FORMAT_MIME[metadata.format];
+      if (!verifiedMime || metadata.pages > 1 || !metadata.width || !metadata.height) {
+        throw new Error('Unsupported image format');
+      }
+      await decoder.clone().stats();
+    } catch {
+      throw new AppError('Invalid or corrupted image bytes.', 400);
+    }
+    if (file.mimetype !== verifiedMime) throw new AppError('Image content does not match its declared type.', 400);
+    const extension = MIME_EXTENSIONS[verifiedMime];
+    const objectPath = `${crypto.randomUUID()}${extension}`;
+    const object = { bucket, path: objectPath, contentType: verifiedMime, byteLength: file.buffer.length };
+    if (onPrepared) await onPrepared(object);
+    const { error } = await storageClient.storage.from(bucket).upload(objectPath, file.buffer, {
+      contentType: verifiedMime,
+      upsert: false,
+    });
+    if (error) throw new AppError(SAFE_ERROR, 503);
+    return object;
+  }
+
+  async function removePrivateObject({ bucket, path }) {
+    requirePrivate();
+    if (!Object.values(PRIVATE_BUCKETS).includes(bucket) || typeof path !== 'string' || !path || path.includes('..')) {
+      throw new AppError('Invalid private asset reference.', 400);
+    }
+    const { error } = await storageClient.storage.from(bucket).remove([path]);
+    if (error && !/not found|does not exist/i.test(error.message || '')) throw new AppError(SAFE_ERROR, 503);
+    return { removed: true };
+  }
+
+  return { uploadPrivateObject, removePrivateObject };
+}
+
+const storageService = createStorageService();
+module.exports = { ...storageService, createStorageService, assertStorageConfiguration, PRIVATE_BUCKETS };

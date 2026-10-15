@@ -2,9 +2,6 @@ const path = require('path');
 // Load environment variables from backend/.env relative to this script
 require('dotenv').config({ path: path.join(__dirname, '../.env') });
 
-const { saveToKnowledgeBase } = require('../src/services/ragService');
-const prisma = require('../src/config/prisma');
-
 const seedData = [
   {
     content: `# Khung Chiến Lược Fastvertising - Case Study: KitKat "Thông báo mất tích"\n\n` +
@@ -130,30 +127,10 @@ const seedData = [
 ];
 
 async function runSeed() {
-  console.log("🚀 Bắt đầu quá trình nạp dữ liệu mẫu vào RAG Knowledge Base...\n");
-
-  try {
-    // Dọn dẹp dữ liệu cũ để tránh trùng lặp
-    console.log("🧹 Đang dọn dẹp dữ liệu cũ...");
-    await prisma.knowledgeBase.deleteMany({});
-    console.log("🧹 Dọn dẹp hoàn tất!\n");
-
-    for (const item of seedData) {
-      const mainTag = item.metadata.tags[0] || 'Unknown';
-      console.log(`Đang nạp: [${mainTag}] - ${item.metadata.niche}`);
-      
-      await saveToKnowledgeBase(item.content, item.metadata);
-    }
-    
-    console.log("\n✅ Nạp dữ liệu mẫu RAG hoàn tất thành công!");
-    await prisma.$disconnect();
-    process.exit(0);
-  } catch (error) {
-    console.error("\n❌ Đã xảy ra lỗi trong quá trình nạp dữ liệu:");
-    console.error(error);
-    await prisma.$disconnect();
-    process.exit(1);
-  }
+  // These historical examples have no verified embedding provenance or approval.
+  // Retain the catalog for review, but never overwrite or classify live rows here.
+  process.stderr.write(`Bulk RAG seeding is disabled. Review ${seedData.length} examples individually before admin-approved ingestion.\n`);
+  process.exitCode = 1;
 }
 
 runSeed();

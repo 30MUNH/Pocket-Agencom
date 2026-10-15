@@ -1,45 +1,66 @@
-import { useState } from 'react';
 import { Users, FileClock, LifeBuoy, BookOpen, ArrowUpRight, Megaphone, CheckSquare, ShieldCheck, ArrowRight } from 'lucide-react';
+import PageHeader from '../../components/ui/PageHeader';
+import { Link } from 'react-router-dom';
+import { useMarketingPlans } from '../../hooks/useMarketingPlans';
+
+const activities = [
+  {
+    id: 1,
+    type: 'staff_create',
+    text: 'Nexus Agency đã tạo một tài khoản nhân viên mới.',
+    time: '10 phút trước',
+  },
+  {
+    id: 2,
+    type: 'review_submit',
+    text: 'Elevate Marketing đã nộp một kế hoạch tùy chỉnh để kiểm duyệt.',
+    time: '1 giờ trước',
+  },
+  {
+    id: 3,
+    type: 'ticket_alert',
+    text: 'Yêu cầu hỗ trợ khẩn cấp #4092 được mở bởi Alpha Retail.',
+    time: '3 giờ trước',
+    isUrgent: true,
+  },
+];
 
 export default function StaffDashboard() {
-  const [activities, setActivities] = useState([
-    {
-      id: 1,
-      type: 'staff_create',
-      text: 'Nexus Agency đã tạo một tài khoản nhân viên mới.',
-      time: '10 phút trước',
-    },
-    {
-      id: 2,
-      type: 'review_submit',
-      text: 'Elevate Marketing đã nộp một kế hoạch tùy chỉnh để kiểm duyệt.',
-      time: '1 giờ trước',
-    },
-    {
-      id: 3,
-      type: 'ticket_alert',
-      text: 'Yêu cầu hỗ trợ khẩn cấp #4092 được mở bởi Alpha Retail.',
-      time: '3 giờ trước',
-      isUrgent: true,
-    },
-  ]);
-
+  const { data: plans = [], isLoading: plansLoading, isError: plansError } = useMarketingPlans();
+  const reviewQueue = plans.filter((plan) => ['saved', 'reviewed', 'need_revision'].includes(plan.status));
   return (
     <div className="space-y-8 animate-fade-in">
       {/* Page Header */}
-      <div>
-        <h2 className="text-display-lg-mobile md:text-display-lg font-display-lg text-primary dark:text-inverse-primary">
-          Tổng quan
-        </h2>
-        <p className="text-body-lg font-body-lg text-on-surface-variant mt-2 max-w-2xl">
-          Giám sát hoạt động hệ thống, quản lý các yêu cầu hỗ trợ và giám sát hoạt động của đại lý.
-        </p>
-      </div>
+      <PageHeader title="Tổng quan" description="Theo dõi kế hoạch cần duyệt và yêu cầu hỗ trợ." />
+      <section aria-label="Kế hoạch cần kiểm duyệt" className="rounded-2xl border border-surface-variant bg-white p-5 sm:p-6 shadow-sm">
+        <h2 className="text-headline-md font-headline-md text-primary mb-4">Kế hoạch cần kiểm duyệt</h2>
+        {plansLoading && <p>Đang tải kế hoạch…</p>}
+        {plansError && <p role="alert">Không thể tải kế hoạch. Vui lòng tải lại trang.</p>}
+        {!plansLoading && !plansError && reviewQueue.length === 0 && <p>Chưa có kế hoạch cần kiểm duyệt.</p>}
+        {!plansLoading && !plansError && reviewQueue.length > 0 && (
+          <div className="divide-y divide-surface-variant/40">
+            {reviewQueue.map((plan) => (
+              <div key={plan.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
+                <div>
+                  <p className="font-bold text-primary">{plan.goal}</p>
+                  <p className="text-sm text-on-surface-variant">{plan.user?.name || 'Khách hàng'} · {plan.status}</p>
+                </div>
+                <Link className="rounded-full bg-primary px-4 py-2 text-sm font-bold text-on-primary" to={`/staff/plan-review/${plan.id}`}>
+                  Xem kế hoạch
+                </Link>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+      <p role="status" className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+        Số liệu và hoạt động bên dưới là dữ liệu minh họa; bảng điều khiển chưa kết nối với dữ liệu trực tiếp.
+      </p>
 
       {/* Bento Grid: Overview Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {/* Card 1: Total Users */}
-        <div className="bg-surface-container-lowest dark:bg-tertiary-container rounded-3xl p-8 shadow-[0_4px_24px_rgba(255,143,163,0.08)] border border-surface-container/10 hover:-translate-y-1 transition-transform duration-300 relative overflow-hidden group">
+        <div className="bg-white rounded-xl p-5 shadow-sm border border-surface-variant relative overflow-hidden">
           <div className="absolute -right-6 -top-6 w-24 h-24 bg-secondary-container rounded-full opacity-20 group-hover:scale-150 transition-transform duration-500 ease-out"></div>
           <div className="flex justify-between items-start mb-6 relative z-10">
             <div className="bg-secondary-container/50 p-3 rounded-2xl">
@@ -58,7 +79,7 @@ export default function StaffDashboard() {
         </div>
 
         {/* Card 2: Pending Reviews */}
-        <div className="bg-surface-container-lowest dark:bg-tertiary-container rounded-3xl p-8 shadow-[0_4px_24px_rgba(255,143,163,0.08)] border border-surface-container/10 hover:-translate-y-1 transition-transform duration-300 relative overflow-hidden group">
+        <div className="bg-white rounded-xl p-5 shadow-sm border border-surface-variant relative overflow-hidden">
           <div className="absolute -right-6 -top-6 w-24 h-24 bg-secondary-container rounded-full opacity-20 group-hover:scale-150 transition-transform duration-500 ease-out"></div>
           <div className="flex justify-between items-start mb-6 relative z-10">
             <div className="bg-secondary-container/50 p-3 rounded-2xl">
@@ -75,7 +96,7 @@ export default function StaffDashboard() {
         </div>
 
         {/* Card 3: Support Tickets */}
-        <div className="bg-surface-container-lowest dark:bg-tertiary-container rounded-3xl p-8 shadow-[0_4px_24px_rgba(255,143,163,0.08)] border border-surface-container/10 hover:-translate-y-1 transition-transform duration-300 relative overflow-hidden group">
+        <div className="bg-white rounded-xl p-5 shadow-sm border border-surface-variant relative overflow-hidden">
           <div className="absolute -right-6 -top-6 w-24 h-24 bg-secondary-container rounded-full opacity-20 group-hover:scale-150 transition-transform duration-500 ease-out"></div>
           <div className="flex justify-between items-start mb-6 relative z-10">
             <div className="bg-secondary-container/50 p-3 rounded-2xl">
@@ -91,7 +112,7 @@ export default function StaffDashboard() {
         </div>
 
         {/* Card 4: Active Templates */}
-        <div className="bg-surface-container-lowest dark:bg-tertiary-container rounded-3xl p-8 shadow-[0_4px_24px_rgba(255,143,163,0.08)] border border-surface-container/10 hover:-translate-y-1 transition-transform duration-300 relative overflow-hidden group">
+        <div className="bg-white rounded-xl p-5 shadow-sm border border-surface-variant relative overflow-hidden">
           <div className="absolute -right-6 -top-6 w-24 h-24 bg-secondary-container rounded-full opacity-20 group-hover:scale-150 transition-transform duration-500 ease-out"></div>
           <div className="flex justify-between items-start mb-6 relative z-10">
             <div className="bg-secondary-container/50 p-3 rounded-2xl">
@@ -110,7 +131,7 @@ export default function StaffDashboard() {
       {/* Lower Section: Layout Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Recent Activities Feed */}
-        <div className="lg:col-span-2 bg-surface-container-lowest dark:bg-tertiary-container rounded-3xl p-8 shadow-[0_4px_24px_rgba(255,143,163,0.08)] border border-surface-container/10 flex flex-col h-full">
+        <div className="lg:col-span-2 bg-white rounded-2xl p-5 sm:p-6 shadow-sm border border-surface-variant flex flex-col h-full">
           <div className="flex justify-between items-center mb-8">
             <h3 className="text-headline-md font-headline-md text-primary dark:text-inverse-primary">
               Hoạt động Gần đây
@@ -148,7 +169,7 @@ export default function StaffDashboard() {
         </div>
 
         {/* Quick Links & Actions */}
-        <div className="bg-surface-container-lowest dark:bg-tertiary-container rounded-3xl p-8 shadow-[0_4px_24px_rgba(255,143,163,0.08)] border border-surface-container/10 flex flex-col justify-between">
+        <div className="bg-white rounded-2xl p-5 sm:p-6 shadow-sm border border-surface-variant flex flex-col justify-between">
           <div>
             <h3 className="text-headline-md font-headline-md text-primary dark:text-inverse-primary mb-8">
               Hành động Nhân viên

@@ -1,7 +1,7 @@
 /**
  * AI Service Configuration & Free-Tier Defaults
  * Strictly enforces $0 spending in FREE_ONLY_MODE.
- * Supports Groq, OpenRouter, and Gemini for text generation,
+ * Supports Groq, OpenRouter, Gemini, and Cloudflare Workers AI for text,
  * and Cloudflare Workers AI for image generation.
  */
 
@@ -9,6 +9,14 @@ const aiConfig = {
   // Free-only mode flags (Strict $0 budget enforcement)
   freeOnlyMode: process.env.FREE_ONLY_MODE !== 'false',
   allowPaidModels: process.env.AI_ALLOW_PAID_MODELS === 'true',
+
+  // Free model availability does not prove that the configured account has
+  // free-tier billing enabled. These gates require an explicit account check.
+  freeTierConfirmed: {
+    groq: process.env.AI_FREE_TIER_CONFIRMED_GROQ === 'true',
+    gemini: process.env.AI_FREE_TIER_CONFIRMED_GEMINI === 'true',
+    cloudflare: process.env.AI_FREE_TIER_CONFIRMED_CLOUDFLARE === 'true',
+  },
 
   // Provider selections
   textProvider: process.env.AI_TEXT_PROVIDER || 'groq',
@@ -19,6 +27,7 @@ const aiConfig = {
     groq: process.env.GROQ_MODEL || 'openai/gpt-oss-120b',
     openrouter: process.env.OPENROUTER_MODEL || 'openrouter/free',
     gemini: process.env.GEMINI_MODEL || 'gemini-2.5-flash',
+    cloudflare: process.env.CLOUDFLARE_TEXT_MODEL || '@cf/openai/gpt-oss-20b',
   },
 
   defaultImageModels: {
@@ -48,6 +57,8 @@ const aiConfig = {
     cloudflare: [
       '@cf/black-forest-labs/flux-1-schnell',
       '@cf/stabilityai/stable-diffusion-xl-base-1.0',
+      '@cf/zai-org/glm-4.7-flash',
+      '@cf/openai/gpt-oss-20b',
     ],
   },
 
@@ -67,12 +78,17 @@ const aiConfig = {
   embedding: {
     model: process.env.GEMINI_EMBEDDING_MODEL || 'gemini-embedding-2',
     dimensions: parseInt(process.env.GEMINI_EMBEDDING_DIMENSIONS || '768', 10),
+    verifiedFreeModels: ['gemini-embedding-2'],
   },
 
   // Operational limits & daily user quota
   limits: {
     maxTokens: parseInt(process.env.AI_MAX_TOKENS || '4096', 10),
     requestTimeoutMs: parseInt(process.env.AI_REQUEST_TIMEOUT_MS || '45000', 10),
+    operationTimeoutMs: parseInt(
+      process.env.AI_OPERATION_TIMEOUT_MS || process.env.AI_REQUEST_TIMEOUT_MS || '45000',
+      10
+    ),
     imageTimeoutMs: parseInt(process.env.AI_IMAGE_TIMEOUT_MS || '60000', 10),
     maxConcurrentGenerations: parseInt(process.env.AI_MAX_CONCURRENT || '5', 10),
     maxRetries: parseInt(process.env.AI_MAX_RETRIES || '2', 10),
@@ -107,7 +123,7 @@ const aiConfig = {
     const m = modelId.trim();
 
     if (p === 'groq') {
-      return this.verifiedFreeModels.groq.includes(m);
+      return this.freeTierConfirmed.groq && this.verifiedFreeModels.groq.includes(m);
     }
 
     if (p === 'openrouter') {
@@ -116,11 +132,11 @@ const aiConfig = {
     }
 
     if (p === 'gemini') {
-      return this.verifiedFreeModels.gemini.some((freeModel) => m.startsWith(freeModel));
+      return this.freeTierConfirmed.gemini && this.verifiedFreeModels.gemini.includes(m);
     }
 
     if (p === 'cloudflare') {
-      return this.verifiedFreeModels.cloudflare.includes(m) || m.startsWith('@cf/');
+      return this.freeTierConfirmed.cloudflare && this.verifiedFreeModels.cloudflare.includes(m);
     }
 
     // fal.ai is paid-only, never free
