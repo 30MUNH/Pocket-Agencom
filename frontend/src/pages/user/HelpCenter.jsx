@@ -390,7 +390,7 @@ export default function HelpCenter() {
 
                 {/* Submit */}
                 <button
-                  className="w-full bg-secondary-container hover:bg-[#ebd0d2] text-on-secondary-container py-3.5 rounded-full text-label-sm font-bold uppercase tracking-wider transition-colors flex justify-center items-center gap-2 mt-2 shadow-sm disabled:opacity-60"
+                  className="w-full bg-secondary-container hover:bg-white text-on-secondary-container py-3.5 rounded-full text-label-sm font-bold uppercase tracking-wider transition-colors flex justify-center items-center gap-2 mt-2 shadow-sm disabled:opacity-60"
                   type="submit"
                   disabled={isSubmitting}
                 >

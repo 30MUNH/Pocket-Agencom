@@ -2,30 +2,30 @@ import { Link } from 'react-router-dom';
 
 export default function Footer() {
   return (
-    <footer className="bg-surface-container-lowest dark:bg-tertiary-container full-width py-4 mt-auto border-t border-surface-container/20">
-      <div className="max-w-7xl mx-auto px-gutter flex flex-col md:flex-row justify-between items-center gap-4">
+    <footer className="bg-white full-width py-5 mt-auto border-t border-slate-200/80">
+      <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-4">
         <div className="flex flex-col items-center md:items-start">
-          <span className="text-xs font-bold text-primary mb-0.5">Pocket <span className="text-[#F897A8]">Agen</span>com</span>
-          <span className="text-[11px] text-on-surface-variant">
+          <span className="text-xs font-bold text-slate-900 mb-0.5">Pocket <span className="text-slate-900">Agencom</span></span>
+          <span className="text-xs text-slate-500">
             © {new Date().getFullYear()} Pocket Agencom. Bảo lưu mọi quyền.
           </span>
         </div>
-        <div className="flex gap-5">
+        <div className="flex gap-6">
           <Link
             to="/privacy"
-            className="inline-flex min-h-6 items-center text-[11px] text-on-surface-variant hover:text-primary transition-colors"
+            className="inline-flex min-h-6 items-center text-xs text-slate-500 hover:text-slate-900 transition-colors"
           >
             Chính sách Bảo mật
           </Link>
           <Link
             to="/terms"
-            className="inline-flex min-h-6 items-center text-[11px] text-on-surface-variant hover:text-primary transition-colors"
+            className="inline-flex min-h-6 items-center text-xs text-slate-500 hover:text-slate-900 transition-colors"
           >
             Điều khoản Dịch vụ
           </Link>
           <Link
             to="/contact"
-            className="inline-flex min-h-6 items-center text-[11px] text-on-surface-variant hover:text-primary transition-colors"
+            className="inline-flex min-h-6 items-center text-xs text-slate-500 hover:text-slate-900 transition-colors"
           >
             Liên hệ chúng tôi
           </Link>

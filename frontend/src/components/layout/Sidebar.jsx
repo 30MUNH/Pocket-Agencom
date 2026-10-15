@@ -82,13 +82,13 @@ export default function Sidebar({ isOpen, onClose, userRole = 'user' }) {
         aria-label="Điều hướng chính"
         aria-hidden={!isDesktop && !isOpen}
         inert={!isDesktop && !isOpen}
-        className={`fixed left-0 top-0 z-50 flex h-dvh w-sidebar-width flex-col gap-4 border-r border-surface-variant bg-white py-6 shadow-xl transition-transform duration-200 motion-reduce:transition-none lg:translate-x-0 ${
+        className={`fixed left-0 top-0 z-50 flex h-dvh w-sidebar-width flex-col gap-4 border-r border-slate-200/80 bg-white py-6 shadow-xl transition-transform duration-200 motion-reduce:transition-none lg:translate-x-0 ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
         {/* Brand/Logo Header */}
-        <div className="px-8 mb-8 flex items-center gap-4">
-          <div className="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center overflow-hidden shrink-0">
+        <div className="px-6 mb-6 flex items-center gap-3.5">
+          <div className="w-10 h-10 rounded-xl bg-slate-900 flex items-center justify-center overflow-hidden shrink-0 shadow-xs">
             <img
               alt="Agency Logo"
               className="w-full h-full object-cover"
@@ -96,10 +96,10 @@ export default function Sidebar({ isOpen, onClose, userRole = 'user' }) {
             />
           </div>
           <div>
-            <span className="text-headline-md font-headline-md font-extrabold tracking-tight text-on-surface">
-              Pocket <span className="text-[#F897A8]">Agen</span>com
+            <span className="text-lg font-extrabold tracking-tight text-slate-900">
+              Pocket <span className="bg-[#FFCED2] px-1.5 py-0.5 rounded-md text-slate-900">Agen</span>com
             </span>
-            <p className="text-label-sm font-label-sm text-on-surface-variant mt-1">
+            <p className="text-xs font-medium text-slate-500 mt-0.5">
               Hỗ trợ Tiếp thị
             </p>
           </div>
@@ -107,7 +107,7 @@ export default function Sidebar({ isOpen, onClose, userRole = 'user' }) {
 
         {/* Menu Items */}
         <div className="flex-1 overflow-y-auto">
-          <ul className="flex flex-col gap-2 px-4">
+          <ul className="flex flex-col gap-1.5 px-3.5">
             {menuItems.map((item) => {
               const Icon = item.icon;
               const isActive = item.path === '/marketing-kit'
@@ -120,17 +120,14 @@ export default function Sidebar({ isOpen, onClose, userRole = 'user' }) {
                     to={item.path}
                     onClick={onClose}
                     aria-current={isActive ? 'page' : undefined}
-                    className={`relative flex min-h-11 items-center gap-4 rounded-lg px-4 py-3 transition-colors ${
+                    className={`relative flex min-h-11 items-center gap-3.5 rounded-xl px-3.5 py-2.5 transition-all ${
                       isActive
-                        ? 'bg-primary-container text-primary font-semibold'
-                        : 'text-on-surface-variant hover:bg-surface-container hover:text-on-surface'
+                        ? 'bg-[#FFCED2] text-slate-900 font-bold shadow-xs'
+                        : 'text-slate-600 hover:bg-slate-100/80 hover:text-slate-900 font-medium'
                     }`}
                   >
-                    {isActive && (
-                      <span className="absolute left-0 w-1.5 h-8 bg-primary rounded-r-full" />
-                    )}
-                    <Icon size={20} aria-hidden="true" className={isActive ? 'text-primary' : 'text-on-surface-variant'} />
-                    <span className="text-sm font-medium">{item.label}</span>
+                    <Icon size={19} aria-hidden="true" className={isActive ? 'text-slate-900' : 'text-slate-500'} />
+                    <span className="text-sm">{item.label}</span>
                   </Link>
                 </li>
               );
@@ -139,26 +136,23 @@ export default function Sidebar({ isOpen, onClose, userRole = 'user' }) {
         </div>
 
         {/* Bottom Section: Settings */}
-        <div className="px-4 mt-auto">
+        <div className="px-3.5 mt-auto border-t border-slate-100 pt-3">
           <Link
             to="/settings"
             onClick={onClose}
             aria-current={location.pathname === '/settings' ? 'page' : undefined}
-            className={`relative flex min-h-11 items-center gap-4 rounded-lg px-4 py-3 transition-colors ${
+            className={`relative flex min-h-11 items-center gap-3.5 rounded-xl px-3.5 py-2.5 transition-all ${
               location.pathname === '/settings'
-                ? 'bg-primary-container text-primary font-semibold'
-                : 'text-on-surface-variant hover:bg-surface-container hover:text-on-surface'
+                ? 'bg-[#FFCED2] text-slate-900 font-bold shadow-xs'
+                : 'text-slate-600 hover:bg-slate-100/80 hover:text-slate-900 font-medium'
             }`}
           >
-            {location.pathname === '/settings' && (
-              <span className="absolute left-0 w-1.5 h-8 bg-primary rounded-r-full" />
-            )}
             <Settings
-              size={20}
+              size={19}
               aria-hidden="true"
-              className={location.pathname === '/settings' ? 'text-primary' : 'text-on-surface-variant'}
+              className={location.pathname === '/settings' ? 'text-slate-900' : 'text-slate-500'}
             />
-            <span className="text-sm font-medium">Cài đặt</span>
+            <span className="text-sm">Cài đặt</span>
           </Link>
         </div>
       </nav>

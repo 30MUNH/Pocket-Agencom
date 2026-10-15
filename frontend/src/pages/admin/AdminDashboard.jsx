@@ -57,24 +57,24 @@ export default function AdminDashboard() {
   return (
     <div className="space-y-8 animate-fade-in">
       {/* Page Header */}
-      <PageHeader title="Tổng quan" description="Quản lý hệ thống và theo dõi hoạt động." >
-        <div className="flex items-center gap-2 bg-surface-container-lowest dark:bg-tertiary-container rounded-full p-1 shadow-sm border border-surface-container/20">
+      <PageHeader title="Tổng quan Quản trị" description="Quản lý hệ thống, phân quyền và theo dõi hoạt động." >
+        <div className="flex items-center gap-1.5 bg-slate-100 rounded-xl p-1 border border-slate-200">
           <button
             onClick={() => setActiveTab('30days')}
-            className={`px-5 py-2 rounded-full font-label-sm text-label-sm transition-all duration-200 ${
+            className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
               activeTab === '30days'
-              ? 'bg-primary text-on-primary font-semibold shadow-sm'
-                : 'text-on-surface-variant hover:bg-surface-container-low'
+                ? 'bg-[#FFCED2] text-slate-900 shadow-xs'
+                : 'text-slate-600 hover:text-slate-900'
             }`}
           >
             30 Ngày qua
           </button>
           <button
             onClick={() => setActiveTab('year')}
-            className={`px-5 py-2 rounded-full font-label-sm text-label-sm transition-all duration-200 ${
+            className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
               activeTab === 'year'
-              ? 'bg-primary text-on-primary font-semibold shadow-sm'
-                : 'text-on-surface-variant hover:bg-surface-container-low'
+                ? 'bg-[#FFCED2] text-slate-900 shadow-xs'
+                : 'text-slate-600 hover:text-slate-900'
             }`}
           >
             Năm nay
@@ -82,27 +82,27 @@ export default function AdminDashboard() {
         </div>
       </PageHeader>
 
-      <p role="status" className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+      <p role="status" className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs font-medium text-amber-900">
         Số liệu và hoạt động bên dưới là dữ liệu minh họa; bảng điều khiển chưa kết nối với thống kê trực tiếp.
       </p>
 
       {/* Key Metrics Bento Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
         {/* Widget 1: User Count */}
-        <div className="bg-white rounded-xl p-5 shadow-sm border border-surface-variant flex flex-col justify-between h-40">
+        <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200/80 flex flex-col justify-between h-40 transition-all hover:border-slate-300">
           <div className="flex justify-between items-start">
-            <span className="text-label-sm font-label-sm text-surface-tint uppercase tracking-wider">
+            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
               Tổng Người dùng
             </span>
-            <div className="w-10 h-10 rounded-full bg-secondary-fixed flex items-center justify-center text-primary">
+            <div className="w-10 h-10 rounded-xl bg-[#FFCED2] flex items-center justify-center text-slate-900 shadow-xs">
               <Users size={20} />
             </div>
           </div>
           <div>
-            <div className="text-headline-md font-headline-md text-primary dark:text-inverse-primary">
+            <div className="text-2xl font-bold text-slate-900 tracking-tight">
               12,450
             </div>
-            <div className="flex items-center gap-1 text-sm text-secondary mt-1">
+            <div className="flex items-center gap-1 text-xs font-semibold text-emerald-600 mt-1">
               <TrendingUp size={14} />
               <span>+12% tháng này</span>
             </div>
@@ -110,20 +110,20 @@ export default function AdminDashboard() {
         </div>
 
         {/* Widget 2: Staff Count */}
-        <div className="bg-white rounded-xl p-5 shadow-sm border border-surface-variant flex flex-col justify-between h-40">
+        <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200/80 flex flex-col justify-between h-40 transition-all hover:border-slate-300">
           <div className="flex justify-between items-start">
-            <span className="text-label-sm font-label-sm text-surface-tint uppercase tracking-wider">
+            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
               Nhân viên Hoạt động
             </span>
-            <div className="w-10 h-10 rounded-full bg-primary-fixed flex items-center justify-center text-primary">
+            <div className="w-10 h-10 rounded-xl bg-[#FFCED2] flex items-center justify-center text-slate-900 shadow-xs">
               <BadgeCheck size={20} />
             </div>
           </div>
           <div>
-            <div className="text-headline-md font-headline-md text-primary dark:text-inverse-primary">
+            <div className="text-2xl font-bold text-slate-900 tracking-tight">
               142
             </div>
-            <div className="flex items-center gap-1 text-sm text-surface-tint mt-1">
+            <div className="flex items-center gap-1 text-xs font-semibold text-slate-500 mt-1">
               <Minus size={14} />
               <span>Không thay đổi</span>
             </div>
@@ -131,20 +131,20 @@ export default function AdminDashboard() {
         </div>
 
         {/* Widget 3: Total Plans */}
-        <div className="bg-white rounded-xl p-5 shadow-sm border border-surface-variant flex flex-col justify-between h-40">
+        <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200/80 flex flex-col justify-between h-40 transition-all hover:border-slate-300">
           <div className="flex justify-between items-start">
-            <span className="text-label-sm font-label-sm text-surface-tint uppercase tracking-wider">
+            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
               Gói dịch vụ Hoạt động
             </span>
-            <div className="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center text-primary">
+            <div className="w-10 h-10 rounded-xl bg-[#FFCED2] flex items-center justify-center text-slate-900 shadow-xs">
               <ClipboardList size={20} />
             </div>
           </div>
           <div>
-            <div className="text-headline-md font-headline-md text-primary dark:text-inverse-primary">
+            <div className="text-2xl font-bold text-slate-900 tracking-tight">
               8,920
             </div>
-            <div className="flex items-center gap-1 text-sm text-secondary mt-1">
+            <div className="flex items-center gap-1 text-xs font-semibold text-emerald-600 mt-1">
               <TrendingUp size={14} />
               <span>+5% tháng này</span>
             </div>
@@ -152,21 +152,20 @@ export default function AdminDashboard() {
         </div>
 
         {/* Widget 4: Revenue */}
-        <div className="bg-primary dark:bg-primary-container text-on-primary rounded-3xl p-6 shadow-xl flex flex-col justify-between h-40 hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group">
-          <div className="absolute inset-0 bg-blue-900/10 pointer-events-none" />
+        <div className="bg-slate-900 text-white rounded-2xl p-6 shadow-sm flex flex-col justify-between h-40 relative overflow-hidden group">
           <div className="flex justify-between items-start relative z-10">
-            <span className="text-label-sm font-label-sm text-surface-dim uppercase tracking-wider">
-              Doanh thu hàng tháng (MRR)
+            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+              Doanh thu tháng (MRR)
             </span>
-            <div className="w-10 h-10 rounded-full bg-on-primary/20 flex items-center justify-center text-on-primary">
+            <div className="w-10 h-10 rounded-xl bg-[#FFCED2] flex items-center justify-center text-slate-900 shadow-xs">
               <DollarSign size={20} />
             </div>
           </div>
           <div className="relative z-10">
-            <div className="text-headline-md font-headline-md text-on-primary">
+            <div className="text-2xl font-bold text-white tracking-tight">
               $142,500
             </div>
-            <div className="flex items-center gap-1 text-sm text-secondary-container mt-1">
+            <div className="flex items-center gap-1 text-xs font-semibold text-emerald-400 mt-1">
               <TrendingUp size={14} />
               <span>+18% tháng này</span>
             </div>
@@ -177,42 +176,42 @@ export default function AdminDashboard() {
       {/* Main Content Grid (Charts and Lists) */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Chart Section */}
-        <div className="lg:col-span-2 bg-white rounded-2xl p-5 sm:p-6 shadow-sm border border-surface-variant">
+        <div className="lg:col-span-2 bg-white rounded-2xl p-6 shadow-sm border border-slate-200/80">
           <div className="flex justify-between items-center mb-8">
             <div>
-              <h3 className="text-headline-md font-headline-md text-primary dark:text-inverse-primary">
+              <h3 className="text-lg font-bold text-slate-900 tracking-tight">
                 Xu hướng Hoạt động Người dùng
               </h3>
-              <p className="text-body-md font-body-md text-surface-tint mt-1">
+              <p className="text-xs text-slate-500 mt-1">
                 Người dùng hoạt động hàng ngày trong 14 ngày qua.
               </p>
             </div>
-            <button className="text-surface-tint hover:text-primary dark:hover:text-inverse-primary transition-colors p-2 rounded-full">
+            <button className="text-slate-400 hover:text-slate-900 transition-colors p-2 rounded-full">
               <MoreHorizontal size={20} />
             </button>
           </div>
 
           {/* Stylized CSS Chart Representation */}
-          <div className="h-64 flex items-end gap-2 sm:gap-4 w-full px-2 border-b border-surface-container dark:border-outline-variant/30 pb-2">
+          <div className="h-64 flex items-end gap-2 sm:gap-4 w-full px-2 border-b border-slate-200 pb-2">
             {chartData.map((item, idx) => (
               <div
                 key={idx}
-                className={`w-full ${item.height} rounded-t-lg transition-all duration-300 hover:opacity-80 cursor-pointer relative group ${
+                className={`w-full ${item.height} rounded-t-lg transition-all duration-300 cursor-pointer relative group ${
                   item.isPeak
-                    ? 'bg-primary dark:bg-inverse-primary'
-                    : 'bg-secondary-fixed-dim dark:bg-secondary-fixed/30 hover:bg-secondary-container'
+                    ? 'bg-slate-900 hover:bg-slate-800'
+                    : 'bg-slate-200 hover:bg-[#FFCED2]'
                 }`}
                 title={`${item.day}: ${item.value}`}
               >
                 {/* Floating Tooltip on Hover */}
-                <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-surface-variant dark:bg-surface-container-high text-on-surface text-[10px] font-bold py-1 px-2 rounded shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-20">
+                <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-[11px] font-semibold py-1 px-2.5 rounded-lg shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-20">
                   {item.value} {item.isPeak && '(Đỉnh điểm)'}
                 </div>
               </div>
             ))}
           </div>
 
-          <div className="flex justify-between text-xs text-surface-tint mt-3 font-label-sm font-semibold tracking-wider">
+          <div className="flex justify-between text-xs text-slate-400 mt-3 font-semibold tracking-wider">
             <span>01 Tháng 5</span>
             <span>07 Tháng 5</span>
             <span>14 Tháng 5</span>
@@ -220,15 +219,15 @@ export default function AdminDashboard() {
         </div>
 
         {/* Recent Activity List */}
-        <div className="bg-white rounded-2xl p-5 sm:p-6 shadow-sm border border-surface-variant flex flex-col justify-between">
+        <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200/80 flex flex-col justify-between">
           <div>
-            <h3 className="text-headline-md font-headline-md text-primary dark:text-inverse-primary mb-6">
+            <h3 className="text-lg font-bold text-slate-900 tracking-tight mb-6">
               Nâng cấp Gần đây
             </h3>
-            <div className="flex flex-col gap-6">
+            <div className="flex flex-col gap-5">
               {recentUpgrades.map((item) => (
-                <div key={item.id} className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-full overflow-hidden bg-surface-container dark:bg-surface-variant flex items-center justify-center shrink-0 shadow-sm border border-surface-container-high/10">
+                <div key={item.id} className="flex items-center gap-3.5">
+                  <div className="w-10 h-10 rounded-full overflow-hidden bg-slate-100 flex items-center justify-center shrink-0 border border-slate-200">
                     {item.avatar ? (
                       <img
                         alt={item.company}
@@ -236,19 +235,19 @@ export default function AdminDashboard() {
                         src={item.avatar}
                       />
                     ) : (
-                      <item.icon size={20} className="text-primary dark:text-inverse-primary" />
+                      <item.icon size={20} className="text-slate-700" />
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-body-md font-body-md text-primary dark:text-inverse-primary truncate font-semibold">
+                    <p className="text-sm font-semibold text-slate-900 truncate">
                       {item.company}
                     </p>
-                    <p className="text-sm text-surface-tint truncate">
+                    <p className="text-xs text-slate-500 truncate">
                       {item.detail}
                     </p>
                   </div>
                   <div className="text-right shrink-0">
-                    <span className="text-label-sm font-label-sm text-secondary font-medium">
+                    <span className="text-xs font-medium text-slate-400">
                       {item.time}
                     </span>
                   </div>
@@ -257,7 +256,7 @@ export default function AdminDashboard() {
             </div>
           </div>
 
-          <button className="w-full mt-6 py-3 rounded-full border border-outline-variant dark:border-outline-variant/30 text-primary dark:text-inverse-primary hover:bg-surface-container-low transition-colors text-label-sm font-label-sm font-bold">
+          <button className="w-full mt-6 py-2.5 rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-colors text-xs font-bold">
             Xem toàn bộ Hoạt động
           </button>
         </div>
