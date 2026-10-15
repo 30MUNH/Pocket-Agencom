@@ -133,14 +133,14 @@ export default function TrendBulletin() {
     <section className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center text-primary">
+          <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-900">
             <TrendingUp size={20} />
           </div>
           <div>
-            <h3 className="text-headline-md font-headline-md text-primary flex items-center gap-2">
-              Bản tin Xu hướng <Sparkles className="text-secondary animate-pulse" size={18} />
+            <h3 className="text-base font-bold text-slate-900 flex items-center gap-2 tracking-tight">
+              Bản tin Xu hướng <Sparkles className="text-amber-500 animate-pulse" size={16} />
             </h3>
-            <p className="text-body-md text-on-surface-variant text-sm">
+            <p className="text-xs text-slate-500 mt-0.5">
               Cập nhật các trào lưu marketing nóng hổi và tạo kịch bản ngay chỉ với một cú nhấp.
             </p>
           </div>
@@ -150,25 +150,22 @@ export default function TrendBulletin() {
           type="button"
           onClick={handleRefreshTrends}
           disabled={isRefreshing || isLoadingTrends}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-full border border-secondary/30 bg-surface-container-low hover:bg-secondary-container/40 text-secondary text-xs font-bold transition-all shadow-sm active:scale-95 self-start sm:self-auto disabled:opacity-50 cursor-pointer"
+          className="flex items-center gap-2 px-3.5 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold transition-all shadow-sm self-start sm:self-auto disabled:opacity-50 cursor-pointer"
         >
-          <RefreshCw size={14} className={isRefreshing ? "animate-spin" : ""} />
+          <RefreshCw size={13} className={isRefreshing ? "animate-spin" : ""} />
           <span>{isRefreshing ? "AI đang săn trend..." : "Làm mới trào lưu AI"}</span>
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
         {trendsList.map((trend) => {
           const IconComponent = trend.icon || getTrendIcon(trend.iconName);
           return (
             <div
               key={trend.id}
               onClick={() => setSelectedTrend(trend)}
-              className="bg-surface-container-lowest dark:bg-tertiary-container rounded-3xl p-6 shadow-ambient hover:shadow-ambient-hover hover:-translate-y-1.5 transition-all duration-300 flex flex-col justify-between border border-surface-container/20 group relative overflow-hidden cursor-pointer"
+              className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md hover:border-slate-300 transition-all duration-300 flex flex-col justify-between border border-slate-200/80 group relative overflow-hidden cursor-pointer"
             >
-              {/* Card top blur glow */}
-              <div className="absolute top-0 right-0 w-24 h-24 bg-secondary-container/10 dark:bg-secondary-fixed/5 rounded-full blur-xl pointer-events-none group-hover:scale-150 transition-transform duration-500" />
-              
               <div>
                 {/* Header card with Icon & Tags & Scope Badge */}
                 <div className="flex items-start justify-between gap-4 mb-4">
@@ -177,18 +174,18 @@ export default function TrendBulletin() {
                   </div>
                   <div className="flex flex-wrap gap-1.5 justify-end items-center">
                     {trend.trendScope === 'SIMPLE_POST' ? (
-                      <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-850 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200/50 dark:border-emerald-500/20">
+                      <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
                         Bài đăng nhanh
                       </span>
                     ) : (
-                      <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-purple-100 text-purple-850 dark:bg-purple-950/60 dark:text-purple-300 border border-purple-200/50 dark:border-purple-500/20">
+                      <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-purple-50 text-purple-700 border border-purple-200">
                         Chiến dịch
                       </span>
                     )}
                     {trend.tags.map((tag, idx) => (
                       <span
                         key={idx}
-                        className={`px-2 py-0.5 rounded-full text-[11px] font-semibold font-label-sm ${trend.badgeColor}`}
+                        className={`px-2 py-0.5 rounded-full text-[11px] font-semibold ${trend.badgeColor}`}
                       >
                         {tag}
                       </span>
@@ -197,12 +194,12 @@ export default function TrendBulletin() {
                 </div>
 
                 {/* Title */}
-                <h4 className="text-body-lg font-headline-md text-primary mb-3 line-clamp-2 group-hover:text-secondary transition-colors">
+                <h4 className="text-sm font-bold text-slate-900 mb-2 line-clamp-2 group-hover:text-black transition-colors leading-snug">
                   {trend.title}
                 </h4>
 
                 {/* Teaser */}
-                <p className="text-body-md text-on-surface-variant text-sm line-clamp-3 mb-6">
+                <p className="text-xs text-slate-500 line-clamp-3 mb-6 leading-relaxed">
                   {trend.teaser}
                 </p>
               </div>
@@ -213,10 +210,10 @@ export default function TrendBulletin() {
                   e.stopPropagation();
                   handleCreateScript(trend);
                 }}
-                className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-primary py-3.5 text-sm font-semibold text-on-primary transition-colors hover:bg-primary/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 py-2.5 text-xs font-bold text-white transition-colors hover:bg-slate-800 shadow-sm"
               >
                 <span>{trend.trendScope === 'SIMPLE_POST' ? 'Soạn thảo nhanh' : 'Tạo kịch bản'}</span>
-                <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform animate-bounce-horizontal" />
+                <ArrowRight size={13} className="group-hover:translate-x-1 transition-transform" />
               </button>
             </div>
           );
@@ -226,37 +223,34 @@ export default function TrendBulletin() {
       {/* Detail Modal Popup */}
       {selectedTrend && (
         <div 
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-modal-fade"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-modal-fade"
           onClick={() => setSelectedTrend(null)}
         >
           <div 
-            className="bg-surface-container-lowest dark:bg-surface-container-high rounded-[2rem] p-6 md:p-8 max-w-xl w-full border border-surface-container/30 shadow-2xl relative overflow-hidden animate-modal-slide"
+            className="bg-white rounded-2xl p-6 md:p-8 max-w-xl w-full border border-slate-200 shadow-2xl relative overflow-hidden animate-modal-slide text-slate-900"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Top blur glow */}
-            <div className="absolute top-0 right-0 w-32 h-32 bg-secondary-container/20 dark:bg-secondary-fixed/5 rounded-full blur-2xl pointer-events-none" />
-            
             {/* Modal Container */}
-            <div className="space-y-6 relative z-10">
+            <div className="space-y-5 relative z-10">
               <div className="flex items-start justify-between gap-4">
                 <div className="flex items-center gap-3">
-                  <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${selectedTrend.iconColor}`}>
-                    {ActiveIcon && <ActiveIcon size={24} />}
+                  <div className={`w-11 h-11 rounded-xl flex items-center justify-center ${selectedTrend.iconColor}`}>
+                    {ActiveIcon && <ActiveIcon size={22} />}
                   </div>
                   <div className="flex flex-wrap gap-1.5 items-center">
                     {selectedTrend.trendScope === 'SIMPLE_POST' ? (
-                      <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-850 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200/50 dark:border-emerald-500/20">
+                      <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
                         Bài đăng nhanh
                       </span>
                     ) : (
-                      <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-purple-100 text-purple-850 dark:bg-purple-950/60 dark:text-purple-300 border border-purple-200/50 dark:border-purple-500/20">
+                      <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-purple-50 text-purple-700 border border-purple-200">
                         Chiến dịch
                       </span>
                     )}
                     {selectedTrend.tags.map((tag, idx) => (
                       <span
                         key={idx}
-                        className={`px-3 py-1 rounded-full text-xs font-semibold font-label-sm ${selectedTrend.badgeColor}`}
+                        className={`px-2.5 py-1 rounded-full text-xs font-semibold ${selectedTrend.badgeColor}`}
                       >
                         {tag}
                       </span>
@@ -265,56 +259,56 @@ export default function TrendBulletin() {
                 </div>
                 <button
                   onClick={() => setSelectedTrend(null)}
-                  className="p-1.5 rounded-full hover:bg-surface-container-high transition-colors text-on-surface-variant"
+                  className="p-1.5 rounded-full hover:bg-slate-100 transition-colors text-slate-400 hover:text-slate-700"
                 >
-                  <X size={20} />
+                  <X size={18} />
                 </button>
               </div>
 
               <div>
-                <h3 className="text-xl md:text-2xl font-headline-md text-primary leading-snug">
+                <h3 className="text-lg md:text-xl font-bold text-slate-900 leading-snug">
                   {selectedTrend.title}
                 </h3>
               </div>
 
-              <div className="space-y-4 text-body-md text-on-surface-variant max-h-[50vh] overflow-y-auto pr-2 custom-scrollbar">
+              <div className="space-y-3.5 text-xs text-slate-600 max-h-[50vh] overflow-y-auto pr-1">
                 <div>
-                  <h4 className="text-label-md font-headline-md text-primary mb-1">Mô tả trào lưu:</h4>
-                  <p className="leading-relaxed text-sm bg-surface-container-low p-4 rounded-2xl">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">Mô tả trào lưu:</h4>
+                  <p className="leading-relaxed bg-slate-50 p-3.5 rounded-xl border border-slate-100">
                     {selectedTrend.teaser}
                   </p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="bg-surface-container-low p-4 rounded-2xl">
-                    <h4 className="text-label-sm font-headline-md text-primary mb-1">Loại chiến dịch gợi ý:</h4>
-                    <span className="inline-block bg-secondary-container/60 text-secondary px-3 py-1 rounded-full text-xs font-semibold mt-1">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-100">
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">Loại chiến dịch gợi ý:</h4>
+                    <span className="inline-block bg-slate-200/80 text-slate-800 px-2.5 py-0.5 rounded-full text-xs font-semibold mt-1">
                       {selectedTrend.prefill.campaignType === 'awareness' ? 'Nhận diện thương hiệu' : selectedTrend.prefill.campaignType === 'sales' ? 'Thúc đẩy doanh số' : 'Tương tác & Giữ chân'}
                     </span>
                   </div>
-                  <div className="bg-surface-container-low p-4 rounded-2xl">
-                    <h4 className="text-label-sm font-headline-md text-primary mb-1">Khách hàng hướng tới:</h4>
+                  <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-100">
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">Khách hàng hướng tới:</h4>
                     <p className="text-xs leading-relaxed mt-1">{selectedTrend.prefill.customerProfile}</p>
                   </div>
                 </div>
 
-                <div className="bg-surface-container-low p-4 rounded-2xl space-y-3">
+                <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-100 space-y-2.5">
                   <div>
-                    <h4 className="text-label-sm font-headline-md text-primary mb-0.5">Ý tưởng kịch bản:</h4>
-                    <p className="text-xs leading-relaxed">{selectedTrend.prefill.description}</p>
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 mb-0.5">Ý tưởng kịch bản:</h4>
+                    <p className="text-xs leading-relaxed text-slate-600">{selectedTrend.prefill.description}</p>
                   </div>
-                  <div className="pt-2 border-t border-surface-container-high">
-                    <h4 className="text-label-sm font-headline-md text-primary mb-0.5">Mục tiêu chính:</h4>
-                    <p className="text-xs font-semibold text-secondary">{selectedTrend.prefill.primaryGoal}</p>
+                  <div className="pt-2 border-t border-slate-200/70">
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 mb-0.5">Mục tiêu chính:</h4>
+                    <p className="text-xs font-semibold text-slate-800">{selectedTrend.prefill.primaryGoal}</p>
                   </div>
                 </div>
               </div>
 
               {/* Action Buttons */}
-              <div className="flex gap-4 pt-2">
+              <div className="flex gap-3 pt-2">
                 <button
                   onClick={() => setSelectedTrend(null)}
-                  className="flex-1 py-3.5 rounded-full border border-outline hover:bg-surface-container transition-all font-label-sm text-label-sm text-on-surface"
+                  className="flex-1 py-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 transition-all text-xs font-bold text-slate-700"
                 >
                   Đóng
                 </button>
@@ -323,7 +317,7 @@ export default function TrendBulletin() {
                     handleCreateScript(selectedTrend);
                     setSelectedTrend(null);
                   }}
-                  className="flex-1 bg-secondary text-on-secondary font-label-sm text-label-sm py-3.5 rounded-full hover:bg-secondary/95 transition-all flex items-center justify-center gap-2"
+                  className="flex-1 bg-slate-900 text-white text-xs font-bold py-2.5 rounded-xl hover:bg-slate-800 transition-all flex items-center justify-center gap-2 shadow-sm"
                 >
                   <span>{selectedTrend.trendScope === 'SIMPLE_POST' ? 'Soạn thảo nhanh' : 'Tạo kịch bản'}</span>
                   <ArrowRight size={14} />

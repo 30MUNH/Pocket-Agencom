@@ -166,57 +166,57 @@ export default function UserSettings() {
       <div className="flex flex-col lg:flex-row gap-8">
         {/* Settings Navigation Sidebar */}
         <aside className="w-full lg:w-64 shrink-0">
-          <div className="bg-surface-container-lowest dark:bg-tertiary-container rounded-3xl shadow-ambient p-4 flex flex-row lg:flex-col gap-2 overflow-x-auto lg:overflow-visible border border-surface-container/20">
+          <div className="bg-white rounded-2xl shadow-sm p-3 flex flex-row lg:flex-col gap-1.5 overflow-x-auto lg:overflow-visible border border-slate-200/80">
             {/* Profile Info Tab */}
             <button
               onClick={() => setActiveTab('profile')}
-              className={`w-full text-left relative flex items-center rounded-full py-3 px-6 shrink-0 transition-all ${
+              className={`w-full text-left relative flex items-center rounded-xl py-2.5 px-4 shrink-0 transition-all ${
                 activeTab === 'profile'
-                  ? 'bg-secondary-container text-on-secondary-container font-bold shadow-sm'
-                  : 'text-on-surface-variant hover:bg-surface-container-low dark:hover:bg-surface-variant/30'
+                  ? 'bg-[#FFCED2] text-slate-900 font-bold shadow-xs'
+                  : 'text-slate-600 hover:bg-slate-100/80 hover:text-slate-900 font-medium'
               }`}
             >
-              <UserIcon size={18} className="mr-3 text-secondary shrink-0" />
-              <span className="text-label-sm font-label-sm">Thông tin Hồ sơ</span>
+              <UserIcon size={18} className={`mr-3 shrink-0 ${activeTab === 'profile' ? 'text-slate-900' : 'text-slate-500'}`} />
+              <span className="text-sm">Thông tin Hồ sơ</span>
             </button>
 
             {/* Security Tab */}
             <button
               onClick={() => setActiveTab('security')}
-              className={`w-full text-left relative flex items-center rounded-full py-3 px-6 shrink-0 transition-all ${
+              className={`w-full text-left relative flex items-center rounded-xl py-2.5 px-4 shrink-0 transition-all ${
                 activeTab === 'security'
-                  ? 'bg-secondary-container text-on-secondary-container font-bold shadow-sm'
-                  : 'text-on-surface-variant hover:bg-surface-container-low dark:hover:bg-surface-variant/30'
+                  ? 'bg-[#FFCED2] text-slate-900 font-bold shadow-xs'
+                  : 'text-slate-600 hover:bg-slate-100/80 hover:text-slate-900 font-medium'
               }`}
             >
-              <Lock size={18} className="mr-3 text-secondary shrink-0" />
-              <span className="text-label-sm font-label-sm">Bảo mật</span>
+              <Lock size={18} className={`mr-3 shrink-0 ${activeTab === 'security' ? 'text-slate-900' : 'text-slate-500'}`} />
+              <span className="text-sm">Bảo mật</span>
             </button>
 
             {/* Notifications Tab */}
             <button
               onClick={() => setActiveTab('notifications')}
-              className={`w-full text-left relative flex items-center rounded-full py-3 px-6 shrink-0 transition-all ${
+              className={`w-full text-left relative flex items-center rounded-xl py-2.5 px-4 shrink-0 transition-all ${
                 activeTab === 'notifications'
-                  ? 'bg-secondary-container text-on-secondary-container font-bold shadow-sm'
-                  : 'text-on-surface-variant hover:bg-surface-container-low dark:hover:bg-surface-variant/30'
+                  ? 'bg-[#FFCED2] text-slate-900 font-bold shadow-xs'
+                  : 'text-slate-600 hover:bg-slate-100/80 hover:text-slate-900 font-medium'
               }`}
             >
-              <Bell size={18} className="mr-3 text-secondary shrink-0" />
-              <span className="text-label-sm font-label-sm">Thông báo</span>
+              <Bell size={18} className={`mr-3 shrink-0 ${activeTab === 'notifications' ? 'text-slate-900' : 'text-slate-500'}`} />
+              <span className="text-sm">Thông báo</span>
             </button>
 
             {/* Social Integration Tab */}
             <button
               onClick={() => setActiveTab('social')}
-              className={`w-full text-left relative flex items-center rounded-full py-3 px-6 shrink-0 transition-all ${
+              className={`w-full text-left relative flex items-center rounded-xl py-2.5 px-4 shrink-0 transition-all ${
                 activeTab === 'social'
-                  ? 'bg-secondary-container text-on-secondary-container font-bold shadow-sm'
-                  : 'text-on-surface-variant hover:bg-surface-container-low dark:hover:bg-surface-variant/30'
+                  ? 'bg-[#FFCED2] text-slate-900 font-bold shadow-xs'
+                  : 'text-slate-600 hover:bg-slate-100/80 hover:text-slate-900 font-medium'
               }`}
             >
-              <Share2 size={18} className="mr-3 text-secondary shrink-0" />
-              <span className="text-label-sm font-label-sm">Liên kết Mạng xã hội</span>
+              <Share2 size={18} className={`mr-3 shrink-0 ${activeTab === 'social' ? 'text-slate-900' : 'text-slate-500'}`} />
+              <span className="text-sm">Liên kết Mạng xã hội</span>
             </button>
           </div>
         </aside>
@@ -226,11 +226,11 @@ export default function UserSettings() {
           
           {/* TAB 1: Profile Info */}
           {activeTab === 'profile' && (
-            <section className="bg-surface-container-lowest dark:bg-tertiary-container rounded-3xl shadow-ambient p-8 md:p-10 border border-surface-container/20">
-              <div className="mb-8 border-b border-surface-container dark:border-outline-variant/20 pb-6 flex items-center justify-between">
+            <section className="bg-white rounded-2xl shadow-sm p-7 md:p-8 border border-slate-200/80">
+              <div className="mb-6 border-b border-slate-100 pb-5 flex items-center justify-between">
                 <div>
-                  <h3 className="text-headline-md font-bold text-primary dark:text-inverse-primary">Thông tin Hồ sơ</h3>
-                  <p className="text-body-md text-on-surface-variant mt-1">
+                  <h3 className="text-xl font-bold text-slate-900">Thông tin Hồ sơ</h3>
+                  <p className="text-sm text-slate-500 mt-0.5">
                     Cập nhật thông tin định danh và thương hiệu doanh nghiệp của bạn.
                   </p>
                 </div>
@@ -268,13 +268,13 @@ export default function UserSettings() {
                 />
               </div>
 
-              <form onSubmit={handleSaveProfile} className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
-                <div className="space-y-2">
-                  <label className="block text-label-sm font-semibold text-on-surface dark:text-inverse-primary" htmlFor="fullName">
+              <form onSubmit={handleSaveProfile} className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider" htmlFor="fullName">
                     Họ và Tên
                   </label>
                   <input
-                    className="w-full bg-surface-container-low dark:bg-surface-variant/20 text-primary dark:text-inverse-primary border border-surface-variant/40 rounded-xl px-4 py-3 text-body-md focus:outline-none focus:ring-2 focus:ring-secondary transition-all"
+                    className="w-full bg-white text-slate-900 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-slate-900 transition-all shadow-xs"
                     id="fullName"
                     type="text"
                     value={form.fullName}
@@ -282,24 +282,24 @@ export default function UserSettings() {
                     required
                   />
                 </div>
-                <div className="space-y-2">
-                  <label className="block text-label-sm font-semibold text-on-surface dark:text-inverse-primary" htmlFor="emailAddress">
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider" htmlFor="emailAddress">
                     Địa chỉ Email (Định danh)
                   </label>
                   <input
-                    className="w-full bg-surface-container-low/50 dark:bg-surface-variant/10 text-primary/60 dark:text-inverse-primary/60 border border-surface-variant/30 rounded-xl px-4 py-3 text-body-md focus:outline-none cursor-not-allowed"
+                    className="w-full bg-slate-50 text-slate-400 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none cursor-not-allowed"
                     id="emailAddress"
                     type="email"
                     value={form.emailAddress}
                     disabled
                   />
                 </div>
-                <div className="space-y-2">
-                  <label className="block text-label-sm font-semibold text-on-surface dark:text-inverse-primary" htmlFor="phoneNumber">
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider" htmlFor="phoneNumber">
                     Số điện thoại
                   </label>
                   <input
-                    className="w-full bg-surface-container-low dark:bg-surface-variant/20 text-primary dark:text-inverse-primary border border-surface-variant/40 rounded-xl px-4 py-3 text-body-md focus:outline-none focus:ring-2 focus:ring-secondary transition-all"
+                    className="w-full bg-white text-slate-900 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-slate-900 transition-all shadow-xs"
                     id="phoneNumber"
                     type="tel"
                     placeholder="Ví dụ: 0912345678"
@@ -308,12 +308,12 @@ export default function UserSettings() {
                   />
                 </div>
                 {user?.role === 'user' && (
-                  <div className="space-y-2">
-                    <label className="block text-label-sm font-semibold text-on-surface dark:text-inverse-primary" htmlFor="companyName">
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider" htmlFor="companyName">
                       Tên thương hiệu / Công ty
                     </label>
                     <input
-                      className="w-full bg-surface-container-low dark:bg-surface-variant/20 text-primary dark:text-inverse-primary border border-surface-variant/40 rounded-xl px-4 py-3 text-body-md focus:outline-none focus:ring-2 focus:ring-secondary transition-all"
+                      className="w-full bg-white text-slate-900 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-slate-900 transition-all shadow-xs"
                       id="companyName"
                       type="text"
                       placeholder="Ví dụ: Agencom Skincare"
@@ -322,11 +322,11 @@ export default function UserSettings() {
                     />
                   </div>
                 )}
-                <div className="md:col-span-2 pt-6 flex justify-end">
+                <div className="md:col-span-2 pt-4 flex justify-end">
                   <button
                     type="submit"
                     disabled={updateProfileMutation.isPending || updateBusinessProfileMutation.isPending}
-                    className="bg-primary text-on-primary hover:opacity-90 px-8 py-3 rounded-full text-label-sm font-bold shadow-sm transition-all duration-200 flex items-center gap-2 disabled:opacity-60"
+                    className="bg-slate-900 text-white hover:bg-slate-800 px-6 py-2.5 rounded-xl text-sm font-bold shadow-sm transition-all flex items-center gap-2 disabled:opacity-60"
                   >
                     {(updateProfileMutation.isPending || updateBusinessProfileMutation.isPending) ? (
                       <>
@@ -348,10 +348,10 @@ export default function UserSettings() {
           {/* TAB 2: Security & Password */}
           {activeTab === 'security' && (
             <div className="space-y-6">
-              <section className="bg-surface-container-lowest dark:bg-tertiary-container rounded-3xl shadow-ambient p-8 md:p-10 border border-surface-container/20">
-                <div className="mb-6 border-b border-surface-container dark:border-outline-variant/20 pb-4">
-                  <h3 className="text-headline-md font-bold text-primary dark:text-inverse-primary">Đổi Mật khẩu</h3>
-                  <p className="text-body-md text-on-surface-variant mt-1">
+              <section className="bg-white rounded-2xl shadow-sm p-7 md:p-8 border border-slate-200/80">
+                <div className="mb-6 border-b border-slate-100 pb-4">
+                  <h3 className="text-xl font-bold text-slate-900">Đổi Mật khẩu</h3>
+                  <p className="text-sm text-slate-500 mt-0.5">
                     Để đảm bảo an toàn cho tài khoản, hãy sử dụng mật khẩu mạnh với tối thiểu 6 ký tự.
                   </p>
                 </div>
@@ -443,13 +443,13 @@ export default function UserSettings() {
               </section>
 
               {/* Security info card */}
-              <section className="bg-surface-container-lowest dark:bg-tertiary-container rounded-3xl p-6 sm:p-8 border border-surface-container/20 flex flex-col sm:flex-row items-start sm:items-center gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-emerald-100 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
-                  <ShieldCheck size={28} />
+              <section className="bg-white rounded-2xl p-6 sm:p-7 border border-slate-200/80 shadow-sm flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                <div className="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 border border-emerald-100">
+                  <ShieldCheck size={24} />
                 </div>
                 <div>
-                  <h4 className="text-base font-bold text-primary dark:text-inverse-primary">Tài khoản được bảo vệ chủ động</h4>
-                  <p className="text-xs sm:text-sm text-on-surface-variant mt-0.5">
+                  <h4 className="text-sm font-bold text-slate-900">Tài khoản được bảo vệ chủ động</h4>
+                  <p className="text-xs text-slate-500 mt-0.5">
                     Mọi phiên truy cập được bảo vệ bằng mã hóa JWT bảo mật và chuẩn mã hóa mật khẩu bcrypt chống tấn công brute-force.
                   </p>
                 </div>
@@ -459,19 +459,19 @@ export default function UserSettings() {
 
           {/* TAB 3: Notifications */}
           {activeTab === 'notifications' && (
-            <section className="bg-surface-container-lowest dark:bg-tertiary-container rounded-3xl shadow-ambient p-8 md:p-10 border border-surface-container/20">
-              <div className="mb-6 border-b border-surface-container dark:border-outline-variant/20 pb-4">
-                <h3 className="text-headline-md font-bold text-primary dark:text-inverse-primary">Tùy chọn Nhận thông báo</h3>
-                <p className="text-body-md text-on-surface-variant mt-1">
+            <section className="bg-white rounded-2xl shadow-sm p-7 md:p-8 border border-slate-200/80">
+              <div className="mb-6 border-b border-slate-100 pb-4">
+                <h3 className="text-xl font-bold text-slate-900">Tùy chọn Nhận thông báo</h3>
+                <p className="text-sm text-slate-500 mt-0.5">
                   Tùy chỉnh các thông báo hệ thống và lời nhắc tối ưu chiến dịch marketing cho tài khoản của bạn.
                 </p>
-                <div className="mt-4 p-3.5 rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 text-amber-900 dark:text-amber-200 text-xs flex items-center gap-2">
-                  <span className="font-bold shrink-0">📌 Tùy chọn cục bộ (Local Preferences):</span>
+                <div className="mt-3.5 p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs flex items-center gap-2">
+                  <span className="font-bold shrink-0">📌 Tùy chọn cục bộ:</span>
                   <span>Chỉ lưu trên trình duyệt này; các thông báo chưa được kết nối với hệ thống gửi.</span>
                 </div>
               </div>
 
-              <div className="space-y-5">
+              <div className="space-y-3.5">
                 {[
                   {
                     key: 'goldenTime',
@@ -496,11 +496,11 @@ export default function UserSettings() {
                 ].map((item) => (
                   <div
                     key={item.key}
-                    className="flex items-center justify-between p-4 rounded-2xl bg-surface-container-low dark:bg-surface-variant/20 border border-surface-variant/30"
+                    className="flex items-center justify-between p-4 rounded-xl bg-slate-50/70 border border-slate-200/80"
                   >
                     <div className="pr-4">
-                      <h4 className="text-sm font-bold text-primary dark:text-inverse-primary">{item.title}</h4>
-                      <p className="text-xs text-on-surface-variant mt-0.5">{item.desc}</p>
+                      <h4 className="text-sm font-bold text-slate-900">{item.title}</h4>
+                      <p className="text-xs text-slate-500 mt-0.5">{item.desc}</p>
                     </div>
                     <button
                       type="button"
@@ -508,7 +508,7 @@ export default function UserSettings() {
                       aria-checked={notifSettings[item.key]}
                       onClick={() => handleToggleNotif(item.key)}
                       className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                        notifSettings[item.key] ? 'bg-secondary' : 'bg-surface-container-high'
+                        notifSettings[item.key] ? 'bg-slate-900' : 'bg-slate-200'
                       }`}
                     >
                       <span
@@ -529,11 +529,11 @@ export default function UserSettings() {
           )}
 
           {/* Danger Zone / Logout */}
-          <section className="bg-surface-container-lowest dark:bg-tertiary-container rounded-3xl shadow-ambient p-8 md:p-10 border border-surface-variant/40 mt-12">
+          <section className="bg-white rounded-2xl shadow-sm p-7 md:p-8 border border-slate-200/80 mt-10">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
               <div>
-                <h3 className="text-headline-md font-bold text-primary dark:text-inverse-primary">Đăng xuất Tài khoản</h3>
-                <p className="text-body-md text-on-surface-variant mt-1 max-w-md">
+                <h3 className="text-xl font-bold text-slate-900">Đăng xuất Tài khoản</h3>
+                <p className="text-sm text-slate-500 mt-0.5 max-w-md">
                   Kết thúc phiên làm việc an toàn trên thiết bị này. Bạn có thể đăng nhập lại bất kỳ lúc nào.
                 </p>
               </div>
@@ -545,9 +545,9 @@ export default function UserSettings() {
                     window.location.href = '/login';
                   }
                 }}
-                className="bg-surface-container-lowest dark:bg-surface-variant/30 border border-outline text-primary dark:text-inverse-primary hover:bg-secondary-container/50 px-8 py-3 rounded-full text-label-sm font-bold transition-all duration-200 flex items-center justify-center gap-2 group shrink-0 shadow-sm"
+                className="bg-white border border-slate-200 hover:bg-red-50 hover:text-red-600 hover:border-red-200 text-slate-700 px-6 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 group shrink-0 shadow-xs"
               >
-                <LogOut size={16} className="text-outline group-hover:text-primary transition-colors" />
+                <LogOut size={16} className="text-slate-400 group-hover:text-red-600 transition-colors" />
                 Đăng xuất An toàn
               </button>
             </div>

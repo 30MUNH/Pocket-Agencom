@@ -15,13 +15,13 @@ export default function ForgotPasswordPage() {
     <div className="bg-surface font-body-md text-on-surface min-h-screen flex items-center justify-center relative overflow-hidden">
       <div className="w-full max-w-md px-gutter relative z-10">
         {/* Logo and Back Link */}
-        <div className="flex items-center justify-between mb-8 pb-4 border-b border-surface-container-high">
-          <span className="text-headline-md font-headline-md font-extrabold text-primary">
-            Pocket <span className="text-[#F897A8]">Agen</span>com
+        <div className="flex items-center justify-between mb-8 pb-4 border-b border-slate-100">
+          <span className="text-headline-md font-headline-md font-extrabold text-black">
+            Pocket Agencom
           </span>
           <Link
             to="/"
-            className="flex items-center gap-2 px-3 py-1.5 bg-surface-container-lowest rounded-full shadow-sm border border-surface-container/20 text-on-surface-variant hover:text-primary hover:shadow-md transition-all text-xs font-semibold"
+            className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 rounded-full border border-slate-200 text-slate-600 hover:text-black transition-all text-xs font-semibold"
           >
             <ArrowLeft size={14} />
             <span>Quay về</span>
@@ -29,21 +29,21 @@ export default function ForgotPasswordPage() {
         </div>
 
         {/* Forgot Password Card */}
-        <div className="glass-panel rounded-lg p-10 flex flex-col gap-8">
+        <div className="bg-white rounded-2xl p-8 sm:p-10 border border-slate-200/80 shadow-sm flex flex-col gap-6">
           {/* Header */}
           <div className="text-center">
-            <div className="w-16 h-16 bg-secondary-container rounded-full flex items-center justify-center mx-auto mb-6 shadow-ambient">
+            <div className="w-14 h-14 bg-slate-50 border border-slate-200 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-800">
               <span
-                className="material-symbols-outlined text-[32px] text-secondary"
+                className="material-symbols-outlined text-[28px]"
                 style={{ fontVariationSettings: "'FILL' 0" }}
               >
                 lock_reset
               </span>
             </div>
-            <h1 className="text-headline-md font-headline-md text-on-surface mb-2">
+            <h1 className="text-xl font-bold text-slate-900 tracking-tight mb-1">
               Đặt lại mật khẩu
             </h1>
-            <p className="text-body-md font-body-md text-on-surface-variant">
+            <p className="font-body-md text-sm text-slate-500">
               Nhập địa chỉ email của bạn và chúng tôi sẽ gửi liên kết đặt lại
               mật khẩu cho bạn.
             </p>
@@ -51,18 +51,18 @@ export default function ForgotPasswordPage() {
 
           {/* Form (hidden after submit) */}
           {!unavailable && (
-            <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-              <div className="flex flex-col gap-2">
+            <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+              <div className="flex flex-col gap-1.5">
                 <label
                   htmlFor="forgot-email"
-                  className="text-label-sm font-label-sm text-on-surface-variant ml-1"
+                  className="text-xs font-bold uppercase tracking-wider text-slate-700"
                 >
                   Địa chỉ Email
                 </label>
                 <div className="relative">
                   <Mail
-                    size={20}
-                    className="absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant/50"
+                    size={18}
+                    className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
                   />
                   <input
                     id="forgot-email"
@@ -72,16 +72,16 @@ export default function ForgotPasswordPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="you@example.com"
-                    className="w-full bg-surface-container-low border-transparent focus:border-transparent focus:ring-2 focus:ring-secondary-container rounded-full py-3 pl-12 pr-4 text-body-md font-body-md text-on-surface placeholder:text-on-surface-variant/50 transition-shadow"
+                    className="w-full bg-white border border-slate-200 focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10 rounded-xl py-3 pl-10 pr-4 text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none transition-all"
                   />
                 </div>
               </div>
               <button
                 type="submit"
-                className="w-full bg-secondary-container hover:bg-secondary-container/80 text-on-secondary-container text-label-sm font-label-sm py-4 rounded-full transition-all duration-200 transform hover:-translate-y-0.5 shadow-ambient flex items-center justify-center gap-2"
+                className="w-full bg-slate-900 hover:bg-slate-800 text-white text-sm font-bold py-3 rounded-xl transition-all duration-200 shadow-sm flex items-center justify-center gap-2"
               >
                 <span>Gửi liên kết đặt lại</span>
-                <ArrowRight size={18} />
+                <ArrowRight size={16} />
               </button>
             </form>
           )}

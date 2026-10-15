@@ -48,7 +48,7 @@ function renderBoldText(text) {
       return (
         <strong 
           key={idx} 
-          className="font-bold text-secondary dark:text-secondary-fixed bg-secondary-container/30 dark:bg-secondary/15 px-1.5 py-0.5 rounded-md inline shadow-sm text-sm"
+          className="font-bold text-slate-900 bg-[#FFCED2]/60 px-1.5 py-0.5 rounded-md inline text-sm"
         >
           {part}
         </strong>
@@ -172,20 +172,20 @@ function IdeaCard({ idea, index, totalLength, businessProfileId, existingResourc
 
   if (isGeneratingPost) {
     return (
-      <div className="bg-surface-container-lowest dark:bg-tertiary-container rounded-[2rem] p-8 border border-secondary-container/30 shadow-[0_4px_24px_rgba(255,143,163,0.08)] flex flex-col h-full animate-pulse min-h-[320px]">
+      <div className="bg-white rounded-2xl p-7 border border-slate-200/80 shadow-sm flex flex-col h-full animate-pulse min-h-[320px]">
         <div className="flex justify-between items-start mb-6">
-          <div className="h-4 w-16 bg-surface-container-high dark:bg-surface-variant/40 rounded"></div>
-          <Heart className="text-secondary-container dark:text-outline-variant opacity-50" size={18} />
+          <div className="h-4 w-16 bg-slate-100 rounded"></div>
+          <Heart className="text-slate-300 opacity-50" size={18} />
         </div>
-        <div className="h-6 w-3/4 bg-surface-container-high dark:bg-surface-variant/40 rounded mb-4"></div>
+        <div className="h-6 w-3/4 bg-slate-100 rounded mb-4"></div>
         <div className="space-y-2 flex-1">
-          <div className="h-4 bg-surface-container-high dark:bg-surface-variant/40 rounded w-full"></div>
-          <div className="h-4 bg-surface-container-high dark:bg-surface-variant/40 rounded w-5/6"></div>
-          <div className="h-4 bg-surface-container-high dark:bg-surface-variant/40 rounded w-2/3"></div>
+          <div className="h-4 bg-slate-100 rounded w-full"></div>
+          <div className="h-4 bg-slate-100 rounded w-5/6"></div>
+          <div className="h-4 bg-slate-100 rounded w-2/3"></div>
         </div>
-        <div className="mt-6 flex items-center justify-center gap-2 py-3 bg-secondary-container/20 rounded-xl">
-          <Loader2 className="animate-spin text-secondary" size={16} />
-          <span className="text-xs font-bold text-secondary">
+        <div className="mt-6 flex items-center justify-center gap-2 py-3 bg-[#FFCED2]/40 rounded-xl">
+          <Loader2 className="animate-spin text-slate-800" size={16} />
+          <span className="text-xs font-bold text-slate-800">
             {selectedFile ? 'AI đang phân tích ảnh & biên soạn bài đăng...' : 'Đang biên soạn bài đăng...'}
           </span>
         </div>
@@ -195,17 +195,15 @@ function IdeaCard({ idea, index, totalLength, businessProfileId, existingResourc
 
   return (
     <div
-      className={`bg-surface-container-lowest dark:bg-tertiary-container rounded-[2rem] p-8 shadow-[0_4px_24px_rgba(255,143,163,0.08)] hover:-translate-y-1 hover:shadow-[0_8px_32px_rgba(255,143,163,0.12)] transition-all duration-500 ease-out flex flex-col h-full border border-transparent hover:border-secondary-container/50 ${
-        index === totalLength - 1 && !isExpanded
-          ? 'bg-gradient-to-br from-surface-container-lowest to-secondary-container/10 dark:to-secondary-fixed-dim/5'
-          : ''
-      } ${isExpanded ? 'md:col-span-3 border-secondary/30 ring-1 ring-secondary/15' : ''}`}
+      className={`bg-white rounded-2xl p-7 shadow-sm hover:shadow-md hover:border-slate-300 transition-all duration-300 flex flex-col h-full border border-slate-200/80 ${
+        isExpanded ? 'md:col-span-3 border-slate-400 ring-1 ring-slate-200' : ''
+      }`}
     >
-      <div className="flex justify-between items-start mb-6">
-        <span className="text-label-sm font-label-sm text-secondary dark:text-secondary-fixed uppercase tracking-widest">
+      <div className="flex justify-between items-start mb-5">
+        <span className="text-xs font-bold text-slate-700 bg-slate-100 px-2.5 py-1 rounded-md uppercase tracking-wider">
           {idea.channel || 'Đa kênh'}
         </span>
-        <Heart className="text-secondary-container dark:text-outline-variant cursor-pointer hover:fill-secondary" size={18} />
+        <Heart className="text-slate-300 cursor-pointer hover:text-rose-500 hover:fill-rose-500 transition-colors" size={18} />
       </div>
 
       <h4 className="text-lg font-bold text-primary dark:text-inverse-primary mb-3">
@@ -623,7 +621,7 @@ export default function MarketingResult() {
           </Link>}
           <button
             onClick={handleExportPlan}
-            className="px-5 py-3 rounded-full text-label-sm font-label-sm text-primary dark:text-inverse-primary bg-surface-container-lowest dark:bg-tertiary-container border border-outline-variant hover:border-primary dark:hover:border-primary-fixed transition-colors shadow-sm flex items-center gap-2"
+            className="px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 transition-colors shadow-xs flex items-center gap-2"
           >
             <Download size={14} />
             Xuất file
@@ -631,7 +629,7 @@ export default function MarketingResult() {
           <button
             onClick={handleSave}
             disabled={savePlan.isPending}
-            className="px-5 py-3 rounded-full text-label-sm font-label-sm text-on-primary bg-primary hover:bg-primary/90 transition-colors shadow-md hover:-translate-y-0.5 transform duration-200 disabled:opacity-60 flex items-center gap-2"
+            className="px-5 py-2.5 rounded-xl text-sm font-bold text-white bg-slate-900 hover:bg-slate-800 transition-all shadow-sm disabled:opacity-60 flex items-center gap-2"
           >
             {savePlan.isPending ? <Loader2 size={14} className="animate-spin" /> : null}
             Lưu kế hoạch
@@ -640,19 +638,19 @@ export default function MarketingResult() {
       </div>
 
       {plan.hasLegacyContent && (
-        <div className="rounded-2xl border border-amber-300/60 bg-amber-50 dark:bg-amber-950/20 px-5 py-4 text-sm text-amber-900 dark:text-amber-200">
+        <div className="rounded-xl border border-amber-200 bg-amber-50 px-5 py-3.5 text-sm text-amber-900">
           Kế hoạch lịch sử này có nội dung tham chiếu một tính năng đã ngừng hoạt động. Nội dung gốc được giữ nguyên để đối chiếu; các thao tác tạo lại hoặc tái sử dụng tự động đã được tắt.
         </div>
       )}
 
       {plan.mediaAssets?.length > 0 && (
         <section className="space-y-3" aria-labelledby="plan-media-title">
-          <h2 id="plan-media-title" className="text-headline-md font-bold text-primary dark:text-inverse-primary">Tệp đã lưu cùng kế hoạch</h2>
+          <h2 id="plan-media-title" className="text-xl font-bold text-slate-900">Tệp đã lưu cùng kế hoạch</h2>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
             {plan.mediaAssets.map(({ mediaAsset }) => mediaAsset?.fileType === 'image' && (
-              <figure key={mediaAsset.id} className="overflow-hidden rounded-2xl border border-surface-variant/30 bg-surface-container-lowest">
+              <figure key={mediaAsset.id} className="overflow-hidden rounded-xl border border-slate-200 bg-white">
                 <AuthorizedMediaImage assetId={mediaAsset.sourceKind === 'private_storage' ? mediaAsset.id : null} legacyUrl={mediaAsset.url} alt={mediaAsset.name} className="aspect-video w-full object-cover" />
-                <figcaption className="truncate px-3 py-2 text-xs font-medium text-on-surface-variant">{mediaAsset.name}</figcaption>
+                <figcaption className="truncate px-3 py-2 text-xs font-medium text-slate-600">{mediaAsset.name}</figcaption>
               </figure>
             ))}
           </div>
@@ -660,20 +658,20 @@ export default function MarketingResult() {
       )}
 
       {/* Bento Grid: Content Ideas */}
-      <section className="space-y-6">
+      <section className="space-y-5">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-secondary-container flex items-center justify-center">
-            <Lightbulb className="text-on-secondary-container" size={16} />
+          <div className="w-9 h-9 rounded-xl bg-[#FFCED2] flex items-center justify-center text-slate-900 shrink-0">
+            <Lightbulb size={18} />
           </div>
-          <h3 className="text-headline-md font-bold text-primary dark:text-inverse-primary">Ý tưởng Nội dung</h3>
+          <h3 className="text-xl font-bold text-slate-900">Ý tưởng Nội dung</h3>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {contentIdeas.map((idea, index) => plan.hasLegacyContent ? (
-            <article key={index} className="rounded-[2rem] border border-surface-variant/30 bg-surface-container-lowest p-6">
-              <span className="text-xs font-bold text-on-surface-variant">{idea.channel || idea.format}</span>
-              <h4 className="mt-2 font-bold text-primary">{idea.title}</h4>
-              <p className="mt-3 text-sm text-on-surface-variant">{idea.description}</p>
+            <article key={index} className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+              <span className="text-xs font-bold text-slate-600">{idea.channel || idea.format}</span>
+              <h4 className="mt-2 font-bold text-slate-900">{idea.title}</h4>
+              <p className="mt-3 text-sm text-slate-600 leading-relaxed">{idea.description}</p>
             </article>
           ) : (
             <IdeaCard
@@ -693,50 +691,48 @@ export default function MarketingResult() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Left Column Checklist (4 span) */}
         <div className="lg:col-span-4 space-y-8">
-          <section className="bg-surface-container-lowest dark:bg-tertiary-container rounded-[2.5rem] p-8 shadow-[0_4px_24px_rgba(255,143,163,0.06)] border border-surface-variant/30 relative overflow-hidden">
-            <div className="absolute -top-10 -right-10 w-32 h-32 bg-secondary-container/40 dark:bg-secondary-fixed-dim/5 rounded-full blur-2xl pointer-events-none" />
-            
-            <div className="flex items-center justify-between mb-8 relative z-10">
+          <section className="bg-white rounded-2xl p-7 shadow-sm border border-slate-200/80 relative overflow-hidden">
+            <div className="flex items-center justify-between mb-6 relative z-10">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-secondary-container/60 dark:bg-secondary-fixed-dim/20 flex items-center justify-center">
-                  <ClipboardCheck className="text-on-secondary-container dark:text-secondary-fixed" size={14} />
+                <div className="w-8 h-8 rounded-lg bg-[#FFCED2] flex items-center justify-center text-slate-900">
+                  <ClipboardCheck size={16} />
                 </div>
-                <h3 className="text-headline-md font-bold text-primary dark:text-inverse-primary text-xl">Danh sách Việc cần làm</h3>
+                <h3 className="font-bold text-slate-900 text-lg">Danh sách Việc cần làm</h3>
               </div>
-              <span className="text-xs font-bold text-secondary dark:text-secondary-fixed bg-secondary-container/50 dark:bg-outline/20 px-2 py-1 rounded">
+              <span className="text-xs font-bold text-slate-900 bg-[#FFCED2] px-2.5 py-1 rounded-full">
                 Tuần 1
               </span>
             </div>
 
-            <ul className="space-y-4 relative z-10">
+            <ul className="space-y-3 relative z-10">
               {checklist.map((item) => (
                 <li
                   key={item.id}
                   onClick={() => toggleCheck(item.id)}
-                  className="group flex items-start gap-4 p-3 -mx-3 rounded-xl hover:bg-surface-container dark:hover:bg-surface-variant/20 transition-colors cursor-pointer"
+                  className="group flex items-start gap-3.5 p-2.5 -mx-2.5 rounded-xl hover:bg-slate-50 transition-colors cursor-pointer"
                 >
                   <div
-                    className={`mt-1 w-5 h-5 rounded border-2 flex items-center justify-center transition-all relative shrink-0 ${
+                    className={`mt-0.5 w-5 h-5 rounded-md border flex items-center justify-center transition-all relative shrink-0 ${
                       item.checked
-                        ? 'border-secondary bg-secondary-container dark:bg-secondary/40'
-                        : 'border-outline-variant group-hover:border-secondary bg-surface-container-lowest dark:bg-surface-variant/30'
+                        ? 'border-slate-900 bg-slate-900 text-white'
+                        : 'border-slate-300 group-hover:border-slate-900 bg-white'
                     }`}
                   >
-                    {item.checked && <Check size={12} className="text-secondary dark:text-white" />}
+                    {item.checked && <Check size={12} className="text-white" />}
                   </div>
                   <div>
                     <p
-                      className={`text-body-md font-medium transition-all ${
+                      className={`text-sm font-semibold transition-all ${
                         item.checked
-                          ? 'text-on-surface-variant line-through opacity-70'
-                          : 'text-primary dark:text-inverse-primary'
+                          ? 'text-slate-400 line-through'
+                          : 'text-slate-900'
                       }`}
                     >
                       {item.title}
                     </p>
                     <p
-                      className={`text-xs mt-1 transition-all ${
-                        item.checked ? 'text-outline line-through' : 'text-on-surface-variant'
+                      className={`text-xs mt-0.5 transition-all ${
+                        item.checked ? 'text-slate-400 line-through' : 'text-slate-500'
                       }`}
                     >
                       {item.desc}
@@ -751,14 +747,14 @@ export default function MarketingResult() {
           <BudgetBreakdownCard rawBudget={plan.budget ?? monthlyMarketingBudget} budgetBreakdown={plan.budgetBreakdown} />
 
           {/* Gợi ý từ khóa chuẩn SEO */}
-          <div className="bg-surface-container-lowest dark:bg-tertiary-container rounded-[2.5rem] p-6 md:p-8 shadow-[0_4px_24px_rgba(255,143,163,0.08)] border border-surface-variant/40 space-y-6">
-            <div className="flex items-center gap-3 border-b border-surface-variant/30 pb-4">
-              <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+          <div className="bg-white rounded-2xl p-7 shadow-sm border border-slate-200/80 space-y-5">
+            <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
+              <div className="w-9 h-9 rounded-xl bg-slate-100 text-slate-900 flex items-center justify-center shrink-0">
                 <Target size={18} />
               </div>
               <div>
-                <h3 className="text-lg font-bold text-primary dark:text-inverse-primary leading-tight">Gợi ý từ khóa chuẩn SEO</h3>
-                <p className="text-xs text-on-surface-variant mt-0.5">Từ khóa giúp tăng khả năng hiển thị trên Google</p>
+                <h3 className="text-base font-bold text-slate-900 leading-tight">Gợi ý từ khóa chuẩn SEO</h3>
+                <p className="text-xs text-slate-500 mt-0.5">Từ khóa giúp tăng khả năng hiển thị trên Google</p>
               </div>
             </div>
 
@@ -797,37 +793,40 @@ export default function MarketingResult() {
               <div className="w-8 h-8 rounded-full bg-secondary-container flex items-center justify-center">
                 <PlayCircle className="text-on-secondary-container" size={16} />
               </div>
-              <h3 className="text-headline-md font-bold text-primary dark:text-inverse-primary">Kịch bản Video ngắn</h3>
+              <div className="w-9 h-9 rounded-xl bg-[#FFCED2] flex items-center justify-center text-slate-900 shrink-0">
+                <Video size={18} />
+              </div>
+              <h3 className="text-xl font-bold text-slate-900">Kịch bản Video ngắn</h3>
             </div>
 
             <div className="space-y-4">
               {videoScripts.map((script, index) => (
                 <div
                   key={index}
-                  className="bg-surface-container-lowest dark:bg-tertiary-container rounded-2xl p-6 shadow-sm border border-surface-variant/50 hover:shadow-[0_4px_16px_rgba(255,143,163,0.05)] transition-shadow flex flex-col sm:flex-row gap-6 items-start"
+                  className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200/80 hover:border-slate-300 transition-all flex flex-col sm:flex-row gap-5 items-start"
                 >
-                  <div className="w-full sm:w-32 h-24 rounded-xl overflow-hidden shrink-0 relative bg-surface-variant/30 dark:bg-surface-variant/10 flex items-center justify-center">
-                    <Video className="text-outline" size={32} />
-                    <div className="absolute inset-0 bg-primary/5 hover:bg-primary/10 transition-colors cursor-pointer flex items-center justify-center">
-                      <span className="bg-white/80 dark:bg-surface/80 rounded-full p-1.5 shadow-sm text-primary dark:text-inverse-primary">
-                        <Play size={14} fill="currentColor" />
+                  <div className="w-full sm:w-28 h-20 rounded-xl overflow-hidden shrink-0 relative bg-slate-100 flex items-center justify-center">
+                    <Video className="text-slate-400" size={24} />
+                    <div className="absolute inset-0 bg-black/5 hover:bg-black/10 transition-colors cursor-pointer flex items-center justify-center">
+                      <span className="bg-[#FFCED2] rounded-full p-1.5 shadow-xs text-slate-900">
+                        <Play size={12} fill="currentColor" />
                       </span>
                     </div>
                   </div>
                   <div className="flex-1 space-y-2">
                     <div className="flex items-center justify-between">
-                      <h4 className="text-lg font-bold text-primary dark:text-inverse-primary">
+                      <h4 className="text-base font-bold text-slate-900">
                         {script.scene || script.title || `Phân cảnh ${index + 1}`}
                       </h4>
-                      <span className="text-xs font-bold text-on-surface-variant bg-surface-container dark:bg-outline/20 px-2.5 py-1 rounded shrink-0 ml-2">
+                      <span className="text-xs font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded-md shrink-0 ml-2">
                         Cảnh {index + 1}
                       </span>
                     </div>
-                    <p className="text-sm text-on-surface-variant font-medium">
+                    <p className="text-sm text-slate-600 leading-relaxed">
                       {script.action}
                     </p>
                     {script.dialogue && (
-                      <p className="text-sm text-on-surface-variant italic border-l-2 border-secondary/40 pl-3">
+                      <p className="text-sm text-slate-800 italic border-l-2 border-[#FFCED2] pl-3 py-0.5 bg-slate-50 rounded-r-md">
                         "{script.dialogue}"
                       </p>
                     )}
@@ -838,9 +837,9 @@ export default function MarketingResult() {
                           `[${script.scene || script.title || `Phân cảnh ${index + 1}`}] ${script.action}\nLời thoại: ${script.dialogue || ''}`
                         )
                       }
-                      className="text-label-sm font-label-sm text-secondary hover:text-primary dark:text-secondary-fixed-dim dark:hover:text-primary-fixed flex items-center gap-1.5 transition-colors"
+                      className="text-xs font-semibold text-slate-700 hover:text-slate-900 flex items-center gap-1.5 transition-colors pt-1"
                     >
-                      <Copy size={14} />
+                      <Copy size={13} />
                       {copiedScript === `scene-${index}` ? 'Đã sao chép!' : 'Sao chép Kịch bản'}
                     </button>
                   </div>
@@ -850,32 +849,32 @@ export default function MarketingResult() {
           </section>
 
           {/* Playbook / Campaign Proposal */}
-          <section className="bg-surface-container-lowest dark:bg-tertiary-container rounded-[2.5rem] p-8 md:p-12 shadow-[0_4px_24px_rgba(255,143,163,0.08)] space-y-8">
-            <div className="flex items-center gap-4 border-b border-surface-variant/50 pb-6">
-              <div className="w-10 h-10 rounded-xl bg-primary text-on-primary flex items-center justify-center shadow-md">
+          <section className="bg-white rounded-2xl p-7 md:p-9 shadow-sm border border-slate-200/80 space-y-6">
+            <div className="flex items-center gap-3.5 border-b border-slate-100 pb-5">
+              <div className="w-9 h-9 rounded-xl bg-slate-900 text-white flex items-center justify-center shadow-xs">
                 <BookOpen size={18} />
               </div>
               <div>
-                <h3 className="text-headline-md font-bold text-primary dark:text-inverse-primary font-display-md">Đề xuất Chiến dịch</h3>
-                <p className="text-sm text-on-surface-variant mt-1">Quy trình thực thi chi tiết từng bước do AI thiết kế.</p>
+                <h3 className="text-xl font-bold text-slate-900">Đề xuất Chiến dịch</h3>
+                <p className="text-xs text-slate-500 mt-0.5">Quy trình thực thi chi tiết từng bước do AI thiết kế.</p>
               </div>
             </div>
 
             {plan.playbook ? (
               Array.isArray(plan.playbook) ? (
                 /* Timeline / Card layout for structured playbook */
-                <div className="relative border-l-2 border-dashed border-outline-variant/60 ml-4 pl-6 md:pl-8 space-y-12">
+                <div className="relative border-l-2 border-slate-200 ml-3.5 pl-6 space-y-8">
                   {plan.playbook.map((phase, idx) => (
                     <div key={idx} className="relative group">
                       {/* Timeline dot */}
-                      <span className="absolute -left-[41px] md:-left-[49px] top-1.5 flex items-center justify-center w-8 h-8 rounded-full bg-secondary-container text-primary font-bold border-4 border-surface-container-lowest dark:border-tertiary-container text-xs shadow-sm z-10 transition-transform group-hover:scale-110 duration-200">
+                      <span className="absolute -left-[35px] top-1.5 flex items-center justify-center w-7 h-7 rounded-full bg-slate-900 text-white font-bold ring-4 ring-white text-xs shadow-xs z-10">
                         {idx + 1}
                       </span>
 
                       {/* Phase Card */}
-                      <div className="bg-surface-container-lowest dark:bg-surface-variant/20 rounded-3xl p-6 md:p-8 border border-surface-variant/40 shadow-sm hover:shadow-md transition-all duration-300 space-y-6">
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-surface-variant/20 pb-4">
-                          <h4 className="text-xl font-bold text-primary dark:text-inverse-primary">
+                      <div className="bg-slate-50/70 rounded-xl p-5 md:p-6 border border-slate-200/80 shadow-xs hover:border-slate-300 transition-all space-y-4">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200/60 pb-3">
+                          <h4 className="text-base font-bold text-slate-900">
                             {phase.phaseName}
                           </h4>
                           {phase.duration && (

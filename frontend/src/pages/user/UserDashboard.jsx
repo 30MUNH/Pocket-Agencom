@@ -102,10 +102,10 @@ export default function UserDashboard() {
       >
         <Link
           to="/marketing-kit"
-          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-on-primary transition-colors hover:bg-primary/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-xs font-bold text-white transition-colors hover:bg-slate-800 shadow-sm"
         >
-          <Sparkles size={16} aria-hidden="true" />
-          Tạo kế hoạch
+          <Sparkles size={15} aria-hidden="true" className="text-[#FFCED2]" />
+          Tạo kế hoạch mới
         </Link>
       </PageHeader>
 
@@ -118,16 +118,16 @@ export default function UserDashboard() {
             <Link
               key={i}
               to={action.path}
-              className="group flex min-h-24 items-center gap-4 rounded-xl border border-surface-variant bg-white p-4 transition-colors hover:border-primary/40 hover:bg-primary-container/30 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              className="group flex min-h-20 items-center gap-3.5 rounded-xl border border-slate-200/80 bg-white p-4 transition-all hover:border-slate-300 hover:shadow-sm"
             >
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-primary-container text-primary">
-                <Icon size={20} aria-hidden="true" />
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-800 group-hover:bg-[#FFCED2]/40 transition-colors">
+                <Icon size={18} aria-hidden="true" />
               </div>
               <div className="min-w-0">
-                <h2 className="text-sm font-semibold text-on-surface">
+                <h2 className="text-sm font-bold text-slate-900">
                   {title}
                 </h2>
-                <p className="mt-1 text-sm leading-5 text-on-surface-variant">
+                <p className="text-xs text-slate-500 mt-0.5">
                   {action.desc}
                 </p>
               </div>
@@ -144,29 +144,29 @@ export default function UserDashboard() {
         {/* Recent Plans */}
         <section className="space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold tracking-tight text-on-surface">Kế hoạch gần đây</h2>
+            <h2 className="text-base font-bold text-slate-900 tracking-tight">Kế hoạch gần đây</h2>
             <Link
               to="/plans"
-              className="inline-flex min-h-11 items-center gap-1 rounded-md px-2 text-sm font-medium text-primary hover:bg-primary-container focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              className="inline-flex items-center gap-1 text-xs font-bold text-slate-600 hover:text-slate-900 transition-colors"
             >
-              Xem tất cả <ArrowRight size={16} />
+              Xem tất cả <ArrowRight size={14} />
             </Link>
           </div>
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-3">
             {isPlansLoading && (
-              <div className="flex items-center justify-center py-10 gap-2 text-on-surface-variant">
-                <Loader2 className="animate-spin" size={20} />
+              <div className="flex items-center justify-center py-10 gap-2 text-slate-400 text-xs">
+                <Loader2 className="animate-spin" size={16} />
                 Đang tải kế hoạch...
               </div>
             )}
             
             {!isPlansLoading && recentPlans.length === 0 && (
-              <div className="flex min-h-48 flex-col items-center justify-center rounded-xl border border-dashed border-outline-variant bg-white px-6 py-8 text-center">
-                <ClipboardList size={24} aria-hidden="true" className="mb-3 text-on-surface-variant" />
-                <p className="text-sm font-medium text-on-surface">Chưa có kế hoạch marketing</p>
-                <p className="mt-1 max-w-sm text-sm text-on-surface-variant">Tạo kế hoạch đầu tiên để bắt đầu quản lý chiến dịch tại đây.</p>
-                <Link to="/marketing-kit" className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-on-primary hover:bg-primary/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
-                  <Sparkles size={16} aria-hidden="true" /> Tạo kế hoạch
+              <div className="flex min-h-40 flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-white px-6 py-8 text-center">
+                <ClipboardList size={22} aria-hidden="true" className="mb-2 text-slate-400" />
+                <p className="text-sm font-bold text-slate-800">Chưa có kế hoạch marketing</p>
+                <p className="mt-1 text-xs text-slate-500">Tạo kế hoạch đầu tiên để bắt đầu quản lý chiến dịch tại đây.</p>
+                <Link to="/marketing-kit" className="mt-3.5 inline-flex items-center gap-1.5 rounded-xl bg-slate-900 px-4 py-2 text-xs font-bold text-white hover:bg-slate-800 shadow-sm transition-colors">
+                  <Sparkles size={14} aria-hidden="true" className="text-[#FFCED2]" /> Tạo kế hoạch
                 </Link>
               </div>
             )}
@@ -175,31 +175,31 @@ export default function UserDashboard() {
               return (
                 <div
                   key={plan.id}
-                  className="flex flex-col items-start justify-between gap-4 rounded-xl border border-surface-variant bg-white p-4 transition-shadow hover:shadow-ambient sm:flex-row sm:items-center"
+                  className="flex flex-col items-start justify-between gap-3.5 rounded-xl border border-slate-200/80 bg-white p-4 transition-all hover:border-slate-300 hover:shadow-sm sm:flex-row sm:items-center"
                 >
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-full bg-secondary-container/50 flex items-center justify-center text-primary shrink-0">
-                      <Megaphone size={24} />
+                  <div className="flex items-center gap-3.5">
+                    <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-800 shrink-0">
+                      <Megaphone size={20} />
                     </div>
                     <div>
-                      <h4 className="text-label-sm font-label-sm text-primary mb-1 line-clamp-1 max-w-[250px] md:max-w-[400px]">
+                      <h4 className="text-sm font-bold text-slate-900 mb-0.5 line-clamp-1 max-w-[250px] md:max-w-[400px]">
                         {plan.goal}
                       </h4>
-                      <p className="text-body-md font-body-md text-on-surface-variant text-sm">
+                      <p className="text-xs text-slate-500">
                         Loại: {plan.campaignType || 'Tiêu chuẩn'} • {formatDate(plan.createdAt)}
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <span className={`px-3 py-1 font-label-sm text-[11px] rounded-full font-bold ${getStatusBg(plan.status)}`}>
+                  <div className="flex items-center gap-2.5">
+                    <span className={`px-2.5 py-0.5 text-xs rounded-full font-bold ${getStatusBg(plan.status)}`}>
                       {plan.hasLegacyContent ? 'Kế hoạch lịch sử' : getStatusLabel(plan.status)}
                     </span>
                     <Link
                       to={`/marketing-kit/result?planId=${plan.id}`}
                       aria-label={`Xem kế hoạch: ${plan.goal}`}
-                      className="flex h-11 w-11 items-center justify-center rounded-lg text-on-surface-variant hover:bg-surface-container focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                      className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
                     >
-                      <Eye size={18} aria-hidden="true" />
+                      <Eye size={16} aria-hidden="true" />
                     </Link>
                   </div>
                 </div>
@@ -214,19 +214,19 @@ export default function UserDashboard() {
 
           <section className="space-y-3">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold tracking-tight text-on-surface">Mẫu thiết kế</h2>
+              <h2 className="text-base font-bold text-slate-900 tracking-tight">Mẫu thiết kế</h2>
               <Link
                 to="/templates"
-                className="inline-flex min-h-11 items-center gap-1 rounded-md px-2 text-sm font-medium text-primary hover:bg-primary-container focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                className="inline-flex items-center gap-1 text-xs font-bold text-slate-600 hover:text-slate-900 transition-colors"
               >
-                Khám phá <ArrowRight size={16} />
+                Khám phá <ArrowRight size={14} />
               </Link>
             </div>
-            <div className="rounded-xl border border-surface-variant bg-white p-4">
-              <div className="grid grid-cols-2 gap-4">
+            <div className="rounded-2xl border border-slate-200/80 bg-white p-4">
+              <div className="grid grid-cols-2 gap-3">
                 {RECOMMENDED_TEMPLATES.map((tmpl) => (
                   <Link to="/templates" key={tmpl.id} className="group block min-w-0">
-                    <div className="mb-3 aspect-square overflow-hidden rounded-xl relative">
+                    <div className="mb-2.5 aspect-square overflow-hidden rounded-xl relative border border-slate-100">
                       <img
                         alt={tmpl.name}
                         loading="lazy"
@@ -235,17 +235,17 @@ export default function UserDashboard() {
                         className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-[1.02]"
                         src={tmpl.image}
                       />
-                      <div className="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                        <Eye className="text-white" size={24} />
+                      <div className="absolute inset-0 bg-slate-900/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <Eye className="text-white" size={20} />
                       </div>
                     </div>
-                    <h3 className="truncate text-sm font-semibold text-primary">{tmpl.name}</h3>
+                    <h3 className="truncate text-xs font-bold text-slate-800">{tmpl.name}</h3>
                   </Link>
                 ))}
               </div>
               <Link
                 to="/templates"
-                className="mt-4 flex min-h-11 w-full items-center justify-center rounded-lg bg-primary-container px-4 py-2 text-sm font-semibold text-primary transition-colors hover:bg-primary-fixed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                className="mt-3.5 flex w-full items-center justify-center rounded-xl bg-slate-50 border border-slate-200 py-2 text-xs font-bold text-slate-700 transition-colors hover:bg-slate-100"
               >
                 Khám phá Thư viện
               </Link>

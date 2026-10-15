@@ -102,36 +102,36 @@ export default function PlanReviewPage() {
   const isStaff = user?.role === 'staff' || user?.role === 'admin';
 
   return (
-    <div className="flex-1 w-full space-y-8">
+    <div className="flex-1 w-full space-y-8 max-w-7xl mx-auto">
       {/* Top Header Row */}
-      <div className="border-b border-surface-variant/50 pb-6 flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <div className="border-b border-slate-200/80 pb-6 flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
           <Link
             to="/dashboard"
-            className="inline-flex items-center text-on-surface-variant hover:text-primary transition-colors text-label-sm font-label-sm mb-3 dark:text-outline-variant"
+            className="inline-flex items-center text-slate-500 hover:text-slate-900 transition-colors text-xs font-semibold uppercase tracking-wider mb-3"
           >
-            <ArrowLeft size={16} className="mr-1" />
+            <ArrowLeft size={14} className="mr-1.5" />
             Quay lại Hàng chờ
           </Link>
-          <div className="flex items-center gap-3">
-            <h2 className="text-display-lg-mobile md:text-headline-md font-headline-md text-primary dark:text-inverse-primary">
+          <div className="flex flex-wrap items-center gap-3">
+            <h2 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">
               {plan.goal}
             </h2>
-            <span className="inline-flex items-center px-3 py-1 rounded-full text-[11px] font-label-sm uppercase tracking-wider bg-surface-container-high text-on-surface-variant">
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-[#FFCED2] text-slate-900">
               {statusLabel}
             </span>
           </div>
-          <p className="text-body-md text-on-surface-variant mt-1 dark:text-outline-variant">
-            Được nộp bởi <span className="font-semibold">{plan.user?.name}</span>
+          <p className="text-sm text-slate-600 mt-1">
+            Được nộp bởi <span className="font-semibold text-slate-900">{plan.user?.name}</span>
           </p>
         </div>
 
         {isStaff && (
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2.5">
           <button
             onClick={handleSuggestEdits}
             disabled={reviewPlan.isPending}
-            className="px-5 py-3 rounded-full bg-surface-container hover:bg-surface-container-high text-on-surface text-label-sm transition-colors flex items-center gap-2 disabled:opacity-60"
+            className="px-4 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-sm transition-all flex items-center gap-2 disabled:opacity-60 shadow-sm"
           >
             <Edit size={16} />
             Yêu cầu Sửa
@@ -139,14 +139,14 @@ export default function PlanReviewPage() {
           <button
             onClick={handleMarkReviewed}
             disabled={reviewPlan.isPending}
-            className="px-5 py-3 rounded-full bg-surface-container text-label-sm transition-colors disabled:opacity-60"
+            className="px-4 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-sm transition-all disabled:opacity-60 shadow-sm"
           >
             Đánh dấu Đã xem
           </button>
           <button
             onClick={handleApprove}
             disabled={reviewPlan.isPending}
-            className="px-7 py-3 rounded-full bg-primary text-on-primary hover:bg-primary/90 shadow-md text-label-sm transition-all flex items-center gap-2 font-bold disabled:opacity-60"
+            className="px-5 py-2.5 rounded-xl bg-slate-900 text-white hover:bg-slate-800 shadow-sm text-sm transition-all flex items-center gap-2 font-bold disabled:opacity-60"
           >
             {reviewPlan.isPending ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
             Duyệt Kế hoạch
@@ -156,7 +156,7 @@ export default function PlanReviewPage() {
       </div>
 
       {plan.hasLegacyContent && (
-        <div className="rounded-2xl border border-amber-300/60 bg-amber-50 dark:bg-amber-950/20 px-5 py-4 text-sm text-amber-900 dark:text-amber-200">
+        <div className="rounded-xl border border-amber-200 bg-amber-50 px-5 py-3.5 text-sm text-amber-900">
           Kế hoạch lịch sử này có nội dung tham chiếu một tính năng đã ngừng hoạt động. Nội dung gốc được giữ nguyên để đối chiếu; các thao tác tạo lại hoặc tái sử dụng tự động đã được tắt.
         </div>
       )}
@@ -167,161 +167,155 @@ export default function PlanReviewPage() {
         <div className="flex-1 flex flex-col gap-8">
           {/* Overview Section */}
           <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="md:col-span-2 bg-surface-container-lowest dark:bg-tertiary-container rounded-[2rem] p-8 shadow-sm hover:shadow-md transition-all duration-300 relative overflow-hidden group border border-surface-variant/50">
-              <div className="absolute -right-12 -top-12 w-48 h-48 bg-secondary-container/30 dark:bg-secondary-fixed-dim/5 rounded-full blur-3xl group-hover:bg-secondary-container/50 transition-colors" />
-              <h3 className="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-widest mb-4">
+            <div className="md:col-span-2 bg-white rounded-2xl p-7 shadow-sm border border-slate-200/80 relative overflow-hidden group">
+              <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">
                 Tóm tắt Dự án
               </h3>
-              <p className="text-body-lg text-on-surface dark:text-inverse-primary leading-relaxed relative z-10 whitespace-pre-wrap">
+              <p className="text-slate-800 leading-relaxed relative z-10 whitespace-pre-wrap font-medium">
                 {typeof plan.playbook === 'string'
                   ? plan.playbook
                   : (plan.campaignReason || plan.campaignType || plan.goal || 'Chưa có thông tin tóm tắt.')}
               </p>
             </div>
 
-            <div className="bg-surface-container-lowest dark:bg-tertiary-container rounded-[2rem] p-8 shadow-sm border border-surface-variant/50 flex flex-col justify-center items-start">
-              <h3 className="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-widest mb-2">
+            <div className="bg-white rounded-2xl p-7 shadow-sm border border-slate-200/80 flex flex-col justify-center items-start">
+              <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
                 Khách hàng Mục tiêu
               </h3>
-              <p className="text-headline-md font-bold text-primary dark:text-inverse-primary mb-1">
+              <p className="text-xl font-bold text-slate-900 mb-1">
                 {plan.businessProfile?.targetCustomer || plan.targetCustomer || 'Chưa xác định'}
               </p>
-              <p className="text-body-md text-on-surface-variant leading-relaxed">
+              <p className="text-sm text-slate-600 leading-relaxed">
                 {plan.businessProfile?.businessType || plan.businessProfile?.productDescription || plan.businessType || 'Doanh nghiệp'}
               </p>
             </div>
           </section>
 
           {/* Content Concepts Section */}
-          <section className="bg-surface-container-lowest dark:bg-tertiary-container rounded-[2rem] p-8 shadow-sm border border-surface-variant/50 space-y-8">
-            <h3 className="text-headline-md font-bold text-primary dark:text-inverse-primary flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-secondary-container dark:bg-secondary-fixed-dim/10 flex items-center justify-center text-on-secondary-container dark:text-secondary-fixed">
-                <Lightbulb size={20} />
+          <section className="bg-white rounded-2xl p-7 shadow-sm border border-slate-200/80 space-y-6">
+            <h3 className="text-xl font-bold text-slate-900 flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-[#FFCED2] flex items-center justify-center text-slate-900">
+                <Lightbulb size={18} />
               </div>
               Ý tưởng Nội dung
             </h3>
 
             {plan.contentIdeas && plan.contentIdeas.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 {plan.contentIdeas.map((idea, index) => (
-                  <div key={index} className="p-6 rounded-2xl bg-surface dark:bg-surface-variant/20 border border-surface-variant/30 hover:-translate-y-0.5 transition-all">
-                    <span className="inline-block px-3 py-1 bg-surface-container dark:bg-outline/20 rounded-full text-label-sm font-label-sm text-on-surface-variant dark:text-inverse-on-surface mb-4">
+                  <div key={index} className="p-5 rounded-xl bg-slate-50/70 border border-slate-200/80 hover:border-slate-300 transition-all">
+                    <span className="inline-block px-2.5 py-1 bg-white border border-slate-200/80 rounded-md text-xs font-semibold text-slate-700 mb-3 shadow-xs">
                       {idea.channel || idea.format || 'Đa kênh'}
                     </span>
-                    <h4 className="text-body-lg font-semibold text-on-surface dark:text-inverse-primary mb-2">
+                    <h4 className="text-base font-bold text-slate-900 mb-2">
                       {idea.title}
                     </h4>
-                    <p className="text-body-md text-on-surface-variant mb-4 whitespace-pre-wrap leading-relaxed">
+                    <p className="text-sm text-slate-600 mb-3 whitespace-pre-wrap leading-relaxed">
                       {idea.description}
                     </p>
                     {idea.format && (
-                      <div className="flex items-center gap-2 text-label-sm font-label-sm text-secondary dark:text-secondary-fixed">
-                        <Eye size={14} /> {idea.format}
+                      <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-500">
+                        <Eye size={13} /> {idea.format}
                       </div>
                     )}
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-body-md text-on-surface-variant">Chưa có ý tưởng nội dung.</p>
+              <p className="text-sm text-slate-500">Chưa có ý tưởng nội dung.</p>
             )}
           </section>
 
           {/* Approved Scripts Section */}
-          <section className="bg-surface-container-lowest dark:bg-tertiary-container rounded-[2rem] p-8 shadow-sm border border-surface-variant/50 relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-br from-surface-container-lowest to-secondary-container/10 dark:to-secondary-fixed-dim/5 z-0" />
-            <div className="relative z-10 space-y-6">
-              <h3 className="text-headline-md font-bold text-primary dark:text-inverse-primary flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-primary text-on-primary flex items-center justify-center">
-                  <Video size={20} />
-                </div>
-                Kịch bản Video
-              </h3>
+          <section className="bg-white rounded-2xl p-7 shadow-sm border border-slate-200/80 space-y-6">
+            <h3 className="text-xl font-bold text-slate-900 flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-slate-900 text-white flex items-center justify-center">
+                <Video size={18} />
+              </div>
+              Kịch bản Video
+            </h3>
 
-              {plan.videoScripts && plan.videoScripts.length > 0 ? (
-                <div className="space-y-4">
-                  {plan.videoScripts.map((script, index) => (
-                    <details
-                      key={index}
-                      className="group bg-surface dark:bg-surface-variant/20 rounded-2xl border border-surface-variant/30 overflow-hidden"
-                      open={index === 0}
-                    >
-                      <summary className="flex items-center justify-between p-6 cursor-pointer hover:bg-surface-container-low dark:hover:bg-surface-variant/35 transition-colors">
-                        <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 rounded-xl bg-surface-container dark:bg-outline/20 flex items-center justify-center">
-                            <Play size={16} className="text-primary dark:text-inverse-primary" />
-                          </div>
-                          <div>
-                            <h4 className="text-body-lg font-semibold text-on-surface dark:text-inverse-primary">
-                              {script.scene || script.title || `Phân cảnh ${index + 1}`}
-                            </h4>
-                            {script.title && script.scene && (
-                              <p className="text-label-sm font-label-sm text-on-surface-variant mt-1">
-                                {script.title}
-                              </p>
-                            )}
-                          </div>
+            {plan.videoScripts && plan.videoScripts.length > 0 ? (
+              <div className="space-y-3.5">
+                {plan.videoScripts.map((script, index) => (
+                  <details
+                    key={index}
+                    className="group bg-slate-50/60 rounded-xl border border-slate-200/80 overflow-hidden"
+                    open={index === 0}
+                  >
+                    <summary className="flex items-center justify-between p-4 cursor-pointer hover:bg-slate-100/60 transition-colors">
+                      <div className="flex items-center gap-3.5">
+                        <div className="w-9 h-9 rounded-lg bg-white border border-slate-200/80 flex items-center justify-center shadow-xs">
+                          <Play size={14} className="text-slate-900 fill-slate-900" />
                         </div>
-                        <ChevronDown className="text-on-surface-variant group-open:rotate-180 transition-transform" size={18} />
-                      </summary>
-                      <div className="p-6 pt-0 border-t border-surface-variant/30 bg-surface dark:bg-surface-variant/5">
-                        <div className="grid grid-cols-1 md:grid-cols-[1fr_2fr] gap-6 mt-6">
-                          <div>
-                            <h5 className="text-label-sm font-label-sm text-on-surface-variant uppercase mb-2">Hình ảnh / Hành động</h5>
-                            <p className="text-body-md text-on-surface dark:text-inverse-primary leading-relaxed whitespace-pre-wrap">
-                              {script.visual || script.action || 'Không có mô tả hình ảnh'}
+                        <div>
+                          <h4 className="text-sm font-bold text-slate-900">
+                            {script.scene || script.title || `Phân cảnh ${index + 1}`}
+                          </h4>
+                          {script.title && script.scene && (
+                            <p className="text-xs text-slate-500 mt-0.5">
+                              {script.title}
                             </p>
-                          </div>
-                          <div>
-                            <h5 className="text-label-sm font-label-sm text-on-surface-variant uppercase mb-2">Âm thanh / Lời thoại</h5>
-                            <div className="text-body-md text-on-surface bg-surface-container-low dark:bg-surface-variant/20 p-4 rounded-xl italic leading-relaxed whitespace-pre-wrap">
-                              {script.audio || script.dialogue || script.action || 'Không có lời thoại'}
-                            </div>
+                          )}
+                        </div>
+                      </div>
+                      <ChevronDown className="text-slate-400 group-open:rotate-180 transition-transform" size={16} />
+                    </summary>
+                    <div className="p-4 pt-1 border-t border-slate-200/60 bg-white">
+                      <div className="grid grid-cols-1 md:grid-cols-[1fr_2fr] gap-5 mt-3">
+                        <div>
+                          <h5 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Hình ảnh / Hành động</h5>
+                          <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">
+                            {script.visual || script.action || 'Không có mô tả hình ảnh'}
+                          </p>
+                        </div>
+                        <div>
+                          <h5 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Âm thanh / Lời thoại</h5>
+                          <div className="text-sm text-slate-800 bg-slate-50 border border-slate-100 p-3.5 rounded-lg italic leading-relaxed whitespace-pre-wrap">
+                            {script.audio || script.dialogue || script.action || 'Không có lời thoại'}
                           </div>
                         </div>
                       </div>
-                    </details>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-body-md text-on-surface-variant">Chưa có kịch bản video.</p>
-              )}
-            </div>
+                    </div>
+                  </details>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-slate-500">Chưa có kịch bản video.</p>
+            )}
           </section>
 
           {/* Rollout Timeline Section */}
-          <section className="bg-surface-container-lowest dark:bg-tertiary-container rounded-[2rem] p-8 shadow-sm border border-surface-variant/50 space-y-8">
-            <h3 className="text-headline-md font-bold text-primary dark:text-inverse-primary flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-secondary-container dark:bg-secondary-fixed-dim/10 flex items-center justify-center text-on-secondary-container dark:text-secondary-fixed">
-                <Calendar size={20} />
+          <section className="bg-white rounded-2xl p-7 shadow-sm border border-slate-200/80 space-y-6">
+            <h3 className="text-xl font-bold text-slate-900 flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-[#FFCED2] flex items-center justify-center text-slate-900">
+                <Calendar size={18} />
               </div>
               Lộ trình Triển khai
             </h3>
 
             {Array.isArray(plan.playbook) && plan.playbook.length > 0 ? (
-              <div className="relative border-l-2 border-surface-variant/50 dark:border-outline/20 ml-6 space-y-10 pb-4">
+              <div className="relative border-l-2 border-slate-200 ml-4 space-y-8 pb-3">
                 {plan.playbook.map((phase, index) => (
-                  <div key={index} className="relative pl-8">
-                    <div className="absolute -left-[11px] top-1 w-5 h-5 rounded-full bg-primary flex items-center justify-center ring-4 ring-surface-container-lowest dark:ring-tertiary-container">
-                      <div className="w-2 h-2 rounded-full bg-on-primary" />
-                    </div>
-                    <div className="flex flex-wrap items-center gap-3">
-                      <h4 className="text-body-lg font-semibold text-on-surface dark:text-inverse-primary">
+                  <div key={index} className="relative pl-6">
+                    <div className="absolute -left-[9px] top-1.5 w-4 h-4 rounded-full bg-slate-900 ring-4 ring-white" />
+                    <div className="flex flex-wrap items-center gap-2.5">
+                      <h4 className="text-base font-bold text-slate-900">
                         {phase.phaseName || `Giai đoạn ${index + 1}`}
                       </h4>
                       {phase.duration && (
-                        <span className="text-xs px-2.5 py-0.5 rounded-full bg-surface-container text-on-surface-variant font-medium">
+                        <span className="text-xs px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 font-semibold">
                           {phase.duration}
                         </span>
                       )}
                     </div>
                     {phase.objective && (
-                      <p className="text-body-md text-on-surface-variant mt-2">
+                      <p className="text-sm text-slate-600 mt-1.5 font-medium">
                         {phase.objective}
                       </p>
                     )}
                     {Array.isArray(phase.keyActions) && phase.keyActions.length > 0 && (
-                      <ul className="mt-2 space-y-1 text-body-sm text-on-surface-variant list-disc list-inside">
+                      <ul className="mt-2 space-y-1 text-sm text-slate-600 list-disc list-inside">
                         {phase.keyActions.map((action, aIdx) => (
                           <li key={aIdx}>{typeof action === 'string' ? action.replace(/\*\*/g, '') : action}</li>
                         ))}
@@ -331,17 +325,15 @@ export default function PlanReviewPage() {
                 ))}
               </div>
             ) : Array.isArray(plan.checklist) && plan.checklist.length > 0 ? (
-              <div className="relative border-l-2 border-surface-variant/50 dark:border-outline/20 ml-6 space-y-8 pb-4">
+              <div className="relative border-l-2 border-slate-200 ml-4 space-y-6 pb-3">
                 {plan.checklist.map((item, index) => (
-                  <div key={index} className="relative pl-8">
-                    <div className="absolute -left-[11px] top-1 w-5 h-5 rounded-full bg-primary flex items-center justify-center ring-4 ring-surface-container-lowest dark:ring-tertiary-container">
-                      <div className="w-2 h-2 rounded-full bg-on-primary" />
-                    </div>
-                    <h4 className="text-body-lg font-semibold text-on-surface dark:text-inverse-primary">
+                  <div key={index} className="relative pl-6">
+                    <div className="absolute -left-[9px] top-1.5 w-4 h-4 rounded-full bg-slate-900 ring-4 ring-white" />
+                    <h4 className="text-base font-bold text-slate-900">
                       {item.title}
                     </h4>
                     {item.desc && (
-                      <p className="text-body-md text-on-surface-variant mt-1">
+                      <p className="text-sm text-slate-600 mt-1">
                         {item.desc}
                       </p>
                     )}
@@ -349,62 +341,64 @@ export default function PlanReviewPage() {
                 ))}
               </div>
             ) : typeof plan.playbook === 'string' && plan.playbook.trim() ? (
-              <div className="prose prose-sm max-w-none text-on-surface-variant leading-relaxed whitespace-pre-wrap pl-6">
+              <div className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap pl-4 font-normal">
                 {plan.playbook}
               </div>
             ) : (
-              <p className="text-body-md text-on-surface-variant">Chưa có lộ trình triển khai.</p>
+              <p className="text-sm text-slate-500">Chưa có lộ trình triển khai.</p>
             )}
           </section>
         </div>
 
         {/* Right Sidebar: Internal Notes Thread */}
-        <aside className="w-full xl:w-[380px] shrink-0 flex flex-col gap-6">
-          <div className="sticky top-28 bg-surface-container-lowest dark:bg-tertiary-container rounded-[2rem] p-6 shadow-sm border border-surface-variant/50 flex flex-col h-[calc(100vh-140px)]">
-            <div className="flex items-center gap-3 mb-6 pb-6 border-b border-surface-variant/30">
-              <MessageSquare className="text-primary dark:text-inverse-primary" size={24} />
+        <aside className="w-full xl:w-[360px] shrink-0 flex flex-col gap-6">
+          <div className="sticky top-24 bg-white rounded-2xl p-6 shadow-sm border border-slate-200/80 flex flex-col h-[calc(100vh-140px)]">
+            <div className="flex items-center gap-3 mb-5 pb-4 border-b border-slate-100">
+              <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-800">
+                <MessageSquare size={16} />
+              </div>
               <div>
-                <h3 className="text-headline-md font-bold text-primary dark:text-inverse-primary">Ghi chú Nội bộ</h3>
-                <p className="text-label-sm font-label-sm text-on-surface-variant">Chỉ dành riêng cho Pocket Agencom</p>
+                <h3 className="text-base font-bold text-slate-900">Ghi chú Nội bộ</h3>
+                <p className="text-xs text-slate-500">Chỉ dành riêng cho Pocket Agencom</p>
               </div>
             </div>
 
             {/* Scrollable history thread */}
-            <div className="flex-1 overflow-y-auto pr-2 space-y-6 scrollbar-none">
+            <div className="flex-1 overflow-y-auto pr-1 space-y-4">
               {notes.map((note) => {
                 if (note.type === 'log') {
                   return (
-                    <div key={note.id} className="flex gap-4 items-center justify-center my-3">
-                      <div className="h-px bg-surface-variant/30 dark:bg-outline/25 flex-1" />
-                      <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider px-2 dark:text-outline-variant">
+                    <div key={note.id} className="flex gap-3 items-center justify-center my-2">
+                      <div className="h-px bg-slate-200 flex-1" />
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-1">
                         {note.text}
                       </span>
-                      <div className="h-px bg-surface-variant/30 dark:bg-outline/25 flex-1" />
+                      <div className="h-px bg-slate-200 flex-1" />
                     </div>
                   );
                 }
 
                 return (
-                  <div key={note.id} className="flex gap-4">
+                  <div key={note.id} className="flex gap-3">
                     <img
                       alt="Avatar"
-                      className="w-10 h-10 rounded-full object-cover shrink-0 ring-2 ring-surface-container-lowest shadow-sm"
+                      className="w-8 h-8 rounded-full object-cover shrink-0 ring-1 ring-slate-200 shadow-xs"
                       src={note.avatar}
                     />
                     <div
-                      className={`rounded-2xl rounded-tl-none p-4 flex-1 border ${
+                      className={`rounded-xl rounded-tl-none p-3.5 flex-1 border ${
                         note.isHighlight
-                          ? 'bg-secondary-container/20 border-secondary-container/40 dark:bg-secondary/25 dark:border-secondary/35'
-                          : 'bg-surface border-surface-variant/30 dark:bg-surface-variant/10 dark:border-outline/10'
+                          ? 'bg-slate-50 border-slate-200/80'
+                          : 'bg-white border-slate-200/70'
                       }`}
                     >
                       <div className="flex justify-between items-center mb-1">
-                        <span className="text-label-sm font-bold text-on-surface dark:text-inverse-primary">
+                        <span className="text-xs font-bold text-slate-900">
                           {note.author}
                         </span>
-                        <span className="text-[10px] text-on-surface-variant dark:text-outline-variant">{note.time}</span>
+                        <span className="text-[10px] text-slate-400">{note.time}</span>
                       </div>
-                      <p className="text-body-md text-on-surface-variant dark:text-inverse-on-surface text-sm leading-relaxed">
+                      <p className="text-xs text-slate-600 leading-relaxed">
                         {note.text}
                       </p>
                     </div>
@@ -414,18 +408,18 @@ export default function PlanReviewPage() {
             </div>
 
             {/* Note input box */}
-            <form onSubmit={handlePostNote} className="mt-6 pt-4 border-t border-surface-variant/30 dark:border-outline/20">
+            <form onSubmit={handlePostNote} className="mt-4 pt-3.5 border-t border-slate-100">
               <textarea
                 value={newNoteText}
                 onChange={(e) => setNewNoteText(e.target.value)}
                 placeholder="Thêm ghi chú hoặc báo cáo vấn đề..."
                 rows={3}
-                className="w-full bg-secondary-container/30 dark:bg-surface-variant/20 border-none rounded-2xl p-4 text-body-md text-primary dark:text-inverse-primary placeholder:text-on-surface-variant/60 focus:ring-2 focus:ring-secondary-container resize-none transition-shadow"
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-slate-900 focus:bg-white resize-none transition-all"
               />
-              <div className="flex justify-end mt-3">
+              <div className="flex justify-end mt-2.5">
                 <button
                   type="submit"
-                  className="px-5 py-2.5 rounded-full bg-primary text-on-primary hover:bg-primary/95 text-label-sm font-label-sm transition-colors font-bold"
+                  className="px-4 py-2 rounded-xl bg-slate-900 text-white hover:bg-slate-800 text-xs font-bold transition-colors shadow-xs"
                 >
                   Đăng Ghi chú
                 </button>

@@ -43,21 +43,21 @@ export default function RegisterPage() {
       <main className="flex-1 flex items-center justify-center p-gutter lg:px-section-padding-desktop bg-surface-container-lowest">
         <div className="w-full max-w-md">
           <div className="flex items-center justify-between mb-12">
-            <span className="text-headline-md font-extrabold text-primary">Pocket <span className="text-[#F897A8]">Agen</span>com</span>
-            <Link to="/" className="flex items-center gap-2 px-4 py-2 rounded-full border border-surface-container/20 text-on-surface-variant text-xs font-semibold">
+            <span className="text-headline-md font-extrabold text-black">Pocket <span className="text-[#FFCED2]">Agen</span>com</span>
+            <Link to="/" className="flex items-center gap-2 px-4 py-2 rounded-full border border-slate-200 bg-slate-50 text-slate-600 hover:text-black text-xs font-semibold">
               <ArrowLeft size={14} /> Quay về
             </Link>
           </div>
-          <h1 className="text-display-lg-mobile md:text-display-lg font-display-lg text-primary mb-2">Bắt đầu ngay</h1>
-          <p className="text-body-lg text-on-surface-variant mb-8">Tạo tài khoản doanh nghiệp để tiếp cận các công cụ tiếp thị thông minh.</p>
+          <h1 className="text-display-lg-mobile md:text-display-lg font-display-lg text-black mb-2">Đăng ký tài khoản</h1>
+          <p className="text-body-lg text-slate-600 mb-8">Tạo tài khoản doanh nghiệp để tiếp cận các công cụ tiếp thị thông minh.</p>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             {fields.map(([name, label, type, Icon, placeholder]) => (
-              <label key={name} className="block text-label-sm text-on-surface">
+              <label key={name} className="block text-label-sm text-slate-800">
                 <span className="block mb-2 ml-1">{label}</span>
                 <span className="relative block">
-                  <Icon size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant" />
-                  <input id={`reg-${name}`} type={type} required value={form[name]} onChange={update(name)} placeholder={placeholder} className="w-full pl-12 pr-4 py-4 rounded-full bg-surface-container-low focus:ring-2 focus:ring-secondary-container outline-none" />
+                  <Icon size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input id={`reg-${name}`} type={type} required value={form[name]} onChange={update(name)} placeholder={placeholder} className="w-full pl-12 pr-4 py-4 rounded-full bg-slate-50 border border-slate-200 focus:border-black outline-none" />
                 </span>
               </label>
             ))}
@@ -66,33 +66,33 @@ export default function RegisterPage() {
               ['password', 'Mật khẩu', showPassword, () => setShowPassword((value) => !value), 8],
               ['confirmPassword', 'Xác nhận mật khẩu', showConfirmPassword, () => setShowConfirmPassword((value) => !value)],
             ].map(([name, label, visible, toggle, minLength]) => (
-              <label key={name} className="block text-label-sm text-on-surface">
+              <label key={name} className="block text-label-sm text-slate-800">
                 <span className="block mb-2 ml-1">{label}</span>
                 <span className="relative block">
-                  {name === 'password' ? <Lock size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant" /> : <ShieldCheck size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant" />}
-                  <input type={visible ? 'text' : 'password'} required minLength={minLength} value={form[name]} onChange={update(name)} className="w-full pl-12 pr-12 py-4 rounded-full bg-surface-container-low focus:ring-2 focus:ring-secondary-container outline-none" />
-                  <button type="button" onClick={toggle} className="absolute right-4 top-1/2 -translate-y-1/2 text-on-surface-variant">{visible ? <EyeOff size={20} /> : <Eye size={20} />}</button>
+                  {name === 'password' ? <Lock size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" /> : <ShieldCheck size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />}
+                  <input type={visible ? 'text' : 'password'} required minLength={minLength} value={form[name]} onChange={update(name)} className="w-full pl-12 pr-12 py-4 rounded-full bg-slate-50 border border-slate-200 focus:border-black outline-none" />
+                  <button type="button" onClick={toggle} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-black">{visible ? <EyeOff size={20} /> : <Eye size={20} />}</button>
                 </span>
               </label>
             ))}
 
-            <label className="flex items-start gap-3 text-sm text-on-surface-variant">
+            <label className="flex items-start gap-3 text-sm text-slate-600">
               <input type="checkbox" checked={form.agreeTerms} onChange={update('agreeTerms')} className="mt-0.5" />
               Tôi đồng ý với Điều khoản Dịch vụ và Chính sách Bảo mật.
             </label>
-            <button type="submit" disabled={registerMutation.isPending} className="w-full py-4 rounded-full bg-[#ff758f] text-white font-bold flex justify-center items-center gap-2 disabled:opacity-60">
+            <button type="submit" disabled={registerMutation.isPending} className="w-full py-4 rounded-full bg-black hover:bg-neutral-800 text-white font-bold flex justify-center items-center gap-2 disabled:opacity-60 transition-all shadow-sm">
               {registerMutation.isPending ? <Loader2 size={20} className="animate-spin" /> : <Briefcase size={20} />}
               Tạo tài khoản <ArrowRight size={20} />
             </button>
           </form>
-          <p className="mt-8 text-center text-on-surface-variant">Đã có tài khoản? <Link to="/login" className="text-primary font-bold hover:underline">Đăng nhập</Link></p>
+          <p className="mt-8 text-center text-slate-600">Đã có tài khoản? <Link to="/login" className="text-black font-bold hover:underline">Đăng nhập</Link></p>
         </div>
       </main>
-      <aside className="hidden md:flex w-1/2 bg-secondary-container/20 items-center justify-center p-gutter">
-        <div className="w-full max-w-lg rounded-3xl bg-surface-container-lowest shadow-ambient p-12 text-center">
-          <div className="w-20 h-20 mx-auto rounded-full bg-secondary-container/40 flex items-center justify-center mb-6"><Briefcase size={36} className="text-primary" /></div>
-          <h2 className="text-headline-md text-primary mb-3">The Marketing Agency in Your Pocket</h2>
-          <p className="text-on-surface-variant">Lập kế hoạch bằng AI, quản lý nội dung, lịch đăng, ngân sách và hiệu quả chiến dịch trong một nơi.</p>
+      <aside className="hidden md:flex w-1/2 bg-slate-50 items-center justify-center p-gutter border-l border-slate-200">
+        <div className="w-full max-w-lg rounded-3xl bg-white border border-slate-200 shadow-sm p-12 text-center">
+          <div className="w-20 h-20 mx-auto rounded-full bg-slate-100 flex items-center justify-center mb-6"><Briefcase size={36} className="text-black" /></div>
+          <h2 className="text-headline-md text-black mb-3">The Marketing Agency in Your Pocket</h2>
+          <p className="text-slate-600">Lập kế hoạch bằng AI, quản lý nội dung, lịch đăng, ngân sách và hiệu quả chiến dịch trong một nơi.</p>
         </div>
       </aside>
     </div>
