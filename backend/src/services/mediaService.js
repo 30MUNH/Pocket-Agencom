@@ -1,6 +1,7 @@
 const prisma = require('../config/prisma');
 const { AppError } = require('../middleware/errorHandler');
 const { validateExternalMediaUrl } = require('./externalMediaUrl');
+const { requireOwnedBusinessProfile } = require('./businessProfileAccess');
 const { createMediaAssetReferenceService } = require('./mediaAssetReferenceService');
 const mediaAssetReferenceService = createMediaAssetReferenceService();
 
@@ -13,10 +14,11 @@ async function uploadMediaAsset(userId, { name, url, fileType = 'image', sizeByt
   }
 
   const canonicalUrl = validateExternalMediaUrl(url);
+  const profile = businessProfileId == null ? null : await requireOwnedBusinessProfile(userId, businessProfileId, prisma);
   return prisma.mediaAsset.create({
     data: {
       userId,
-      businessProfileId: businessProfileId ? Number(businessProfileId) : null,
+      businessProfileId: profile?.id || null,
       name,
       url: canonicalUrl,
       sourceKind: 'external_url',
@@ -31,7 +33,7 @@ async function uploadMediaAsset(userId, { name, url, fileType = 'image', sizeByt
  */
 async function getMediaAssets(userId) {
   const assets = await prisma.mediaAsset.findMany({
-    where: { userId },
+    where: { userId, lifecycleState: 'active' },
     orderBy: { createdAt: 'desc' },
   });
   return (assets || []).map(({ id, name, url, sourceKind, fileType, sizeBytes, createdAt }) => ({ id, name, url: sourceKind === 'private_storage' ? null : url, sourceKind, fileType, sizeBytes, createdAt }));

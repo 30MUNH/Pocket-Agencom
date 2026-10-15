@@ -1,6 +1,7 @@
 const prisma = require('../config/prisma');
 const { AppError } = require('../middleware/errorHandler');
 const { validateExternalMediaUrl } = require('./externalMediaUrl');
+const { requireOwnedBusinessProfile } = require('./businessProfileAccess');
 
 /**
  * Formats a scheduled post to extract embedded image URLs without schema drift.
@@ -73,6 +74,7 @@ function calculateGoldenTime() {
 async function createScheduledPost(userId, postData) {
   const { title, content, platform = 'Facebook', scheduledTime, status = 'pending_approval', isGoldenTime = true, businessProfileId } = postData;
   if (!title || !content) throw new AppError('Tiêu đề và nội dung bài viết là bắt buộc.', 400);
+  const profile = businessProfileId == null ? null : await requireOwnedBusinessProfile(userId, businessProfileId, prisma);
   const mediaAssetId = parseMediaAssetId(postData.mediaAssetId);
   const imageUrl = mediaAssetId ? null : validatePostImageUrls(content, postData.imageUrl);
   const enrichedContent = mediaAssetId ? stripImageMarkers(content) : imageUrl && !content.includes(imageUrl) ? `${content}\n\n[IMAGE_URL: ${imageUrl}]` : content;
@@ -80,7 +82,7 @@ async function createScheduledPost(userId, postData) {
   if (Number.isNaN(finalScheduledTime.getTime())) throw new AppError('Thời gian lên lịch không hợp lệ.', 400);
   const data = {
     userId,
-    businessProfileId: businessProfileId ? Number(businessProfileId) : null,
+    businessProfileId: profile?.id || null,
     title,
     content: enrichedContent,
     imageUrl,

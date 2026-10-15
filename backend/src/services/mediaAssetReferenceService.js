@@ -91,7 +91,10 @@ function createMediaAssetReferenceService({
     return prismaClient.$transaction(async (tx) => withAssetLock(tx, id, async () => {
       const asset = await tx.mediaAsset.findUnique({ where: { id } });
       if (!asset || asset.userId !== userId) throw new AppError('Media asset not found.', 404);
-      if (asset.lifecycleState === 'deleting') return { operationId: asset.deletionOperationId };
+      if (asset.lifecycleState === 'deleting') {
+        if (asset.deletionLastError === 'upload_pending') throw new AppError('Media asset is still uploading.', 409);
+        return { operationId: asset.deletionOperationId };
+      }
       const references = await countReferences(tx, asset);
       if (references) throw new AppError('Media asset is still referenced and cannot be deleted.', 409);
       if (asset.sourceKind === 'legacy_unverified' || asset.sourceKind === 'legacy_internal_verified') {
@@ -119,7 +122,7 @@ function createMediaAssetReferenceService({
     const prepared = await prismaClient.$transaction(async (tx) => withAssetLock(tx, id, async () => {
       const asset = await tx.mediaAsset.findUnique({ where: { id } });
       if (!asset) return { gone: true };
-      if (asset.lifecycleState !== 'deleting' || !asset.deletionOperationId) return { gone: false, pending: false };
+      if (asset.lifecycleState !== 'deleting' || !asset.deletionOperationId || asset.deletionLastError === 'upload_pending') return { gone: false, pending: true };
       const current = now();
       await tx.mediaAssetAccessLease.deleteMany({ where: { mediaAssetId: id, expiresAt: { lte: current } } });
       const lease = await tx.mediaAssetAccessLease.findFirst({ where: { mediaAssetId: id, expiresAt: { gt: current } }, select: { id: true } });
@@ -167,9 +170,10 @@ function createMediaAssetReferenceService({
   }
 
   async function recoverDeletingAssets({ limit = 100 } = {}) {
-    const assets = await prismaClient.mediaAsset.findMany({ where: { lifecycleState: 'deleting' }, select: { id: true, deletionAttemptCount: true, deletionLastAttemptAt: true }, take: limit, orderBy: { deletionStartedAt: 'asc' } });
     const current = now();
-    const eligible = assets.filter((asset) => !asset.deletionAttemptCount || !asset.deletionLastAttemptAt || current.getTime() - asset.deletionLastAttemptAt.getTime() >= retryDelayMs(asset.deletionAttemptCount));
+    const assets = await prismaClient.mediaAsset.findMany({ where: { lifecycleState: 'deleting', deletionStartedAt: { lte: current }, OR: [{ deletionLastError: null }, { deletionLastError: { not: 'upload_pending' } }] }, select: { id: true, deletionLastError: true, deletionAttemptCount: true, deletionLastAttemptAt: true }, take: limit, orderBy: { deletionStartedAt: 'asc' } });
+    const eligible = assets.filter((asset) => asset.deletionLastError !== 'upload_pending'
+      && (!asset.deletionAttemptCount || !asset.deletionLastAttemptAt || current.getTime() - asset.deletionLastAttemptAt.getTime() >= retryDelayMs(asset.deletionAttemptCount)));
     const results = [];
     for (const asset of eligible) {
       try { results.push(await resumeDeletion(asset.id)); }
@@ -178,7 +182,28 @@ function createMediaAssetReferenceService({
     return results;
   }
 
-  return { deleteOwnedAsset, resumeDeletion, recoverDeletingAssets };
+  async function reconcileInterruptedUploads({ uploadsQuiesced = false, limit = 100, minimumAgeMs = 10 * 60_000 } = {}) {
+    if (!uploadsQuiesced) throw new AppError('Upload reconciliation requires all upload workers to be stopped.', 409);
+    const cutoff = new Date(now().getTime() - minimumAgeMs);
+    const staged = await prismaClient.mediaAsset.findMany({
+      where: { lifecycleState: 'deleting', sourceKind: 'private_storage', deletionLastError: 'upload_pending', deletionStartedAt: { lte: cutoff } },
+      select: { id: true, deletionOperationId: true }, take: limit, orderBy: { deletionStartedAt: 'asc' },
+    });
+    const results = [];
+    for (const asset of staged) {
+      const released = await prismaClient.$transaction(async (tx) => withAssetLock(tx, asset.id, async () => tx.mediaAsset.updateMany({
+        where: { id: asset.id, lifecycleState: 'deleting', deletionOperationId: asset.deletionOperationId, deletionLastError: 'upload_pending' },
+        data: { deletionLastError: null },
+      })), { maxWait: 5_000, timeout: REFERENCE_TRANSACTION_TIMEOUT_MS });
+      if (released.count === 1) {
+        try { results.push(await resumeDeletion(asset.id)); }
+        catch { results.push({ deleted: false, pending: true }); }
+      }
+    }
+    return results;
+  }
+
+  return { deleteOwnedAsset, resumeDeletion, recoverDeletingAssets, reconcileInterruptedUploads };
 }
 
 module.exports = { createMediaAssetReferenceService, countReferences, containsReference, retryDelayMs, REMOVE_TIMEOUT_MS, REFERENCE_TRANSACTION_TIMEOUT_MS, MAX_RETRY_DELAY_MS };

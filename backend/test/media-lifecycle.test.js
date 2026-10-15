@@ -4,6 +4,7 @@ const { createMediaAssetReferenceService, retryDelayMs, REFERENCE_TRANSACTION_TI
 
 function setup({ asset, references = {}, leases = [], removeResult = null } = {}) {
   const calls = [];
+  let stagedQuery;
   const tx = {
     async $queryRaw() { calls.push(['lock']); },
     mediaAsset: {
@@ -30,9 +31,10 @@ function setup({ asset, references = {}, leases = [], removeResult = null } = {}
       async count() { return 0; },
     },
   };
-  const prismaClient = { async $transaction(callback, options) { calls.push(['transaction-options', options]); return callback(tx); }, mediaAssetAccessLease: tx.mediaAssetAccessLease };
+  const prismaClient = { async $transaction(callback, options) { calls.push(['transaction-options', options]); return callback(tx); }, mediaAssetAccessLease: tx.mediaAssetAccessLease,
+    mediaAsset: { async findMany(args) { stagedQuery = args; return asset ? [{ id: asset.id, deletionOperationId: asset.deletionOperationId }] : []; } } };
   const storageOperations = { async removePrivateObject(input) { calls.push(['remove-object', input]); if (removeResult) throw removeResult; return { removed: true }; } };
-  return { calls, asset, storageOperations, service: createMediaAssetReferenceService({ prismaClient, storageOperations, now: () => new Date('2026-01-01T00:00:00Z') }) };
+  return { calls, asset, storageOperations, stagedQuery: () => stagedQuery, service: createMediaAssetReferenceService({ prismaClient, storageOperations, now: () => new Date('2026-01-01T00:00:00Z') }) };
 }
 
 const privateAsset = () => ({ id: 12, userId: 4, sourceKind: 'private_storage', lifecycleState: 'active', storageBucket: 'campaign-assets-private', storagePath: 'private.png', deletionOperationId: null, deletionStartedAt: null, deletionLastAttemptAt: null, deletionAttemptCount: 0 });
@@ -41,6 +43,33 @@ test('retry backoff grows exponentially and caps at one hour', () => {
   assert.equal(retryDelayMs(0), 1000);
   assert.equal(retryDelayMs(3), 8000);
   assert.equal(retryDelayMs(99), MAX_RETRY_DELAY_MS);
+});
+
+test('an owner cannot delete an image while its Storage upload is still in progress', async () => {
+  const state = setup({ asset: { ...privateAsset(), lifecycleState: 'deleting', deletionOperationId: 'upload-operation', deletionLastError: 'upload_pending' } });
+  await assert.rejects(state.service.deleteOwnedAsset(4, 12), { statusCode: 409 });
+  assert.equal(state.calls.some(([name]) => name === 'remove-object'), false);
+  assert.deepEqual(await state.service.resumeDeletion(12), { deleted: false, pending: true });
+});
+
+test('deletion recovery excludes pending uploads from its database query', async () => {
+  let query;
+  const service = createMediaAssetReferenceService({
+    prismaClient: { mediaAsset: { async findMany(args) { query = args; return []; } } },
+    storageOperations: { async removePrivateObject() { throw new Error('unexpected'); } },
+  });
+  assert.deepEqual(await service.recoverDeletingAssets(), []);
+  assert.deepEqual(query.where.OR, [{ deletionLastError: null }, { deletionLastError: { not: 'upload_pending' } }]);
+});
+
+test('interrupted uploads require quiesced workers before an exact staged asset is reconciled', async () => {
+  const state = setup({ asset: { ...privateAsset(), lifecycleState: 'deleting', deletionOperationId: 'staged-12', deletionStartedAt: new Date('2025-12-31T23:00:00Z'), deletionLastError: 'upload_pending' } });
+  await assert.rejects(state.service.reconcileInterruptedUploads(), { statusCode: 409 });
+  assert.equal(state.calls.some(([name]) => name === 'remove-object'), false);
+  const results = await state.service.reconcileInterruptedUploads({ uploadsQuiesced: true });
+  assert.deepEqual(results, [{ deleted: true }]);
+  assert.equal(state.stagedQuery().where.deletionLastError, 'upload_pending');
+  assert.equal(state.calls.some(([name]) => name === 'remove-object'), true);
 });
 
 test('referenced assets and legacy markers block physical cleanup', async () => {

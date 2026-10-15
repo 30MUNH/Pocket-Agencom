@@ -5,6 +5,7 @@ const { AppError } = require('../middleware/errorHandler');
 const { isValidPlanTransition } = require('../validators/marketingPlan.validator');
 const aiService = require('./ai/aiService');
 const { validateExternalMediaUrl } = require('./externalMediaUrl');
+const { requireOwnedBusinessProfile } = require('./businessProfileAccess');
 
 function assertNoInternalStorageUrls(value, seen = new Set()) {
   if (value == null || typeof value !== 'object') {
@@ -207,7 +208,7 @@ async function savePlan(id, userId) {
     }
 
     return result;
-  });
+  }, { maxWait: 10_000, timeout: 15_000 });
 
   return formatPlan(updated);
 }
@@ -285,13 +286,7 @@ async function deletePlan(id, userId) {
 async function generateDetailedPost(user, { ideaTitle, ideaDescription, platform, businessProfileId, existingResources, campaignReason }) {
   let profile = null;
   if (businessProfileId) {
-    profile = await prisma.businessProfile.findUnique({
-      where: { id: Number(businessProfileId) },
-    });
-    // Ensure user owns this profile unless they are staff/admin
-    if (profile && user.role === 'user' && profile.userId !== user.id) {
-      throw new AppError('Access denied', 403);
-    }
+    profile = await requireOwnedBusinessProfile(user.id, businessProfileId, prisma);
   }
 
   if (!profile) {
@@ -317,17 +312,7 @@ async function generateDetailedPost(user, { ideaTitle, ideaDescription, platform
 }
 
 async function generateDetailedPostWithImage(user, { ideaTitle, ideaDescription, platform, businessProfileId, existingResources, campaignReason }, file, mediaAssetId) {
-  const profile = await prisma.businessProfile.findUnique({
-    where: { id: Number(businessProfileId) },
-  });
-
-  if (!profile) {
-    throw new AppError('Business profile not found', 404);
-  }
-
-  if (user.role === 'user' && profile.userId !== user.id) {
-    throw new AppError('Access denied', 403);
-  }
+  const profile = await requireOwnedBusinessProfile(user.id, businessProfileId, prisma);
 
   return aiService.generateDetailedPostWithImage({
     userId: user.id,
@@ -363,22 +348,29 @@ async function refinePlan(id, userId, { instruction }) {
   const refinedData = await aiService.refineMarketingPlan({ userId, plan, instruction });
   assertNoInternalStorageUrls(refinedData);
 
-  const updated = await prisma.marketingPlan.update({
-    where: { id: Number(id) },
-    data: {
-      contentIdeas: JSON.stringify(refinedData.contentIdeas),
-      videoScripts: JSON.stringify(refinedData.videoScripts),
-      checklist: JSON.stringify(refinedData.checklist),
-      playbook: JSON.stringify(refinedData.playbook),
-      seoKeywords: JSON.stringify(refinedData.seoKeywords || []),
-      hasLegacyContent: false,
-    },
-    include: {
-      businessProfile: true,
-      reviewedBy: { select: { id: true, name: true } },
-      user: { select: { id: true, name: true, email: true } },
-    },
-  });
+  let updated;
+  try {
+    updated = await prisma.marketingPlan.update({
+      where: { id: Number(id), userId, updatedAt: plan.updatedAt },
+      data: {
+        contentIdeas: JSON.stringify(refinedData.contentIdeas),
+        videoScripts: JSON.stringify(refinedData.videoScripts),
+        checklist: JSON.stringify(refinedData.checklist),
+        playbook: JSON.stringify(refinedData.playbook),
+        seoKeywords: JSON.stringify(refinedData.seoKeywords || []),
+        hasLegacyContent: false,
+        updatedAt: new Date(Math.max(Date.now(), plan.updatedAt.getTime() + 1)),
+      },
+      include: {
+        businessProfile: true,
+        reviewedBy: { select: { id: true, name: true } },
+        user: { select: { id: true, name: true, email: true } },
+      },
+    });
+  } catch (error) {
+    if (error.code === 'P2025') throw new AppError('This plan changed while AI was preparing the revision. Reload it and retry.', 409);
+    throw error;
+  }
 
   return {
     ...formatPlan(updated),
@@ -392,12 +384,8 @@ async function refinePlan(id, userId, { instruction }) {
 async function generateImagePrompt(userId, { postContent, platform, businessProfileId }) {
   let brandContext = '';
   if (businessProfileId) {
-    const profile = await prisma.businessProfile.findUnique({
-      where: { id: Number(businessProfileId) },
-    });
-    if (profile) {
-      brandContext = `${profile.businessType || ''} - USP: ${profile.usp || ''} - Giọng điệu: ${profile.brandVoice || ''}`;
-    }
+    const profile = await requireOwnedBusinessProfile(userId, businessProfileId, prisma);
+    brandContext = `${profile.businessType || ''} - USP: ${profile.usp || ''} - Giọng điệu: ${profile.brandVoice || ''}`;
   }
 
   return aiService.generateImagePrompt({
@@ -412,6 +400,7 @@ async function generateImagePrompt(userId, { postContent, platform, businessProf
  * Generates AI Social Post Image
  */
 async function generateSocialImage(userId, { prompt, aspectRatio, platform, businessProfileId }) {
+  if (businessProfileId != null) await requireOwnedBusinessProfile(userId, businessProfileId, prisma);
   return aiService.generateSocialImage({
     prompt,
     aspectRatio: aspectRatio || '1:1',
@@ -475,6 +464,7 @@ module.exports = {
   deletePlan,
   generateDetailedPost,
   generateDetailedPostWithImage,
+  requireOwnedBusinessProfile: (userId, businessProfileId) => requireOwnedBusinessProfile(userId, businessProfileId, prisma),
   refinePlan,
   generateImagePrompt,
   generateSocialImage,

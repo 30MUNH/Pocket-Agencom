@@ -12,11 +12,13 @@ class CloudflareProvider {
   constructor(
     accountId = aiConfig.keys.cloudflare.accountId,
     apiToken = aiConfig.keys.cloudflare.apiToken,
-    model = aiConfig.defaultImageModels.cloudflare
+    model = aiConfig.defaultImageModels.cloudflare,
+    textModel = aiConfig.defaultTextModels.cloudflare
   ) {
     this.accountId = accountId;
     this.apiToken = apiToken;
     this.model = model;
+    this.textModel = textModel;
     this.name = 'cloudflare';
   }
 
@@ -27,6 +29,78 @@ class CloudflareProvider {
       this.apiToken &&
       this.apiToken.trim().length > 0
     );
+  }
+
+  isTextAvailable() {
+    return this.isAvailable() && aiConfig.isModelFree('cloudflare', this.textModel);
+  }
+
+  async generateText({
+    prompt,
+    systemPrompt = '',
+    temperature = 0.7,
+    maxTokens = 256,
+    jsonMode = false,
+    model = this.textModel,
+    timeoutMs = aiConfig.limits.requestTimeoutMs,
+    signal,
+  }) {
+    if (!this.isAvailable()) {
+      throw new AppError('Cloudflare Workers AI is not configured.', 503);
+    }
+    if (aiConfig.freeOnlyMode && !aiConfig.isModelFree('cloudflare', model)) {
+      throw new AppError('Cloudflare Workers AI model is not verified for free-tier use.', 403);
+    }
+
+    const messages = [];
+    if (systemPrompt) messages.push({ role: 'system', content: systemPrompt });
+    messages.push({ role: 'user', content: prompt });
+    const tokenLimit = Number.isFinite(Number(maxTokens))
+      ? Math.min(Math.max(Math.floor(Number(maxTokens)), 1), aiConfig.limits.maxTokens)
+      : 256;
+    const useChatCompletions = model === '@cf/openai/gpt-oss-20b' || model === '@cf/openai/gpt-oss-120b';
+    const payload = useChatCompletions
+      ? { model, messages, temperature, max_tokens: tokenLimit, reasoning_effort: 'low' }
+      : { messages, temperature, max_tokens: tokenLimit };
+    if (jsonMode) payload.response_format = { type: 'json_object' };
+
+    const endpoint = useChatCompletions
+      ? `https://api.cloudflare.com/client/v4/accounts/${this.accountId}/ai/v1/chat/completions`
+      : `https://api.cloudflare.com/client/v4/accounts/${this.accountId}/ai/run/${model}`;
+    let response;
+    try {
+      response = await axios.post(endpoint, payload, {
+        headers: {
+          Authorization: `Bearer ${this.apiToken}`,
+          'Content-Type': 'application/json',
+        },
+        timeout: timeoutMs,
+        signal,
+      });
+    } catch (err) {
+      const status = err.response?.status;
+      if (status === 401 || status === 403) {
+        throw new AppError('Cloudflare Workers AI authentication or model access was denied.', 401);
+      }
+      if (status === 429) {
+        throw new AppError('Cloudflare Workers AI daily capacity is exhausted.', 429);
+      }
+      throw new AppError('Cloudflare Workers AI text inference failed.', 502);
+    }
+
+    const result = response.data?.result;
+    const text = useChatCompletions
+      ? response.data?.choices?.[0]?.message?.content
+      : result?.response ?? result?.text ?? result?.choices?.[0]?.message?.content;
+    if (typeof text !== 'string' || !text.trim()) {
+      throw new AppError('Cloudflare Workers AI returned an empty text response.', 502);
+    }
+    return {
+      text,
+      provider: this.name,
+      model: response.data?.model || result?.model || model,
+      usage: response.data?.usage || result?.usage || null,
+    };
   }
 
   static getCompositionGuidance(aspectRatio) {
@@ -97,14 +171,8 @@ class CloudflareProvider {
       );
     } catch (err) {
       const status = err.response?.status;
-      const data = err.response?.data;
-      const errorMsg = data?.errors?.[0]?.message || data?.message || err.message;
-
       if (status === 401 || status === 403) {
-        throw new AppError(
-          `Xác thực Cloudflare Workers AI thất bại: ${errorMsg}. Vui lòng kiểm tra CLOUDFLARE_API_TOKEN và quyền hạn token.`,
-          401
-        );
+        throw new AppError('Cloudflare Workers AI authentication or model access was denied.', 401);
       }
 
       if (status === 429) {
@@ -114,7 +182,7 @@ class CloudflareProvider {
         );
       }
 
-      throw new AppError(`Lỗi kết xuất ảnh từ Cloudflare Workers AI: ${errorMsg}`, 502);
+      throw new AppError('Cloudflare Workers AI image generation failed.', 502);
     }
 
     // Step 2: Decode Image Data
@@ -148,6 +216,7 @@ class CloudflareProvider {
       buffer: processed.buffer,
       originalBuffer: rawBuffer,
       mimeType: processed.postProcessed ? 'image/jpeg' : mimeType,
+      originalMimeType: mimeType,
       provider: this.name,
       model: this.model,
       aspectRatio,

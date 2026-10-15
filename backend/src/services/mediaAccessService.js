@@ -1,4 +1,6 @@
 const { AppError } = require('../middleware/errorHandler');
+const crypto = require('node:crypto');
+const { requireOwnedBusinessProfile } = require('./businessProfileAccess');
 const PRIVATE_BUCKETS = Object.freeze({ campaign: 'campaign-assets-private', avatars: 'avatars-private' });
 
 const URL_LIFETIME_SECONDS = 600;
@@ -15,6 +17,7 @@ function createMediaAccessService(options = {}) {
   const prismaClient = options.prismaClient || require('../config/prisma');
   const storageClient = options.storageClient || require('../config/supabase');
   const storageOperations = options.storageOperations || require('./storageService').createStorageService({ storageClient });
+  const referenceOperations = options.referenceOperations || require('./mediaAssetReferenceService').createMediaAssetReferenceService({ prismaClient, storageOperations });
   const mode = options.mode || (() => process.env.PRIVATE_STORAGE_MODE || 'disabled');
   const now = options.now || (() => new Date());
   const signingTimeoutMs = options.signingTimeoutMs ?? SIGNING_TIMEOUT_MS;
@@ -29,25 +32,53 @@ function createMediaAccessService(options = {}) {
   }
 
   async function createOwnedMediaAsset({ ownerId, file, purpose, metadata = {} }) {
-    const object = await storageOperations.uploadPrivateObject({ ownerId, file, purpose });
+    const profile = metadata.businessProfileId == null
+      ? null
+      : await requireOwnedBusinessProfile(ownerId, metadata.businessProfileId, prismaClient);
+    let staged;
+    const operationId = crypto.randomUUID();
     try {
-      return await prismaClient.mediaAsset.create({
-        data: {
-          userId: Number(ownerId),
-          businessProfileId: metadata.businessProfileId ? Number(metadata.businessProfileId) : null,
-          name: String(metadata.name || file.originalname || 'Uploaded image').slice(0, 180),
-          url: null,
-          sourceKind: 'private_storage',
-          storageBucket: object.bucket,
-          storagePath: object.path,
-          fileType: 'image',
-          sizeBytes: object.byteLength,
-        },
+      await storageOperations.uploadPrivateObject({ ownerId, file, purpose, onPrepared: async (object) => {
+        staged = await prismaClient.mediaAsset.create({
+          data: {
+            userId: Number(ownerId),
+            businessProfileId: profile?.id || null,
+            name: String(metadata.name || file.originalname || 'Uploaded image').slice(0, 180),
+            url: null,
+            sourceKind: 'private_storage',
+            storageBucket: object.bucket,
+            storagePath: object.path,
+            fileType: 'image',
+            sizeBytes: object.byteLength,
+            lifecycleState: 'deleting',
+            deletionOperationId: operationId,
+            // An in-progress transfer is excluded from deletion recovery.
+            deletionStartedAt: now(),
+            deletionLastError: 'upload_pending',
+          },
+        });
+      } });
+      return await prismaClient.mediaAsset.update({
+        where: { id: staged.id, lifecycleState: 'deleting', deletionOperationId: operationId },
+        data: { lifecycleState: 'active', deletionOperationId: null, deletionStartedAt: null, deletionLastError: null },
       });
-    } catch {
-      try { await storageOperations.removePrivateObject({ bucket: object.bucket, path: object.path }); } catch { /* recovery tooling can reconcile orphan objects */ }
+    } catch (error) {
+      if (staged) {
+        try {
+          await prismaClient.mediaAsset.updateMany({
+            where: { id: staged.id, lifecycleState: 'deleting', deletionOperationId: operationId, deletionLastError: 'upload_pending' },
+            data: { deletionLastError: null },
+          });
+          await referenceOperations.resumeDeletion(staged.id);
+        } catch { /* The deleting row remains available for explicit reconciliation. */ }
+      }
+      if (!staged && error?.statusCode) throw error;
       throw new AppError('Unable to save private asset metadata.', 503);
     }
+  }
+
+  async function deleteOwnedMediaAsset(ownerId, assetId) {
+    return referenceOperations.deleteOwnedAsset(ownerId, assetId);
   }
 
   async function getAuthorizedMediaAccess({ requester, assetId, disposition = 'inline' }) {
@@ -119,7 +150,7 @@ function createMediaAccessService(options = {}) {
     }
   }
 
-  return { createOwnedMediaAsset, getAuthorizedMediaAccess, getAdminUserAvatarAccess };
+  return { createOwnedMediaAsset, deleteOwnedMediaAsset, getAuthorizedMediaAccess, getAdminUserAvatarAccess };
 }
 
 module.exports = { createMediaAccessService, URL_LIFETIME_SECONDS, LEASE_LIFETIME_MS, SIGNING_TIMEOUT_MS };

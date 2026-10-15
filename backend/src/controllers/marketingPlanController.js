@@ -69,6 +69,7 @@ async function generatePost(req, res, next) {
 }
 
 async function generatePostWithImage(req, res, next) {
+  let imageAsset;
   try {
     if (!req.file) {
       throw new AppError('Vui lòng đính kèm ảnh sản phẩm hoặc ảnh feedback', 400);
@@ -88,12 +89,14 @@ async function generatePostWithImage(req, res, next) {
       throw new AppError('Gemini Vision is unavailable because free-tier eligibility is not confirmed.', 503);
     }
 
+    const profile = await marketingPlanService.requireOwnedBusinessProfile(req.user.id, parsed.data.businessProfileId);
+
     // Persist the image privately and pass its ID with the in-memory bytes to Gemini Vision.
-    const imageAsset = await mediaAccessService.createOwnedMediaAsset({
+    imageAsset = await mediaAccessService.createOwnedMediaAsset({
       ownerId: req.user.id,
       file: req.file,
       purpose: 'campaign',
-      metadata: { name: req.file.originalname },
+      metadata: { name: req.file.originalname, businessProfileId: profile.id },
     });
 
     // The Vision call consumes bytes directly; no public or signed URL enters prompt content.
@@ -106,6 +109,14 @@ async function generatePostWithImage(req, res, next) {
 
     return success(res, { ...post, mediaAssetId: imageAsset.id }, 200);
   } catch (err) {
+    if (imageAsset) {
+      try {
+        const cleanup = await mediaAccessService.deleteOwnedMediaAsset(req.user.id, imageAsset.id);
+        if (!cleanup.deleted) throw new Error('Asset deletion is pending');
+      } catch {
+        return next(new AppError('Image generation failed and asset cleanup is pending recovery.', 503));
+      }
+    }
     next(err);
   }
 }

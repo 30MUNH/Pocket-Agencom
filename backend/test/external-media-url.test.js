@@ -20,10 +20,11 @@ test('rejects Supabase public signed authenticated and encoded bucket object URL
   }
   assert.throws(() => validateExternalMediaUrl('https://abc-project.supabase.co/storage/v1/object/public/%63ampaign-assets/a.png', options), { statusCode: 400 });
   assert.throws(() => validateExternalMediaUrl('https://abc-project.supabase.co/%73torage/v1/object/public/campaign-assets/a.png', options), { statusCode: 400 });
+  assert.throws(() => validateExternalMediaUrl('https://other-project.supabase.co/storage/v1/object/public/private-bucket/user-12/a.png', { supabaseUrl: null }), { statusCode: 400 });
 });
 
 test('does not accept an internal URL from another Supabase host or infer ownership by user prefix', () => {
   assert.throws(() => validateExternalMediaUrl('https://abc-project.supabase.co/storage/v1/object/public/campaign-assets/user-12/a.png', options), { statusCode: 400 });
   assert.equal(validateExternalMediaUrl('https://abc-project.supabase.co.evil.test/storage/v1/object/public/campaign-assets/a.png', options), 'https://abc-project.supabase.co.evil.test/storage/v1/object/public/campaign-assets/a.png');
-  assert.equal(validateExternalMediaUrl('https://abc-project.supabase.co:8443/storage/v1/object/public/campaign-assets/a.png', options), 'https://abc-project.supabase.co:8443/storage/v1/object/public/campaign-assets/a.png');
+  assert.throws(() => validateExternalMediaUrl('https://abc-project.supabase.co:8443/storage/v1/object/public/campaign-assets/a.png', options), { statusCode: 400 });
 });

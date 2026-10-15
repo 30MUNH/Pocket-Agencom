@@ -14,7 +14,10 @@ const testDatabaseUrl = isTest
 
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient(
-  isTest ? { datasources: { db: { url: testDatabaseUrl } } } : undefined,
+  {
+    ...(isTest ? { datasources: { db: { url: testDatabaseUrl } } } : {}),
+    transactionOptions: { maxWait: 10_000, timeout: 15_000 },
+  },
 );
 
 module.exports = prisma;

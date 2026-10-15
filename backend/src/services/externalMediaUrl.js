@@ -11,11 +11,12 @@ function configuredSupabaseHost(supabaseUrl) {
 }
 
 function isSupabaseStorageObject(parsed, expectedHost) {
-  if (!expectedHost || parsed.host.toLowerCase() !== expectedHost) return false;
   let segments;
   try { segments = parsed.pathname.split('/').filter(Boolean).map((part) => decodeURIComponent(part)); }
   catch { return true; }
   if (segments.length < 4 || segments[0] !== 'storage' || segments[1] !== 'v1' || segments[2] !== 'object') return false;
+  const knownSupabaseDomain = parsed.hostname.toLowerCase().endsWith('.supabase.co');
+  if (parsed.host.toLowerCase() !== expectedHost && !knownSupabaseDomain) return false;
   // All Supabase Storage object flavors are internal. Decode bucket exactly once
   // so encoded bucket spellings cannot evade the origin/path check.
   try {

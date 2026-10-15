@@ -1,5 +1,8 @@
 const axios = require('axios');
+const sharp = require('sharp');
 const { z } = require('zod');
+const { generateSocialImageSchema } = require('../../validators/marketingPlan.validator');
+const { requireOwnedBusinessProfile } = require('../businessProfileAccess');
 const aiConfig = require('./aiConfig');
 const GroqProvider = require('./providers/groqProvider');
 const OpenRouterProvider = require('./providers/openRouterProvider');
@@ -184,11 +187,19 @@ const marketingPlanOutputSchema = z.object({
     channel: z.string().optional(),
     format: z.string().optional(),
     description: z.string(),
+    rationale: z.string().optional(),
   })).min(1),
   videoScripts: z.array(z.object({
     scene: z.string().optional(),
     action: z.string(),
     dialogue: z.string().optional(),
+    title: z.string().optional(),
+    duration: z.string().optional(),
+    hook: z.string().optional(),
+    script: z.string().optional(),
+    callToAction: z.string().optional(),
+    visual: z.string().optional(),
+    audio: z.string().optional(),
   })).min(1),
   checklist: z.array(z.string()).min(1),
   playbook: z.array(z.object({
@@ -200,12 +211,27 @@ const marketingPlanOutputSchema = z.object({
   })).min(1),
   seoKeywords: z.array(z.string()).optional().default([]),
   budgetBreakdown: z.object({
-    channels: z.array(z.object({
-      channel: z.string(),
-      percentage: z.number().optional(),
-      estimatedVnd: z.number().optional(),
-    })).optional(),
+    channels: z.array(z.union([
+      z.object({
+        channelName: z.string().min(1),
+        percentOfTotal: z.number().min(0).max(100),
+        description: z.string().optional(),
+        items: z.array(z.object({ name: z.string().min(1), percent: z.number().min(0).max(100) })).min(1),
+      }),
+      z.object({
+        channel: z.string().min(1),
+        percentage: z.number().min(0).max(100),
+        estimatedVnd: z.number().optional(),
+      }).transform((channel) => ({
+        channelName: channel.channel,
+        percentOfTotal: channel.percentage,
+        items: [{ name: 'Ngân sách kênh', percent: 100 }],
+      })),
+    ])).optional(),
   }).optional().nullable(),
+});
+const refinedMarketingPlanOutputSchema = marketingPlanOutputSchema.extend({
+  revisionSummary: z.string().optional(),
 });
 
 /**
@@ -259,6 +285,7 @@ class AIService {
       { name: 'groq', instance: this.groq },
       { name: 'openrouter', instance: this.openrouter },
       { name: 'gemini', instance: this.gemini },
+      { name: 'cloudflare', instance: this.cloudflare },
     ];
 
     // Place primary first, followed by remaining available providers
@@ -268,7 +295,9 @@ class AIService {
       return 0;
     });
 
-    return sorted.filter((p) => p.instance.isAvailable());
+    return sorted.filter((p) => p.name === 'cloudflare'
+      ? p.instance.isTextAvailable()
+      : p.instance.isAvailable());
   }
 
   getImageProvidersInPriority() {
@@ -287,7 +316,8 @@ class AIService {
 
     // In FREE_ONLY_MODE, strictly filter out paid image providers
     if (aiConfig.freeOnlyMode || !aiConfig.allowPaidModels) {
-      return sorted.filter((p) => p.name === 'cloudflare' && p.instance.isAvailable());
+      return sorted.filter((p) => p.name === 'cloudflare' && p.instance.isAvailable()
+        && aiConfig.isModelFree('cloudflare', p.instance.model));
     }
 
     return sorted.filter((p) => p.instance.isAvailable());
@@ -351,7 +381,10 @@ class AIService {
 
     try {
       for (const { name, instance } of providers) {
-        for (let attempt = 0; attempt <= aiConfig.limits.maxRetries; attempt++) {
+        const retryLimit = name === 'openrouter' && aiConfig.freeOnlyMode && !aiConfig.allowPaidModels
+          ? 0
+          : aiConfig.limits.maxRetries;
+        for (let attempt = 0; attempt <= retryLimit; attempt++) {
           const remainingMs = deadline - Date.now();
           if (remainingMs <= 0 || operationController.signal.aborted) break;
           const attemptStartedAt = Date.now();
@@ -380,7 +413,7 @@ class AIService {
             const status = err.response?.status || err.status || err.statusCode || null;
             const code = err.code || err.cause?.code || null;
             console.warn(
-              `[AI Service] ${name} attempt ${attempt + 1}/${aiConfig.limits.maxRetries + 1} failed after ${Date.now() - attemptStartedAt}ms (status=${status ?? 'none'}, code=${code ?? 'none'}).`
+              `[AI Service] ${name} attempt ${attempt + 1}/${retryLimit + 1} failed after ${Date.now() - attemptStartedAt}ms (status=${status ?? 'none'}, code=${code ?? 'none'}).`
             );
           } finally {
             clearTimeout(attemptTimer);
@@ -390,7 +423,7 @@ class AIService {
           const retryAfterSec = Number.parseInt(lastError?.response?.headers?.['retry-after'], 10);
           if (retryAfterSec > 0 && retryAfterSec <= 10) {
             await waitWithSignal(Math.min(retryAfterSec * 1000, deadline - Date.now()), operationController.signal);
-          } else if (isTransientError(lastError) && attempt < aiConfig.limits.maxRetries) {
+          } else if (isTransientError(lastError) && attempt < retryLimit) {
             const backoff = Math.min(
               aiConfig.limits.backoffBaseMs * (2 ** attempt) + Math.random() * 500,
               10000,
@@ -426,7 +459,7 @@ class AIService {
       });
       throw new AppError(
         providers.length === 0
-          ? 'Không có nhà cung cấp AI nào được cấu hình API key (Groq, OpenRouter, hoặc Gemini).'
+          ? 'Không có nhà cung cấp AI miễn phí nào đã xác minh và được cấu hình.'
           : 'Các dịch vụ AI chưa phản hồi sau số lần thử có giới hạn. Vui lòng thử lại sau.',
         503
       );
@@ -506,9 +539,9 @@ BẠN PHẢI TRẢ VỀ DUY NHẤT MỘT ĐỐI TƯỢNG JSON HỢP LỆ VỚI C
   "seoKeywords": ["từ khóa 1", "từ khóa 2", "từ khóa 3"],
   "budgetBreakdown": {
     "channels": [
-      { "channel": "Facebook Ads", "percentage": 50, "estimatedVnd": 5000000 },
-      { "channel": "TikTok Ads", "percentage": 30, "estimatedVnd": 3000000 },
-      { "channel": "Sản xuất nội dung", "percentage": 20, "estimatedVnd": 2000000 }
+      { "channelName": "Facebook Ads", "percentOfTotal": 50, "description": "Quảng cáo tiếp cận khách hàng", "items": [{ "name": "Chi phí quảng cáo", "percent": 100 }] },
+      { "channelName": "TikTok Ads", "percentOfTotal": 30, "items": [{ "name": "Chi phí quảng cáo", "percent": 100 }] },
+      { "channelName": "Sản xuất nội dung", "percentOfTotal": 20, "items": [{ "name": "Ảnh và video", "percent": 100 }] }
     ]
   }
 }
@@ -546,12 +579,9 @@ YÊU CẦU NỘI DUNG:
     const validator = (parsed) => {
       const parsedValidation = marketingPlanOutputSchema.safeParse(parsed);
       if (!parsedValidation.success) {
-        console.warn('[Zod Plan Validation Warning]', parsedValidation.error.issues);
-        if (!parsed.contentIdeas || !parsed.videoScripts || !parsed.checklist || !parsed.playbook) {
-          throw new AppError('Dữ liệu kế hoạch tiếp thị từ AI thiếu các trường bắt buộc.', 502);
-        }
+        throw new AppError('AI returned an incomplete Marketing Plan. Please retry generation.', 502);
       }
-      return parsed;
+      return parsedValidation.data;
     };
 
     const result = await this.generateStructuredContent({
@@ -636,28 +666,19 @@ Người dùng gửi cho bạn ảnh sản phẩm thô. Hãy trả về CHÍNH X
 
     if (userId) await checkAndIncrementUserQuota(userId, 'text');
 
-    // Use Gemini Vision if Gemini key is available
-    if (this.gemini.isAvailable()) {
-      try {
-        const visionResult = await this.gemini.generateVision({
-          prompt: userPrompt,
-          systemPrompt,
-          imageBuffer: file.buffer,
-          mimeType: file.mimetype,
-        });
-        return { content: visionResult.text.trim(), mediaAssetId };
-      } catch (err) {
-        console.warn('[Gemini Vision fallback to text model]:', err.message);
-      }
+    if (!this.gemini.isAvailable()) throw new AppError('Gemini Vision is unavailable for image analysis.', 503);
+    try {
+      const visionResult = await this.gemini.generateVision({
+        prompt: userPrompt,
+        systemPrompt,
+        imageBuffer: file.buffer,
+        mimeType: file.mimetype,
+      });
+      if (!visionResult?.text?.trim()) throw new Error('Empty Vision response');
+      return { content: visionResult.text.trim(), mediaAssetId };
+    } catch {
+      throw new AppError('Image analysis failed. Please try again.', 503);
     }
-
-    // Fallback: Use standard text model describing the image context
-    const textResult = await this.generateText({
-      prompt: `${userPrompt}\n(Ảnh đính kèm đã được gửi an toàn để phân tích.)`,
-      systemPrompt,
-    });
-
-    return { content: textResult.text.trim(), mediaAssetId };
   }
 
   /**
@@ -697,10 +718,9 @@ Hãy áp dụng yêu cầu trên để cập nhật lại các phần trong kế
       prompt,
       systemPrompt: SYSTEM_PROMPT,
       validatorFn: (parsed) => {
-        if (!parsed.contentIdeas || !parsed.videoScripts || !parsed.checklist || !parsed.playbook) {
-          throw new AppError('Dữ liệu cập nhật từ AI không đầy đủ cấu trúc.', 502);
-        }
-        return parsed;
+        const validated = refinedMarketingPlanOutputSchema.safeParse(parsed);
+        if (!validated.success) throw new AppError('AI returned an incomplete plan revision. Please retry.', 502);
+        return validated.data;
       },
     });
 
@@ -731,7 +751,7 @@ ${postContent.slice(0, 1000)}`;
       prompt,
       systemPrompt: SYSTEM_PROMPT,
       temperature: 0.7,
-      maxTokens: 250,
+      maxTokens: 512,
     });
 
     return { imagePrompt: result.text.trim() };
@@ -749,29 +769,38 @@ ${postContent.slice(0, 1000)}`;
     userId,
     businessProfileId = null,
   }) {
+    const parsed = generateSocialImageSchema.safeParse({ prompt, aspectRatio, platform, businessProfileId: businessProfileId ?? undefined });
+    if (!parsed.success) throw new AppError('Invalid image request.', 422, parsed.error.issues);
+    ({ prompt, aspectRatio, platform, businessProfileId } = parsed.data);
+    if (businessProfileId != null) await requireOwnedBusinessProfile(userId, businessProfileId, prisma);
     if ((process.env.PRIVATE_STORAGE_MODE || 'disabled') !== 'private') {
       throw new AppError('Private image storage is disabled.', 503);
     }
-    if (userId) {
-      await checkAndIncrementUserQuota(userId, 'image');
-    }
-    await this.acquireConcurrencySlot();
-    const startTime = Date.now();
     const providers = this.getImageProvidersInPriority();
 
     if (providers.length === 0) {
-      this.releaseConcurrencySlot();
       throw new AppError(
         'Không có nhà cung cấp tạo ảnh AI miễn phí nào khả dụng (vui lòng cấu hình CLOUDFLARE_ACCOUNT_ID và CLOUDFLARE_API_TOKEN).',
         503
       );
     }
+    await this.acquireConcurrencySlot();
+    try {
+      if (userId) await checkAndIncrementUserQuota(userId, 'image');
+    } catch (error) {
+      this.releaseConcurrencySlot();
+      throw error;
+    }
+    const startTime = Date.now();
 
     let lastError = null;
     let generatedImageResult = null;
 
     for (const { name, instance } of providers) {
-      for (let attempt = 0; attempt <= aiConfig.limits.maxRetries; attempt++) {
+      const retryLimit = name === 'cloudflare' && aiConfig.freeOnlyMode && !aiConfig.allowPaidModels
+        ? 0
+        : aiConfig.limits.maxRetries;
+      for (let attempt = 0; attempt <= retryLimit; attempt++) {
         try {
           generatedImageResult = await instance.generateImage({
             prompt,
@@ -780,8 +809,8 @@ ${postContent.slice(0, 1000)}`;
           break;
         } catch (err) {
           lastError = err;
-          console.warn(`[AI Image Service] ${name} attempt ${attempt + 1} failed:`, err.message || err);
-          if (isTransientError(err) && attempt < aiConfig.limits.maxRetries) {
+          console.warn(`[AI Image Service] ${name} attempt ${attempt + 1}/${retryLimit + 1} failed (status=${err.response?.status || err.statusCode || err.status || 'none'}).`);
+          if (isTransientError(err) && attempt < retryLimit) {
             await waitWithBackoff(attempt);
           } else {
             break;
@@ -809,7 +838,7 @@ ${postContent.slice(0, 1000)}`;
 
     // Persist generated bytes only to private Storage; provider URLs/data URLs are never durable fallbacks.
     let imageBuffer = generatedImageResult.buffer;
-    let mimeType = (generatedImageResult.contentType || 'image/jpeg').split(';')[0].trim().toLowerCase();
+    let mimeType = (generatedImageResult.mimeType || generatedImageResult.contentType || 'image/jpeg').split(';')[0].trim().toLowerCase();
     if (!imageBuffer && /^https?:\/\//i.test(generatedImageResult.imageUrl || '')) {
       try {
         const imageResponse = await axios.get(generatedImageResult.imageUrl, { responseType: 'arraybuffer', timeout: 20_000 });
@@ -820,6 +849,10 @@ ${postContent.slice(0, 1000)}`;
       }
     }
     if (!userId || !imageBuffer) throw new AppError('Generated image could not be saved to private storage.', 503);
+    const imageFormats = { jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp' };
+    try { mimeType = imageFormats[(await sharp(imageBuffer).metadata()).format]; }
+    catch { throw new AppError('Generated image has invalid bytes.', 502); }
+    if (!mimeType) throw new AppError('Generated image format is unsupported.', 502);
 
     const mainAsset = await privateMediaAccess.createOwnedMediaAsset({
       ownerId: userId,
@@ -828,14 +861,21 @@ ${postContent.slice(0, 1000)}`;
       metadata: { name: `AI_${platform}_${aspectRatio.replace(':', 'x')}_${Date.now()}`, businessProfileId },
     });
     let originalAssetId = null;
+    let originalSaveFailed = false;
     if (generatedImageResult.originalBuffer && generatedImageResult.postProcessed) {
-      const originalAsset = await privateMediaAccess.createOwnedMediaAsset({
-        ownerId: userId,
-        file: { buffer: generatedImageResult.originalBuffer, mimetype: mimeType, originalname: `AI_original_${Date.now()}` },
-        purpose: 'campaign',
-        metadata: { name: `AI_original_${Date.now()}`, businessProfileId },
-      });
-      originalAssetId = originalAsset.id;
+      try {
+        const originalMimeType = imageFormats[(await sharp(generatedImageResult.originalBuffer).metadata()).format];
+        if (!originalMimeType) throw new AppError('Original generated image format is unsupported.', 502);
+        const originalAsset = await privateMediaAccess.createOwnedMediaAsset({
+          ownerId: userId,
+          file: { buffer: generatedImageResult.originalBuffer, mimetype: originalMimeType, originalname: `AI_original_${Date.now()}` },
+          purpose: 'campaign',
+          metadata: { name: `AI_original_${Date.now()}`, businessProfileId },
+        });
+        originalAssetId = originalAsset.id;
+      } catch {
+        originalSaveFailed = true;
+      }
     }
 
     this.recordUsage({
@@ -849,6 +889,7 @@ ${postContent.slice(0, 1000)}`;
     return {
       mediaAssetId: mainAsset.id,
       originalMediaAssetId: originalAssetId,
+      originalSaveFailed,
       prompt,
       aspectRatio,
       provider: generatedImageResult.provider,

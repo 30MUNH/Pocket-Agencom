@@ -1,7 +1,7 @@
 /**
  * AI Service Configuration & Free-Tier Defaults
  * Strictly enforces $0 spending in FREE_ONLY_MODE.
- * Supports Groq, OpenRouter, and Gemini for text generation,
+ * Supports Groq, OpenRouter, Gemini, and Cloudflare Workers AI for text,
  * and Cloudflare Workers AI for image generation.
  */
 
@@ -27,6 +27,7 @@ const aiConfig = {
     groq: process.env.GROQ_MODEL || 'openai/gpt-oss-120b',
     openrouter: process.env.OPENROUTER_MODEL || 'openrouter/free',
     gemini: process.env.GEMINI_MODEL || 'gemini-2.5-flash',
+    cloudflare: process.env.CLOUDFLARE_TEXT_MODEL || '@cf/openai/gpt-oss-20b',
   },
 
   defaultImageModels: {
@@ -56,6 +57,8 @@ const aiConfig = {
     cloudflare: [
       '@cf/black-forest-labs/flux-1-schnell',
       '@cf/stabilityai/stable-diffusion-xl-base-1.0',
+      '@cf/zai-org/glm-4.7-flash',
+      '@cf/openai/gpt-oss-20b',
     ],
   },
 
