@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { ShoppingBag, ShoppingCart, Store, AtSign, Video, ExternalLink, Plus, Trash2, CheckCircle2, AlertCircle, Link as LinkIcon, Sparkles, Loader2, RefreshCw } from 'lucide-react';
 import { toast } from '../../store/toastStore';
 import { analyticsApi } from '../../api/analyticsApi';
@@ -133,6 +133,20 @@ export function validateSocialUrl(platformKey, url) {
   };
 }
 
+export function detectPlatformFromUrl(url) {
+  if (!url || typeof url !== 'string') return null;
+  let formattedUrl = url.trim();
+  if (!/^https?:\/\//i.test(formattedUrl)) {
+    formattedUrl = `https://${formattedUrl}`;
+  }
+  for (const [key, rule] of Object.entries(PLATFORM_VALIDATION_RULES)) {
+    if (rule.pattern.test(formattedUrl)) {
+      return key;
+    }
+  }
+  return null;
+}
+
 export default function SocialLinksManager({ initialLinks = [], onChange }) {
   const availablePlatformKeys = BUSINESS_PLATFORMS;
 
@@ -142,11 +156,101 @@ export default function SocialLinksManager({ initialLinks = [], onChange }) {
   const [isSyncing, setIsSyncing] = useState(false);
   const [scrapedMetrics, setScrapedMetrics] = useState(null);
 
+  // Sync internal links when initialLinks changes from parent
+  useEffect(() => {
+    if (Array.isArray(initialLinks)) {
+      setLinks(initialLinks);
+    }
+  }, [initialLinks]);
+
   // Real-time Validation State
   const validationResult = useMemo(() => {
-    if (!urlInput.trim()) return { isValid: false, error: null };
-    return validateSocialUrl(selectedPlatform, urlInput);
+    if (!urlInput.trim()) return { isValid: false, error: null, formattedUrl: '' };
+
+    let formattedUrl = urlInput.trim();
+    if (!/^https?:\/\//i.test(formattedUrl)) {
+      formattedUrl = `https://${formattedUrl}`;
+    }
+
+    const currentValidation = validateSocialUrl(selectedPlatform, formattedUrl);
+    if (currentValidation.isValid) {
+      return currentValidation;
+    }
+
+    const detected = detectPlatformFromUrl(formattedUrl);
+    if (detected) {
+      return validateSocialUrl(detected, formattedUrl);
+    }
+
+    return currentValidation;
   }, [selectedPlatform, urlInput]);
+
+  const addLinkItem = (platformKey, finalUrl, customMetrics = null) => {
+    const rule = PLATFORM_VALIDATION_RULES[platformKey] || PLATFORM_VALIDATION_RULES.facebook;
+
+    // Check duplicate URL
+    const isDuplicate = links.some(
+      (item) => item.url?.trim().toLowerCase() === finalUrl.trim().toLowerCase()
+    );
+
+    if (isDuplicate) {
+      setUrlInput('');
+      toast.info(`Liên kết ${rule.name} này đã có trong danh sách.`);
+      return false;
+    }
+
+    const newLink = {
+      id: `link-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      platform: platformKey,
+      platformName: rule.name,
+      url: finalUrl,
+      metrics: customMetrics || scrapedMetrics || null,
+    };
+
+    const updatedLinks = [...links, newLink];
+    setLinks(updatedLinks);
+    setUrlInput('');
+    setScrapedMetrics(null);
+    toast.success(`Đã thêm liên kết ${rule.name}!`);
+
+    if (onChange) onChange(updatedLinks);
+    return true;
+  };
+
+  const handlePaste = (e) => {
+    const pasted = e.clipboardData?.getData('text')?.trim();
+    if (!pasted) return;
+
+    let formattedUrl = pasted;
+    if (!/^https?:\/\//i.test(formattedUrl)) {
+      formattedUrl = `https://${formattedUrl}`;
+    }
+
+    // Auto-detect matching platform and select it in the dropdown
+    const detected = detectPlatformFromUrl(formattedUrl);
+    if (detected && detected !== selectedPlatform) {
+      setSelectedPlatform(detected);
+    }
+  };
+
+  const handleUrlChange = (e) => {
+    const val = e.target.value;
+    setUrlInput(val);
+
+    if (val.trim()) {
+      const detected = detectPlatformFromUrl(val);
+      if (detected && detected !== selectedPlatform) {
+        setSelectedPlatform(detected);
+      }
+    }
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleAddLink(e);
+    }
+  };
 
   const handleAutoFetch = async () => {
     if (!validationResult.isValid) {
@@ -180,26 +284,33 @@ export default function SocialLinksManager({ initialLinks = [], onChange }) {
   };
 
   const handleAddLink = (e) => {
-    e.preventDefault();
-    if (!validationResult.isValid) return;
+    if (e) e.preventDefault();
+    if (!urlInput.trim()) {
+      toast.error('Vui lòng nhập đường dẫn URL.');
+      return;
+    }
 
-    // Avoid duplicate platforms or URLs
-    const rule = PLATFORM_VALIDATION_RULES[selectedPlatform];
-    const newLink = {
-      id: `link-${Date.now()}`,
-      platform: selectedPlatform,
-      platformName: rule.name,
-      url: validationResult.formattedUrl,
-      metrics: scrapedMetrics || null,
-    };
+    let formattedUrl = urlInput.trim();
+    if (!/^https?:\/\//i.test(formattedUrl)) {
+      formattedUrl = `https://${formattedUrl}`;
+    }
 
-    const updatedLinks = [...links, newLink];
-    setLinks(updatedLinks);
-    setUrlInput('');
-    setScrapedMetrics(null);
-    toast.success(`Đã thêm liên kết ${rule.name}!`);
+    let targetPlatform = selectedPlatform;
+    if (!validateSocialUrl(selectedPlatform, formattedUrl).isValid) {
+      const detected = detectPlatformFromUrl(formattedUrl);
+      if (detected) {
+        targetPlatform = detected;
+        setSelectedPlatform(detected);
+      }
+    }
 
-    if (onChange) onChange(updatedLinks);
+    const checkValid = validateSocialUrl(targetPlatform, formattedUrl);
+    if (!checkValid.isValid) {
+      toast.error(checkValid.error || 'Đường dẫn không hợp lệ với nền tảng đã chọn.');
+      return;
+    }
+
+    addLinkItem(targetPlatform, checkValid.formattedUrl);
   };
 
   const handleDeleteLink = (id) => {
@@ -226,7 +337,7 @@ export default function SocialLinksManager({ initialLinks = [], onChange }) {
       </div>
 
       {/* Form Controls */}
-      <form onSubmit={handleAddLink} className="space-y-4">
+      <div className="space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {/* Platform Selector */}
           <div>
@@ -260,9 +371,11 @@ export default function SocialLinksManager({ initialLinks = [], onChange }) {
             <div className="relative">
               <input
                 type="text"
-                placeholder={`Nhập đường dẫn ${PLATFORM_VALIDATION_RULES[selectedPlatform]?.name}...`}
+                placeholder={`Nhập hoặc dán đường dẫn ${PLATFORM_VALIDATION_RULES[selectedPlatform]?.name}...`}
                 value={urlInput}
-                onChange={(e) => setUrlInput(e.target.value)}
+                onChange={handleUrlChange}
+                onPaste={handlePaste}
+                onKeyDown={handleKeyDown}
                 className={`w-full pl-3.5 pr-10 py-3 rounded-2xl bg-surface-container-lowest dark:bg-surface-container border text-xs focus:outline-none focus:ring-2 ${
                   urlInput.trim()
                     ? validationResult.isValid
@@ -310,14 +423,15 @@ export default function SocialLinksManager({ initialLinks = [], onChange }) {
           </button>
 
           <button
-            type="submit"
+            type="button"
+            onClick={handleAddLink}
             disabled={!validationResult.isValid}
             className="px-6 py-2.5 rounded-full bg-primary hover:bg-primary/90 text-on-primary text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <Plus size={15} /> Thêm liên kết
           </button>
         </div>
-      </form>
+      </div>
 
       {/* Added Links List */}
       <div className="pt-2 space-y-3">
