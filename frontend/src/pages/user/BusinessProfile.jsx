@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import { authApi } from '../../api/authApi';
 import { toast } from '../../store/toastStore';
-import SocialLinksManager from '../../components/ui/SocialLinksManager';
+import SocialLinksManager, { PLATFORM_VALIDATION_RULES } from '../../components/ui/SocialLinksManager';
 import CumulativeMediaAnalytics from '../../components/analytics/CumulativeMediaAnalytics';
 
 function FacebookIcon({ className }) {
@@ -92,6 +92,9 @@ export default function BusinessProfile() {
     monthlyMarketingBudget: ''
   });
 
+  // Managed social platforms state for SocialLinksManager
+  const [managedSocialLinks, setManagedSocialLinks] = useState([]);
+
   // One URL input per major platform: { tiktok: '', facebook: '', instagram: '' }
   const [socialForm, setSocialForm] = useState(
     Object.fromEntries(SOCIAL_PLATFORMS.map((p) => [p.key, '']))
@@ -125,6 +128,14 @@ export default function BusinessProfile() {
           monthlyMarketingBudget: user.businessProfile.monthlyMarketingBudget || ''
         });
         setSocialForm(buildSocialForm(user.businessProfile.socialPlatforms));
+        const formattedPlatforms = (user.businessProfile.socialPlatforms || []).map((sp) => ({
+          id: String(sp.id || `link-${sp.platform}`),
+          platform: sp.platform,
+          platformName: PLATFORM_VALIDATION_RULES?.[sp.platform]?.name || sp.platform,
+          url: sp.url,
+          metrics: sp.metrics || null,
+        }));
+        setManagedSocialLinks(formattedPlatforms);
       }
     } catch (err) {
       console.error('Failed to fetch profile:', err);
@@ -141,8 +152,8 @@ export default function BusinessProfile() {
     e.preventDefault();
     setIsSaving(true);
     try {
-      const socialLinks = SOCIAL_PLATFORMS
-        .map(({ key }) => ({ platform: key, url: socialForm[key].trim() }))
+      const socialLinks = managedSocialLinks
+        .map(({ platform, url }) => ({ platform, url: (url || '').trim() }))
         .filter((item) => item.url !== '');
 
       const updatedProfile = await authApi.updateBusinessProfile({ ...form, socialLinks });
@@ -426,10 +437,8 @@ export default function BusinessProfile() {
           {/* Bento Card 4: Kênh Bán Hàng & Thương Mại Điện Tử (SME) */}
           <SocialLinksManager
             userRole="SME"
-            initialLinks={[
-              { id: '1', platform: 'shopee', platformName: 'Shopee', url: 'https://shopee.vn/official_store' },
-              { id: '2', platform: 'tiktok_shop', platformName: 'TikTok Shop', url: 'https://tiktok.com/@official_shop' }
-            ]}
+            initialLinks={managedSocialLinks}
+            onChange={setManagedSocialLinks}
           />
 
           <div className="flex gap-4 justify-end pt-4">
