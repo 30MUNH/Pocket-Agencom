@@ -129,6 +129,7 @@ model BusinessProfile {
   marketingPlans  MarketingPlan[]
   socialPlatforms SocialPlatform[]
 
+  @@unique([userId, id])
   @@map("business_profiles")
 }
 
@@ -204,8 +205,19 @@ model KnowledgeBase {
   content   String                      @db.Text
   metadata  Json?
   embedding Unsupported("vector(768)")?
+  scope               String    @default("unclassified")
+  ownerUserId         Int?      @map("owner_user_id")
+  businessProfileId   Int?      @map("business_profile_id")
+  approvedByUserId    Int?      @map("approved_by_user_id")
+  approvedAt          DateTime? @map("approved_at")
+  embeddingProvider   String?   @map("embedding_provider")
+  embeddingModel      String?   @map("embedding_model")
+  embeddingVersion    String?   @map("embedding_version")
+  embeddingDimensions Int?      @map("embedding_dimensions")
   createdAt DateTime                    @default(now()) @map("created_at")
 
+  @@index([scope, ownerUserId, businessProfileId])
+  @@index([scope, embeddingModel, embeddingVersion])
   @@map("knowledge_base")
 }
 

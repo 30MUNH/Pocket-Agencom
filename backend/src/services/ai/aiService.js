@@ -532,7 +532,10 @@ YÊU CẦU NỘI DUNG:
 
     // RAG Enrichment: find similar past successful strategies
     try {
-      const similar = await findSimilarStrategies(`${data.businessType} - ${data.campaignType} - ${data.goal}`);
+      const similar = await findSimilarStrategies(
+        `${data.businessType} - ${data.campaignType} - ${data.goal}`,
+        { userId, businessProfileId: profile?.id },
+      );
       if (similar && similar.length > 0) {
         userPrompt += `\n\nTham khảo các chiến lược case study đã thành công:\n${similar.map((s, i) => `--- Case study ${i + 1} ---\n${s.content}`).join('\n\n')}`;
       }
