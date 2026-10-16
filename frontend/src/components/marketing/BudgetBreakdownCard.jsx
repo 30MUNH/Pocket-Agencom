@@ -57,32 +57,29 @@ export default function BudgetBreakdownCard({ rawBudget, budgetBreakdown }) {
     }));
 
     return (
-      <section className="bg-surface-container-lowest dark:bg-tertiary-container rounded-[2rem] p-6 md:p-8 shadow-ambient border border-surface-variant/30 relative overflow-hidden w-full transition-all">
-        {/* Decorative Glow */}
-        <div className="absolute -bottom-12 -left-12 w-48 h-48 bg-secondary-container/20 dark:bg-secondary-fixed-dim/5 rounded-full blur-3xl pointer-events-none" />
-
+      <section className="bg-white rounded-2xl p-7 shadow-sm border border-slate-200/80 relative overflow-hidden w-full transition-all">
         {/* Card Header */}
-        <div className="flex flex-col gap-4 border-b border-surface-variant/30 pb-6 relative z-10">
+        <div className="flex flex-col gap-4 border-b border-slate-100 pb-5 relative z-10">
           <div className="flex items-start gap-3">
-            <div className="w-10 h-10 rounded-xl bg-primary text-on-primary flex items-center justify-center shadow-md shrink-0 mt-0.5">
+            <div className="w-9 h-9 rounded-xl bg-[#FFCED2] text-slate-900 flex items-center justify-center shrink-0 mt-0.5">
               <Wallet size={18} />
             </div>
             <div>
-              <h3 className="text-lg font-bold text-primary dark:text-inverse-primary leading-snug">
+              <h3 className="text-base font-bold text-slate-900 leading-snug">
                 Phân Bổ Ngân Sách Đề Xuất
               </h3>
-              <p className="text-xs text-on-surface-variant mt-1 leading-relaxed">
+              <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">
                 Chi tiết phân bổ tài chính theo kênh triển khai chiến dịch
               </p>
             </div>
           </div>
 
           {/* Total Budget Pill */}
-          <div className="bg-surface-container-low dark:bg-surface-variant/20 px-4 py-3 rounded-2xl border border-surface-variant/30 flex flex-col items-start justify-center w-full mt-1">
-            <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">
+          <div className="bg-slate-50 px-4 py-3 rounded-xl border border-slate-200/80 flex flex-col items-start justify-center w-full mt-1">
+            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
               Tổng ngân sách đề xuất
             </span>
-            <span className="text-xl font-bold text-primary dark:text-inverse-primary font-display mt-1">
+            <span className="text-xl font-bold text-slate-900 mt-0.5">
               {formatVnd(totalBudget)}
             </span>
           </div>
@@ -90,15 +87,15 @@ export default function BudgetBreakdownCard({ rawBudget, budgetBreakdown }) {
 
         {/* Tabs Selector — Dynamic */}
         {channels.length > 1 && (
-          <div className="flex gap-2 p-1.5 bg-surface-container-low dark:bg-surface-variant/10 rounded-2xl mt-6 relative z-10 flex-wrap">
+          <div className="flex gap-1.5 p-1 bg-slate-100 rounded-xl mt-5 relative z-10 flex-wrap">
             {channels.map((ch, idx) => (
               <button
                 key={idx}
                 onClick={() => setActiveTabIdx(idx)}
-                className={`flex-1 min-w-0 py-3 px-3 rounded-xl font-label-sm text-label-sm transition-all flex items-center justify-center gap-2 ${
+                className={`flex-1 min-w-0 py-2.5 px-3 rounded-lg text-xs transition-all flex items-center justify-center gap-2 ${
                   activeTabIdx === idx
-                    ? 'bg-secondary text-on-secondary shadow-md font-bold'
-                    : 'text-on-surface-variant hover:text-primary hover:bg-surface-container-high/50'
+                    ? 'bg-[#FFCED2] text-slate-900 font-bold shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900 font-medium'
                 }`}
               >
                 <ChannelIcon name={ch.channelName} size={16} />
@@ -167,35 +164,33 @@ export default function BudgetBreakdownCard({ rawBudget, budgetBreakdown }) {
 
   /* ── Fallback (no AI breakdown — old plans) ────────────────────────────────── */
   return (
-    <section className="bg-surface-container-lowest dark:bg-tertiary-container rounded-[2rem] p-6 md:p-8 shadow-ambient border border-surface-variant/30 relative overflow-hidden w-full transition-all">
-      <div className="absolute -bottom-12 -left-12 w-48 h-48 bg-secondary-container/20 dark:bg-secondary-fixed-dim/5 rounded-full blur-3xl pointer-events-none" />
-
-      <div className="flex flex-col gap-4 border-b border-surface-variant/30 pb-6 relative z-10">
+    <section className="bg-white rounded-2xl p-7 shadow-sm border border-slate-200/80 relative overflow-hidden w-full transition-all">
+      <div className="flex flex-col gap-4 border-b border-slate-100 pb-5 relative z-10">
         <div className="flex items-start gap-3">
-          <div className="w-10 h-10 rounded-xl bg-primary text-on-primary flex items-center justify-center shadow-md shrink-0 mt-0.5">
+          <div className="w-9 h-9 rounded-xl bg-[#FFCED2] text-slate-900 flex items-center justify-center shrink-0 mt-0.5">
             <Wallet size={18} />
           </div>
           <div>
-            <h3 className="text-lg font-bold text-primary dark:text-inverse-primary leading-snug">
+            <h3 className="text-base font-bold text-slate-900 leading-snug">
               Phân Bổ Ngân Sách Đề Xuất
             </h3>
-            <p className="text-xs text-on-surface-variant mt-1 leading-relaxed">
+            <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">
               Chưa có dữ liệu phân bổ chi tiết từ AI. Tạo chiến dịch mới để nhận phân bổ ngân sách tự động.
             </p>
           </div>
         </div>
 
-        <div className="bg-surface-container-low dark:bg-surface-variant/20 px-4 py-3 rounded-2xl border border-surface-variant/30 flex flex-col items-start justify-center w-full mt-1">
-          <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">
+        <div className="bg-slate-50 px-4 py-3 rounded-xl border border-slate-200/80 flex flex-col items-start justify-center w-full mt-1">
+          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
             Tổng ngân sách đề xuất
           </span>
-          <span className="text-xl font-bold text-primary dark:text-inverse-primary font-display mt-1">
+          <span className="text-xl font-bold text-slate-900 mt-0.5">
             {formatVnd(totalBudget)}
           </span>
         </div>
       </div>
 
-      <p className="mt-6 text-[11px] text-on-surface-variant/70 italic relative z-10">
+      <p className="mt-5 text-[11px] text-slate-400 italic relative z-10">
         * Để nhận phân bổ ngân sách chi tiết theo kênh, vui lòng tạo chiến dịch mới.
       </p>
     </section>

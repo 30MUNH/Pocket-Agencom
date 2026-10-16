@@ -121,42 +121,44 @@ export default function GenerateMarketingKit() {
       )}
 
       {/* Stepper tracker */}
-      <div className="mb-12 flex items-center justify-between relative max-w-3xl mx-auto py-4">
+      <div className="mb-10 flex items-center justify-between relative max-w-2xl mx-auto py-2">
         {/* Connection progress bar line background */}
-        <div className="absolute top-1/2 -translate-y-1/2 left-0 right-0 h-[2px] bg-surface-container-high dark:bg-outline/20 -z-10" />
-        <div className="absolute top-1/2 -translate-y-1/2 left-0 w-[50%] h-[2px] bg-secondary dark:bg-secondary-fixed -z-10" />
+        <div className="absolute top-1/2 -translate-y-1/2 left-0 right-0 h-[2px] bg-slate-200 -z-10" />
+        <div className="absolute top-1/2 -translate-y-1/2 left-0 w-[50%] h-[2px] bg-slate-900 -z-10" />
 
         {/* Step 1: Basics */}
-        <div className="flex flex-col items-center gap-2">
-          <div className="w-10 h-10 rounded-full flex items-center justify-center bg-secondary text-on-secondary ring-4 ring-background dark:ring-surface shadow-sm">
-            <Check size={18} />
+        <div className="flex flex-col items-center gap-1.5">
+          <div className="w-9 h-9 rounded-full flex items-center justify-center bg-slate-900 text-white ring-4 ring-white shadow-xs">
+            <Check size={16} />
           </div>
-          <span className="font-label-sm text-label-sm text-secondary dark:text-secondary-fixed">Cơ bản</span>
+          <span className="text-xs font-semibold text-slate-700">Cơ bản</span>
         </div>
 
         {/* Step 2: Details */}
-        <div className="flex flex-col items-center gap-2">
-          <div className="w-10 h-10 rounded-full flex items-center justify-center bg-primary text-on-primary ring-4 ring-background dark:ring-surface shadow-[0_4px_12px_rgba(255,143,163,0.2)] font-bold">
+        <div className="flex flex-col items-center gap-1.5">
+          <div className="w-9 h-9 rounded-full flex items-center justify-center bg-[#FFCED2] text-slate-900 ring-4 ring-white shadow-xs font-bold text-sm">
             2
           </div>
-          <span className="font-label-sm text-label-sm text-primary dark:text-inverse-primary font-bold">Chi tiết</span>
+          <span className="text-xs font-bold text-slate-900">Chi tiết</span>
         </div>
 
         {/* Step 3: Review */}
-        <div className="flex flex-col items-center gap-2">
-          <div className="w-10 h-10 rounded-full flex items-center justify-center bg-surface-container-high text-on-surface-variant ring-4 ring-background dark:ring-surface font-semibold">
+        <div className="flex flex-col items-center gap-1.5">
+          <div className="w-9 h-9 rounded-full flex items-center justify-center bg-slate-100 text-slate-400 ring-4 ring-white font-semibold text-sm">
             3
           </div>
-          <span className="font-label-sm text-label-sm text-on-surface-variant">Xem lại</span>
+          <span className="text-xs font-medium text-slate-400">Xem lại</span>
         </div>
       </div>
 
       {/* Trend Prefill Notification Banner */}
       {trendData && (
-        <div className="bg-secondary-container/30 border border-secondary-container rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 animate-fade-in">
+        <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 animate-fade-in shadow-xs">
           <div className="flex items-center gap-3">
-            <Sparkles className="text-secondary shrink-0 animate-pulse" size={20} />
-            <p className="text-body-md text-primary font-medium text-sm">
+            <div className="w-8 h-8 rounded-lg bg-[#FFCED2] flex items-center justify-center text-slate-900 shrink-0">
+              <Sparkles size={16} />
+            </div>
+            <p className="text-slate-800 font-medium text-sm">
               Đang áp dụng dữ liệu gợi ý từ xu hướng tiếp thị. Bạn có thể tự do điều chỉnh các thông tin bên dưới.
             </p>
           </div>
@@ -169,7 +171,7 @@ export default function GenerateMarketingKit() {
               setPrimaryGoal('500 lượt đăng ký mới và tỷ lệ chuyển đổi 10%');
               navigate(location.pathname, { replace: true, state: {} });
             }}
-            className="text-xs text-secondary hover:text-primary font-bold underline whitespace-nowrap"
+            className="text-xs text-slate-900 hover:text-slate-700 font-bold underline whitespace-nowrap"
           >
             Khôi phục mặc định
           </button>
@@ -177,21 +179,21 @@ export default function GenerateMarketingKit() {
       )}
 
       {/* Bento Grid Form */}
-      <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-12 gap-gutter">
+      <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-12 gap-6">
         {/* Left Column: Context Card & Audience Card */}
-        <div className="md:col-span-8 flex flex-col gap-gutter">
+        <div className="md:col-span-8 flex flex-col gap-6">
           {/* Business Context Card */}
-          <div className="bg-surface-container-lowest dark:bg-tertiary-container rounded-[2rem] p-8 shadow-[4px_24px_40px_rgba(255,143,163,0.08)] border border-surface-variant/50 relative overflow-hidden space-y-6">
-            <div className="absolute -right-20 -top-20 w-64 h-64 bg-secondary-container/20 dark:bg-secondary-fixed/5 rounded-full blur-3xl pointer-events-none" />
-            
-            <h3 className="text-headline-md text-primary dark:text-inverse-primary font-bold flex items-center gap-3">
-              <Store className="text-secondary dark:text-secondary-fixed-dim" size={24} />
+          <div className="bg-white rounded-2xl p-7 shadow-sm border border-slate-200/80 space-y-5">
+            <h3 className="text-xl text-slate-900 font-bold flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-[#FFCED2] flex items-center justify-center text-slate-900 shrink-0">
+                <Store size={18} />
+              </div>
               Bối cảnh Doanh nghiệp
             </h3>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <label htmlFor="campaign-business-type" className="block text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div className="space-y-1.5">
+                <label htmlFor="campaign-business-type" className="block text-xs font-bold text-slate-600 uppercase tracking-wider">
                   Loại hình Doanh nghiệp
                 </label>
                 <div className="relative">
@@ -199,19 +201,19 @@ export default function GenerateMarketingKit() {
                     id="campaign-business-type"
                     value={businessType}
                     onChange={(e) => setBusinessType(e.target.value)}
-                    className="w-full bg-surface-container dark:bg-surface-variant/20 border-none rounded-xl px-4 py-3.5 text-body-md text-primary dark:text-inverse-primary appearance-none cursor-pointer focus:ring-2 focus:ring-secondary focus:bg-surface-container-lowest dark:focus:bg-surface-container-lowest transition-all"
+                    className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-900 appearance-none cursor-pointer focus:outline-none focus:border-slate-900 transition-all shadow-xs"
                   >
                     <option value="ecommerce">Thương mại điện tử</option>
                     <option value="saas">Phần mềm dịch vụ (SaaS)</option>
                     <option value="local">Dịch vụ địa phương</option>
                     <option value="agency">Đại lý / Tư vấn</option>
                   </select>
-                  <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-on-surface-variant" size={18} />
+                  <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400" size={16} />
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <label htmlFor="campaign-type" className="block text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">
+              <div className="space-y-1.5">
+                <label htmlFor="campaign-type" className="block text-xs font-bold text-slate-600 uppercase tracking-wider">
                   Loại hình Chiến dịch
                 </label>
                 <div className="relative">
@@ -219,20 +221,20 @@ export default function GenerateMarketingKit() {
                     id="campaign-type"
                     value={campaignType}
                     onChange={(e) => setCampaignType(e.target.value)}
-                    className="w-full bg-surface-container dark:bg-surface-variant/20 border-none rounded-xl px-4 py-3.5 text-body-md text-primary dark:text-inverse-primary appearance-none cursor-pointer focus:ring-2 focus:ring-secondary focus:bg-surface-container-lowest dark:focus:bg-surface-container-lowest transition-all"
+                    className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-900 appearance-none cursor-pointer focus:outline-none focus:border-slate-900 transition-all shadow-xs"
                   >
                     <option value="awareness">Nhận diện Thương hiệu</option>
                     <option value="leads">Thu thập Khách hàng tiềm năng</option>
                     <option value="sales">Bán hàng Trực tiếp</option>
                     <option value="retention">Giữ chân Khách hàng</option>
                   </select>
-                  <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-on-surface-variant" size={18} />
+                  <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400" size={16} />
                 </div>
               </div>
             </div>
 
-            <div className="space-y-2">
-              <label htmlFor="product-description" className="block text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">
+            <div className="space-y-1.5">
+              <label htmlFor="product-description" className="block text-xs font-bold text-slate-600 uppercase tracking-wider">
                 Mô tả Sản phẩm / Dịch vụ
               </label>
               <textarea
@@ -241,20 +243,22 @@ export default function GenerateMarketingKit() {
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Mô tả ngắn gọn những gì bạn đang tiếp thị. Nêu bật các lợi ích chính hoặc điểm bán hàng độc nhất (USP)..."
                 rows={4}
-                className="w-full bg-surface-container dark:bg-surface-variant/20 border-none rounded-xl px-4 py-3.5 text-body-md text-primary dark:text-inverse-primary resize-none focus:ring-2 focus:ring-secondary focus:bg-surface-container-lowest dark:focus:bg-surface-container-lowest transition-all"
+                className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-900 resize-none focus:outline-none focus:border-slate-900 transition-all shadow-xs leading-relaxed"
               />
             </div>
           </div>
 
           {/* Target Audience Card */}
-          <div className="bg-surface-container-lowest dark:bg-tertiary-container rounded-[2rem] p-8 shadow-[4px_24px_40px_rgba(255,143,163,0.08)] border border-surface-variant/50 space-y-6">
-            <h3 className="text-headline-md text-primary dark:text-inverse-primary font-bold flex items-center gap-3">
-              <Users className="text-secondary dark:text-secondary-fixed-dim" size={24} />
+          <div className="bg-white rounded-2xl p-7 shadow-sm border border-slate-200/80 space-y-4">
+            <h3 className="text-xl text-slate-900 font-bold flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-[#FFCED2] flex items-center justify-center text-slate-900 shrink-0">
+                <Users size={18} />
+              </div>
               Khách hàng Mục tiêu
             </h3>
 
-            <div className="space-y-2">
-              <label htmlFor="target-customer" className="block text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">
+            <div className="space-y-1.5">
+              <label htmlFor="target-customer" className="block text-xs font-bold text-slate-600 uppercase tracking-wider">
                 Chân dung Khách hàng Mục tiêu
               </label>
               <input
@@ -263,20 +267,22 @@ export default function GenerateMarketingKit() {
                 value={customerProfile}
                 onChange={(e) => setCustomerProfile(e.target.value)}
                 placeholder="Ví dụ: Chủ doanh nghiệp nhỏ từ 30-50 tuổi muốn tự động hóa quy trình làm việc"
-                className="w-full bg-surface-container dark:bg-surface-variant/20 border-none rounded-xl px-4 py-3.5 text-body-md text-primary dark:text-inverse-primary focus:ring-2 focus:ring-secondary focus:bg-surface-container-lowest dark:focus:bg-surface-container-lowest transition-all"
+                className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-900 focus:outline-none focus:border-slate-900 transition-all shadow-xs"
               />
             </div>
           </div>
 
           {/* Deployment Details Card */}
-          <div className="bg-surface-container-lowest dark:bg-tertiary-container rounded-[2rem] p-8 shadow-[4px_24px_40px_rgba(255,143,163,0.08)] border border-surface-variant/50 space-y-6">
-            <h3 className="text-headline-md text-primary dark:text-inverse-primary font-bold flex items-center gap-3">
-              <Layers className="text-secondary dark:text-secondary-fixed-dim" size={24} />
+          <div className="bg-white rounded-2xl p-7 shadow-sm border border-slate-200/80 space-y-4">
+            <h3 className="text-xl text-slate-900 font-bold flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-[#FFCED2] flex items-center justify-center text-slate-900 shrink-0">
+                <Layers size={18} />
+              </div>
               Chi tiết Triển khai
             </h3>
 
-            <div className="space-y-2">
-              <label htmlFor="deployment-channels" className="block text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">
+            <div className="space-y-1.5">
+              <label htmlFor="deployment-channels" className="block text-xs font-bold text-slate-600 uppercase tracking-wider">
                 Kênh triển khai
               </label>
               <input
@@ -285,12 +291,12 @@ export default function GenerateMarketingKit() {
                 value={channels}
                 onChange={(e) => setChannels(e.target.value)}
                 placeholder="Chiến dịch diễn ra chủ yếu ở đâu ? ( Tiktok, Facebook,...)"
-                className="w-full bg-surface-container dark:bg-surface-variant/20 border-none rounded-xl px-4 py-3.5 text-body-md text-primary dark:text-inverse-primary focus:ring-2 focus:ring-secondary focus:bg-surface-container-lowest dark:focus:bg-surface-container-lowest transition-all"
+                className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-900 focus:outline-none focus:border-slate-900 transition-all shadow-xs"
               />
             </div>
 
-            <div className="space-y-2">
-              <label htmlFor="existing-resources" className="block text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">
+            <div className="space-y-1.5">
+              <label htmlFor="existing-resources" className="block text-xs font-bold text-slate-600 uppercase tracking-wider">
                 Tài nguyên hiện có
               </label>
               <input
@@ -299,12 +305,12 @@ export default function GenerateMarketingKit() {
                 value={resources}
                 onChange={(e) => setResources(e.target.value)}
                 placeholder="Có ảnh chụp sản phẩm thật, có video feedback của khách,..."
-                className="w-full bg-surface-container dark:bg-surface-variant/20 border-none rounded-xl px-4 py-3.5 text-body-md text-primary dark:text-inverse-primary focus:ring-2 focus:ring-secondary focus:bg-surface-container-lowest dark:focus:bg-surface-container-lowest transition-all"
+                className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-900 focus:outline-none focus:border-slate-900 transition-all shadow-xs"
               />
             </div>
 
-            <div className="space-y-2">
-              <label htmlFor="campaign-reason" className="block text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">
+            <div className="space-y-1.5">
+              <label htmlFor="campaign-reason" className="block text-xs font-bold text-slate-600 uppercase tracking-wider">
                 Lý do triển khai chiến dịch
               </label>
               <input
@@ -313,22 +319,24 @@ export default function GenerateMarketingKit() {
                 value={campaignReason}
                 onChange={(e) => setCampaignReason(e.target.value)}
                 placeholder="Cần xả kho, Nhân dịp Trung thu,..."
-                className="w-full bg-surface-container dark:bg-surface-variant/20 border-none rounded-xl px-4 py-3.5 text-body-md text-primary dark:text-inverse-primary focus:ring-2 focus:ring-secondary focus:bg-surface-container-lowest dark:focus:bg-surface-container-lowest transition-all"
+                className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-900 focus:outline-none focus:border-slate-900 transition-all shadow-xs"
               />
             </div>
           </div>
         </div>
 
         {/* Right Column: Parameters and Checkout Button */}
-        <div className="md:col-span-4 flex flex-col gap-gutter justify-between">
-          <div className="bg-surface-container-lowest dark:bg-tertiary-container rounded-[2rem] p-8 shadow-[4px_24px_40px_rgba(255,143,163,0.08)] border border-surface-variant/50 space-y-6">
-            <h3 className="text-headline-md text-primary dark:text-inverse-primary font-bold flex items-center gap-3">
-              <Target className="text-secondary dark:text-secondary-fixed-dim" size={24} />
+        <div className="md:col-span-4 flex flex-col gap-6 justify-between">
+          <div className="bg-white rounded-2xl p-7 shadow-sm border border-slate-200/80 space-y-5">
+            <h3 className="text-xl text-slate-900 font-bold flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-[#FFCED2] flex items-center justify-center text-slate-900 shrink-0">
+                <Target size={18} />
+              </div>
               Thông số
             </h3>
 
-            <div className="space-y-2">
-              <label htmlFor="primary-goal" className="block text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">
+            <div className="space-y-1.5">
+              <label htmlFor="primary-goal" className="block text-xs font-bold text-slate-600 uppercase tracking-wider">
                 Mục tiêu Chính
               </label>
               <input
@@ -337,12 +345,12 @@ export default function GenerateMarketingKit() {
                 value={primaryGoal}
                 onChange={(e) => setPrimaryGoal(e.target.value)}
                 placeholder="Ví dụ: 50 lượt đăng ký mới trong tháng này"
-                className="w-full bg-surface-container dark:bg-surface-variant/20 border-none rounded-xl px-4 py-3.5 text-body-md text-primary dark:text-inverse-primary focus:ring-2 focus:ring-secondary focus:bg-surface-container-lowest dark:focus:bg-surface-container-lowest transition-all"
+                className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-900 focus:outline-none focus:border-slate-900 transition-all shadow-xs"
               />
             </div>
 
-            <div className="space-y-2">
-              <label htmlFor="estimated-budget" className="block text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">
+            <div className="space-y-1.5">
+              <label htmlFor="estimated-budget" className="block text-xs font-bold text-slate-600 uppercase tracking-wider">
                 Ngân sách Ước tính (VND)
               </label>
               <MoneyInput
@@ -350,21 +358,23 @@ export default function GenerateMarketingKit() {
                 value={budget}
                 onChange={setBudget}
                 placeholder="1.000.000"
-                inputClassName="w-full bg-surface-container dark:bg-surface-variant/20 border-none rounded-xl pl-4 pr-20 py-3.5 text-body-md text-primary dark:text-inverse-primary focus:ring-2 focus:ring-secondary focus:bg-surface-container-lowest dark:focus:bg-surface-container-lowest transition-all"
+                inputClassName="w-full bg-white border border-slate-200 rounded-xl pl-4 pr-16 py-3 text-sm text-slate-900 focus:outline-none focus:border-slate-900 transition-all shadow-xs"
               />
             </div>
           </div>
 
           {/* Submit action card */}
-          <div className="bg-secondary-container/20 dark:bg-secondary-fixed-dim/5 border border-secondary-container dark:border-outline/20 rounded-[2rem] p-8 flex flex-col items-center justify-center text-center">
-            <Wand2 className="text-secondary dark:text-secondary-fixed-dim mb-4" size={48} />
-            <h4 className="text-headline-md text-primary dark:text-inverse-primary font-bold mb-2">Sẵn sàng Thiết lập?</h4>
-            <p className="text-body-md text-on-surface-variant mb-6">
-              Xem lại thông tin nhập của bạn và để hệ thống của chúng tôi tạo bộ công cụ toàn diện.
+          <div className="bg-slate-900 rounded-2xl p-7 flex flex-col items-center justify-center text-center text-white shadow-lg border border-slate-800">
+            <div className="w-14 h-14 rounded-2xl bg-[#FFCED2] flex items-center justify-center text-slate-900 mb-4 shadow-sm">
+              <Wand2 size={28} />
+            </div>
+            <h4 className="text-xl text-white font-bold mb-2">Sẵn sàng Thiết lập?</h4>
+            <p className="text-sm text-slate-300 mb-6 leading-relaxed">
+              Xem lại thông tin và để hệ thống AI khởi tạo toàn bộ chiến dịch tối ưu cho bạn.
             </p>
             <button
               type="submit"
-              className="w-full bg-secondary text-on-secondary font-label-sm text-label-sm py-4 rounded-full hover:bg-secondary/95 transition-all shadow-[0_4px_12px_rgba(109,89,91,0.2)] hover:-translate-y-0.5 active:translate-y-0 flex justify-center items-center gap-2 uppercase tracking-wider font-bold"
+              className="w-full bg-[#FFCED2] hover:bg-[#ffbfc5] text-slate-900 py-3.5 px-6 rounded-xl transition-all font-bold text-sm flex justify-center items-center gap-2 shadow-sm"
             >
               Tạo Bộ công cụ Marketing
               <ArrowRight size={16} />

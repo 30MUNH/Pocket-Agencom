@@ -39,31 +39,31 @@ export default function Header({ onMenuClick, isMenuOpen, user, userRole }) {
   const userInitial = user?.name?.trim()?.[0]?.toLocaleUpperCase('vi-VN') || '?';
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-surface-variant bg-white px-gutter">
+    <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-slate-200/80 bg-white px-6">
       <div className="flex min-w-0 flex-1 items-center gap-4">
         <button
           onClick={onMenuClick}
           type="button"
           aria-label={isMenuOpen ? 'Đóng điều hướng' : 'Mở điều hướng'}
           aria-expanded={isMenuOpen}
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-on-surface hover:bg-surface-container transition-colors lg:hidden"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-slate-700 hover:bg-slate-100 transition-colors lg:hidden"
         >
           <Menu size={20} aria-hidden="true" />
         </button>
         <div className="min-w-0">
-          <p className="truncate text-sm font-semibold text-on-surface">{pageTitle}</p>
-          <p className="hidden text-xs text-on-surface-variant sm:block">Pocket Agencom</p>
+          <p className="truncate text-base font-bold text-slate-900">{pageTitle}</p>
+          <p className="hidden text-xs text-slate-500 sm:block">Pocket Agencom</p>
         </div>
       </div>
 
-      <div className="flex shrink-0 items-center gap-2 sm:gap-3">
-        <span className="hidden rounded-full bg-surface-container px-3 py-1.5 text-xs font-semibold text-on-surface-variant sm:inline-flex">
+      <div className="flex shrink-0 items-center gap-2.5 sm:gap-3.5">
+        <span className="hidden rounded-full bg-[#FFCED2] px-3 py-1 text-xs font-bold text-slate-900 sm:inline-flex shadow-xs">
           {ROLE_LABELS[userRole] || userRole}
         </span>
 
         <div className="hidden min-w-0 max-w-48 flex-col items-end sm:flex">
-          <span className="truncate text-xs font-semibold text-on-surface">{user?.name}</span>
-          <span className="truncate text-[11px] text-on-surface-variant">{user?.email}</span>
+          <span className="truncate text-xs font-bold text-slate-900">{user?.name}</span>
+          <span className="truncate text-[11px] text-slate-500">{user?.email}</span>
         </div>
 
         <button
@@ -71,12 +71,12 @@ export default function Header({ onMenuClick, isMenuOpen, user, userRole }) {
           type="button"
           aria-label="Đăng xuất"
           title="Đăng xuất"
-          className="flex h-11 w-11 items-center justify-center rounded-lg text-on-surface-variant transition-colors hover:bg-error-container hover:text-error"
+          className="flex h-9 w-9 items-center justify-center rounded-xl text-slate-500 transition-colors hover:bg-red-50 hover:text-red-600"
         >
-          <LogOut size={18} aria-hidden="true" />
+          <LogOut size={17} aria-hidden="true" />
         </button>
 
-        <div aria-label={user?.name ? `Tài khoản ${user.name}` : 'Tài khoản'} className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary-container text-sm font-semibold text-primary">
+        <div aria-label={user?.name ? `Tài khoản ${user.name}` : 'Tài khoản'} className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-slate-900 text-xs font-bold text-white shadow-xs">
           {user?.avatarMediaAssetId || user?.avatarUrl
             ? <AuthorizedMediaImage assetId={user?.avatarMediaAssetId} legacyUrl={user?.avatarUrl} alt="" className="h-full w-full object-cover" />
             : <span aria-hidden="true">{userInitial}</span>}

@@ -172,10 +172,10 @@ export default function TemplateLibrary() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`whitespace-nowrap px-6 py-2.5 rounded-full text-label-sm font-label-sm transition-all duration-200 shadow-sm ${
+              className={`whitespace-nowrap px-5 py-2 rounded-xl text-xs font-semibold transition-all shadow-xs ${
                 activeTab === tab.id
-                  ? 'bg-secondary-container text-on-secondary-container font-semibold'
-                  : 'bg-surface-container-lowest dark:bg-tertiary-container text-on-surface-variant hover:bg-secondary-container/30'
+                  ? 'bg-[#FFCED2] text-slate-900 font-bold'
+                  : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-200/80 hover:bg-slate-50'
               }`}
             >
               {tab.label}
@@ -185,9 +185,9 @@ export default function TemplateLibrary() {
       </div>
 
       {/* Starter Templates Advisory Banner */}
-      <div className="p-4 rounded-2xl bg-surface-container-low dark:bg-surface-variant/20 border border-surface-variant/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-on-surface-variant">
+      <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-slate-600 shadow-xs">
         <div className="flex items-center gap-2.5">
-          <span className="font-bold text-secondary px-2.5 py-0.5 rounded-full bg-secondary-container text-[11px] shrink-0 border border-secondary/20">
+          <span className="font-bold text-slate-900 px-2.5 py-0.5 rounded-full bg-[#FFCED2] text-[11px] shrink-0">
             Mẫu dựng sẵn
           </span>
           <span>
@@ -201,16 +201,16 @@ export default function TemplateLibrary() {
         {filteredTemplates.map((tmpl) => (
           <article
             key={tmpl.id}
-            className="bg-surface-container-lowest dark:bg-tertiary-container rounded-2xl p-5 shadow-ambient hover:-translate-y-1 transition-all duration-300 flex flex-col group border border-surface-container/20"
+            className="bg-white rounded-2xl p-5 shadow-sm hover:shadow-md hover:border-slate-300 transition-all duration-300 flex flex-col group border border-slate-200/80"
           >
             {/* Visual Preview */}
-            <div className="w-full aspect-[4/3] rounded-xl overflow-hidden mb-4 relative bg-surface-container flex items-center justify-center">
+            <div className="w-full aspect-[4/3] rounded-xl overflow-hidden mb-4 relative bg-slate-100 flex items-center justify-center">
               {tmpl.isQuote ? (
                 <>
-                  <div className="absolute inset-0 bg-gradient-to-br from-secondary-container/40 to-surface-container-lowest" />
+                  <div className="absolute inset-0 bg-gradient-to-br from-[#FFCED2]/30 to-white" />
                   <div className="relative z-10 flex flex-col items-center p-6 text-center">
-                    <Quote className="text-secondary mb-3 shrink-0" size={36} />
-                    <p className="text-body-md font-body-md text-primary dark:text-inverse-primary italic line-clamp-3">
+                    <Quote className="text-slate-800 mb-3 shrink-0" size={32} />
+                    <p className="text-sm font-medium text-slate-900 italic line-clamp-3">
                       {tmpl.quoteText}
                     </p>
                   </div>
@@ -224,14 +224,14 @@ export default function TemplateLibrary() {
                 />
               )}
               {/* Category Badge */}
-              <div className="absolute top-3 left-3 bg-surface-container-lowest/90 dark:bg-surface-container/90 backdrop-blur-sm px-3 py-1 rounded-full text-[11px] font-label-sm text-primary dark:text-inverse-primary uppercase tracking-wider font-semibold shadow-sm">
+              <div className="absolute top-3 left-3 bg-white/95 backdrop-blur-sm px-2.5 py-0.5 rounded-md text-[11px] font-bold text-slate-900 uppercase tracking-wider shadow-xs">
                 {CATEGORY_MAP[tmpl.category] || tmpl.category}
               </div>
             </div>
 
             {/* Info details */}
             <div className="flex flex-col flex-1">
-              <h3 className="text-headline-md font-bold text-primary dark:text-inverse-primary mb-1 text-[18px]">
+              <h3 className="font-bold text-slate-900 mb-1 text-base">
                 {tmpl.title}
               </h3>
               <p className="text-body-md text-on-surface-variant mb-6 line-clamp-2 text-[14px]">

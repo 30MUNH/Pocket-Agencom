@@ -422,16 +422,16 @@ export default function ContentCalendar() {
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5">
           <button
             onClick={fetchPosts}
-            className="inline-flex items-center gap-2 rounded-full border border-surface-variant/40 bg-surface-container-lowest dark:bg-tertiary-container px-4 py-2 text-xs font-bold text-primary dark:text-inverse-primary hover:bg-surface-container-high transition-colors shadow-sm"
+            className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-xs"
           >
             <RefreshCw size={14} /> Tải lại
           </button>
           <button
             onClick={handleOpenCreateModal}
-            className="inline-flex items-center gap-2 rounded-full bg-primary text-on-primary hover:opacity-90 px-5 py-2 text-xs font-bold shadow-sm transition-all"
+            className="inline-flex items-center gap-2 rounded-xl bg-slate-900 text-white hover:bg-slate-800 px-4 py-2 text-xs font-bold shadow-sm transition-all"
           >
             <Plus size={16} /> Tạo bài viết mới
           </button>
@@ -439,22 +439,22 @@ export default function ContentCalendar() {
       </div>
 
       {/* Outlook Calendar Toolbar */}
-              <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between rounded-2xl bg-surface-container-lowest dark:bg-tertiary-container p-4 sm:p-6 shadow-ambient border border-surface-variant/40">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between rounded-2xl bg-white p-4 sm:p-5 shadow-sm border border-slate-200/80">
         
         {/* Date Navigation */}
         <div className="flex items-center gap-3">
-          <div className="flex items-center rounded-full border border-surface-variant/40 bg-surface-container-low dark:bg-surface-variant/20 p-1">
+          <div className="flex items-center rounded-xl border border-slate-200 bg-slate-50 p-1">
             <button
               type="button"
               onClick={handlePrevMonth}
               aria-label="Tháng trước"
-              className="inline-flex h-11 w-11 items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container-high focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-600 hover:bg-white transition-colors"
             >
               <ChevronLeft size={16} />
             </button>
             <button
               onClick={handleToday}
-              className="px-3 py-1 text-xs font-bold text-primary dark:text-inverse-primary"
+              className="px-3 py-1 text-xs font-bold text-slate-900"
             >
               Hôm nay
             </button>
@@ -462,13 +462,13 @@ export default function ContentCalendar() {
               type="button"
               onClick={handleNextMonth}
               aria-label="Tháng sau"
-              className="inline-flex h-11 w-11 items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container-high focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-600 hover:bg-white transition-colors"
             >
               <ChevronRight size={16} />
             </button>
           </div>
 
-          <span className="text-base sm:text-lg font-bold capitalize text-primary dark:text-inverse-primary">
+          <span className="text-base sm:text-lg font-bold capitalize text-slate-900">
             {formattedMonthYear}
           </span>
         </div>
@@ -476,7 +476,7 @@ export default function ContentCalendar() {
         {/* Filters & View Switches */}
         <div className="flex flex-wrap items-center gap-2">
           {/* Status Filters */}
-          <div className="flex items-center gap-1 overflow-x-auto rounded-full border border-surface-variant/40 bg-surface-container-low dark:bg-surface-variant/20 p-1">
+          <div className="flex items-center gap-1 overflow-x-auto rounded-xl border border-slate-200 bg-slate-50 p-1">
             {[
               { id: 'all', label: 'Tất cả' },
               { id: 'pending_approval', label: '🟡 Chờ duyệt' },
@@ -487,10 +487,10 @@ export default function ContentCalendar() {
               <button
                 key={f.id}
                 onClick={() => setStatusFilter(f.id)}
-                className={`rounded-full px-3 py-1.5 text-xs font-bold transition-all whitespace-nowrap ${
+                className={`rounded-lg px-3 py-1 text-xs font-semibold transition-all whitespace-nowrap ${
                   statusFilter === f.id
-                    ? 'bg-primary text-on-primary shadow-sm'
-                    : 'text-on-surface-variant hover:text-primary'
+                    ? 'bg-[#FFCED2] text-slate-900 font-bold shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
                 {f.label}
@@ -499,11 +499,11 @@ export default function ContentCalendar() {
           </div>
 
           {/* View Modes */}
-          <div className="flex items-center gap-1 rounded-full border border-surface-variant/40 bg-surface-container-low dark:bg-surface-variant/20 p-1">
+          <div className="flex items-center gap-1 rounded-xl border border-slate-200 bg-slate-50 p-1">
             <button
               onClick={() => setViewMode('month')}
-              className={`rounded-full p-2 text-xs font-bold ${
-                viewMode === 'month' ? 'bg-primary text-on-primary' : 'text-on-surface-variant'
+              className={`rounded-lg p-1.5 text-xs font-bold ${
+                viewMode === 'month' ? 'bg-slate-900 text-white' : 'text-slate-500 hover:text-slate-900'
               }`}
               title="Xem theo tháng"
             >
@@ -511,8 +511,8 @@ export default function ContentCalendar() {
             </button>
             <button
               onClick={() => setViewMode('agenda')}
-              className={`rounded-full p-2 text-xs font-bold ${
-                viewMode === 'agenda' ? 'bg-primary text-on-primary' : 'text-on-surface-variant'
+              className={`rounded-lg p-1.5 text-xs font-bold ${
+                viewMode === 'agenda' ? 'bg-slate-900 text-white' : 'text-slate-500 hover:text-slate-900'
               }`}
               title="Xem danh sách Agenda"
             >
@@ -524,11 +524,11 @@ export default function ContentCalendar() {
 
       {/* Main Outlook Grid View */}
       {viewMode === 'month' ? (
-        <div className="overflow-hidden rounded-[2.5rem] border border-surface-variant/40 bg-surface-container-lowest dark:bg-tertiary-container shadow-ambient">
+        <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
           {/* Days of Week Header */}
-          <div className="grid grid-cols-7 border-b border-surface-variant/30 bg-surface-container-low dark:bg-surface-variant/20 text-center text-xs font-bold uppercase tracking-wider text-on-surface-variant">
+          <div className="grid grid-cols-7 border-b border-slate-200 bg-slate-50/80 text-center text-xs font-bold uppercase tracking-wider text-slate-600">
             {['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'].map((day, idx) => (
-              <div key={idx} className="py-3.5 border-r border-surface-variant/20 last:border-r-0">
+              <div key={idx} className="py-3 border-r border-slate-200/60 last:border-r-0">
                 {day}
               </div>
             ))}
@@ -632,11 +632,11 @@ export default function ContentCalendar() {
             return (
               <div
                 key={post.id}
-                className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-3xl border border-surface-variant/40 bg-surface-container-lowest dark:bg-tertiary-container p-5 shadow-ambient"
+                className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm hover:border-slate-300 transition-all"
               >
                 <div className="flex items-start gap-3.5">
-                  <div className="p-3 rounded-2xl bg-secondary-container text-secondary">
-                    <Clock size={20} />
+                  <div className="p-2.5 rounded-xl bg-[#FFCED2] text-slate-900 shrink-0">
+                    <Clock size={18} />
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
@@ -645,24 +645,24 @@ export default function ContentCalendar() {
                         {statusStyle.label}
                       </span>
                       {post.isGoldenTime && (
-                        <span className="inline-flex items-center gap-1 text-[11px] font-bold text-secondary bg-secondary-container px-2 py-0.5 rounded-full border border-secondary-container/60">
+                        <span className="inline-flex items-center gap-1 text-[11px] font-bold text-slate-900 bg-[#FFCED2] px-2 py-0.5 rounded-full">
                           <Sparkles size={12} /> Giờ Vàng (19:30)
                         </span>
                       )}
                     </div>
-                    <h3 className="text-base font-bold text-primary dark:text-inverse-primary mt-1">{post.title}</h3>
-                    <p className="text-xs text-on-surface-variant mt-0.5 line-clamp-1">{post.content}</p>
-                    <span className="text-[11px] text-on-surface-variant mt-1 block">Lịch xuất bản: {formattedDate}</span>
+                    <h3 className="text-base font-bold text-slate-900 mt-1">{post.title}</h3>
+                    <p className="text-xs text-slate-500 mt-0.5 line-clamp-1">{post.content}</p>
+                    <span className="text-[11px] text-slate-400 mt-1 block">Lịch xuất bản: {formattedDate}</span>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-2 self-end sm:self-auto">
                   <button
                     onClick={() => handleToggleApproval(post.id, post.status)}
-                    className={`px-4 py-2 rounded-full text-xs font-bold border transition-colors ${
+                    className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold border transition-all ${
                       post.status === 'approved'
-                        ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300 border-emerald-300'
-                        : 'bg-surface-container text-on-surface-variant border-surface-variant hover:bg-surface-container-high'
+                        ? 'bg-emerald-50 text-emerald-800 border-emerald-200 font-bold'
+                        : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50 shadow-xs'
                     }`}
                   >
                     {post.status === 'approved' ? '✓ Đã duyệt' : 'Duyệt bài'}
@@ -670,9 +670,9 @@ export default function ContentCalendar() {
 
                   <button
                     onClick={() => handleTriggerShare(post)}
-                    className="px-5 py-2 rounded-full bg-primary text-on-primary hover:opacity-90 text-xs font-bold flex items-center gap-1.5 shadow-sm transition-opacity"
+                    className="px-4 py-1.5 rounded-xl bg-slate-900 text-white hover:bg-slate-800 text-xs font-bold flex items-center gap-1.5 shadow-xs transition-colors"
                   >
-                    <Share2 size={14} /> Đăng bài
+                    <Share2 size={13} /> Đăng bài
                   </button>
                 </div>
               </div>
@@ -683,16 +683,16 @@ export default function ContentCalendar() {
 
       {/* Interactive Post Inspection & Approval Modal */}
       {isDetailModalOpen && selectedPost && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-primary/40 backdrop-blur-sm animate-fade-in">
-          <div className="relative w-full max-w-lg overflow-hidden rounded-[2.5rem] border border-surface-variant/40 bg-surface-container-lowest dark:bg-tertiary-container p-6 sm:p-8 shadow-ambient text-primary dark:text-inverse-primary">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-sm animate-fade-in">
+          <div className="relative w-full max-w-lg overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 sm:p-7 shadow-xl text-slate-900">
             
             <button
               type="button"
               onClick={() => setIsDetailModalOpen(false)}
               aria-label="Đóng chi tiết bài viết"
-              className="absolute right-6 top-6 inline-flex h-11 w-11 items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container-high focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              className="absolute right-5 top-5 inline-flex h-9 w-9 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-900 transition-colors"
             >
-              <X size={20} />
+              <X size={18} />
             </button>
 
             <div className="flex items-center gap-2 mb-3">
