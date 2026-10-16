@@ -9,8 +9,9 @@ const VERSION = 'mrl-768-v1';
 let embeddingModelInstance = null;
 
 function getEmbeddingModel() {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey || !apiKey.trim()) throw new Error('GEMINI_API_KEY is not configured for RAG embeddings.');
+  const rawKey = process.env.GEMINI_API_KEYS || process.env.GEMINI_API_KEY || '';
+  const apiKey = rawKey.split(/[,;\n]+/).map((k) => k.trim()).filter(Boolean)[0] || '';
+  if (!apiKey) throw new Error('GEMINI_API_KEY is not configured for RAG embeddings.');
   if (!aiConfig.freeTierConfirmed.gemini || !aiConfig.embedding.verifiedFreeModels.includes(aiConfig.embedding.model)) {
     throw new Error('Gemini free-tier eligibility is not confirmed for the configured RAG embedding model.');
   }

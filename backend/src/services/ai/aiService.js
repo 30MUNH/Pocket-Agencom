@@ -323,6 +323,21 @@ class AIService {
     return sorted.filter((p) => p.instance.isAvailable());
   }
 
+  getVisionProvidersInPriority() {
+    const providers = [];
+    if (typeof this.gemini?.isAvailable === 'function' && this.gemini.isAvailable()) {
+      providers.push({ name: 'gemini', instance: this.gemini });
+    }
+    if (typeof this.openrouter?.isAvailable === 'function' && this.openrouter.isAvailable()) {
+      providers.push({ name: 'openrouter', instance: this.openrouter });
+    }
+    return providers;
+  }
+
+  isVisionAvailable() {
+    return this.getVisionProvidersInPriority().length > 0;
+  }
+
   async acquireConcurrencySlot() {
     if (activeGenerations >= aiConfig.limits.maxConcurrentGenerations) {
       throw new AppError(
@@ -666,19 +681,30 @@ Người dùng gửi cho bạn ảnh sản phẩm thô. Hãy trả về CHÍNH X
 
     if (userId) await checkAndIncrementUserQuota(userId, 'text');
 
-    if (!this.gemini.isAvailable()) throw new AppError('Gemini Vision is unavailable for image analysis.', 503);
-    try {
-      const visionResult = await this.gemini.generateVision({
-        prompt: userPrompt,
-        systemPrompt,
-        imageBuffer: file.buffer,
-        mimeType: file.mimetype,
-      });
-      if (!visionResult?.text?.trim()) throw new Error('Empty Vision response');
-      return { content: visionResult.text.trim(), mediaAssetId };
-    } catch {
-      throw new AppError('Image analysis failed. Please try again.', 503);
+    const visionProviders = this.getVisionProvidersInPriority();
+    if (visionProviders.length === 0) {
+      throw new AppError('Gemini Vision is unavailable because free-tier eligibility is not confirmed.', 503);
     }
+
+    let lastError = null;
+    for (const { name, instance } of visionProviders) {
+      try {
+        const visionResult = await instance.generateVision({
+          prompt: userPrompt,
+          systemPrompt,
+          imageBuffer: file.buffer,
+          mimeType: file.mimetype,
+        });
+        if (visionResult?.text?.trim()) {
+          return { content: visionResult.text.trim(), mediaAssetId };
+        }
+      } catch (err) {
+        lastError = err;
+        console.warn(`[AI Service] Vision provider "${name}" failed: ${err.message}`);
+      }
+    }
+
+    throw new AppError('Image analysis failed. Please try again.', 503);
   }
 
   /**
