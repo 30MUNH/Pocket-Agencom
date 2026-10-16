@@ -2,6 +2,7 @@ const bcrypt = require('bcryptjs');
 const prisma = require('../config/prisma');
 const { signToken } = require('../utils/jwt');
 const { AppError } = require('../middleware/errorHandler');
+const { isDemoAuthEnabled, getDemoUserByEmail } = require('./demoAuth');
 
 const SALT_ROUNDS = 10;
 
@@ -46,104 +47,62 @@ async function register(data) {
 }
 
 async function login(email, password) {
+  if (isDemoAuthEnabled()) {
+    const demoUser = getDemoUserByEmail(email);
+    if (demoUser) {
+      const token = signToken({ userId: demoUser.id, role: demoUser.role, demo: true });
+      return { user: demoUser, token };
+    }
+  }
+
   return loginWithPrisma(prisma, email, password);
 }
 
-const DEMO_USERS = {
-  'admin@pocketagencom.vn': {
-    id: 1,
-    name: 'Quản trị viên Hệ thống',
-    email: 'admin@pocketagencom.vn',
-    role: 'admin',
-    status: 'active',
-  },
-  'staff@pocketagencom.vn': {
-    id: 2,
-    name: 'Nhân viên Kiểm duyệt',
-    email: 'staff@pocketagencom.vn',
-    role: 'staff',
-    status: 'active',
-  },
-  'user@pocketagencom.vn': {
-    id: 3,
-    name: 'Khách hàng Demo',
-    email: 'user@pocketagencom.vn',
-    role: 'user',
-    status: 'active',
-  },
-};
-
 async function loginWithPrisma(prismaClient, email, password) {
-  try {
-    const user = await prismaClient.user.findUnique({ where: { email } });
-    if (!user) {
-      throw new AppError('Invalid email or password', 401);
-    }
-
-    if (user.status !== 'active') {
-      throw new AppError('Account is inactive or banned', 403);
-    }
-
-    const valid = await bcrypt.compare(password, user.passwordHash);
-    if (!valid) {
-      throw new AppError('Invalid email or password', 401);
-    }
-
-    const token = signToken({ userId: user.id, role: user.role });
-    return { user: sanitizeUser(user), token };
-  } catch (error) {
-    // Nếu chưa cấu hình DATABASE_URL, hỗ trợ đăng nhập các tài khoản demo chuẩn
-    const normalized = email.toLowerCase().trim();
-    const demo = DEMO_USERS[normalized] || (normalized.includes('admin') ? DEMO_USERS['admin@pocketagencom.vn'] : null);
-    if (demo) {
-      const token = signToken({ userId: demo.id, role: demo.role });
-      return { user: demo, token };
-    }
-    throw error;
+  const user = await prismaClient.user.findUnique({ where: { email } });
+  if (!user) {
+    throw new AppError('Invalid email or password', 401);
   }
+
+  if (user.status !== 'active') {
+    throw new AppError('Account is inactive or banned', 403);
+  }
+
+  const valid = await bcrypt.compare(password, user.passwordHash);
+  if (!valid) {
+    throw new AppError('Invalid email or password', 401);
+  }
+
+  const token = signToken({ userId: user.id, role: user.role });
+  return { user: sanitizeUser(user), token };
 }
 
 async function getMe(userId) {
-  try {
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        status: true,
-        avatarUrl: true,
-        avatarMediaAssetId: true,
-        phone: true,
-        createdAt: true,
-        businessProfile: {
-          include: {
-            socialPlatforms: true,
-          },
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      status: true,
+      avatarUrl: true,
+      avatarMediaAssetId: true,
+      phone: true,
+      createdAt: true,
+      businessProfile: {
+        include: {
+          socialPlatforms: true,
         },
       },
-    });
+    },
+  });
 
-    if (!user) {
-      throw new AppError('User not found', 404);
-    }
-
-    return user;
-  } catch (error) {
-    const foundDemo = Object.values(DEMO_USERS).find((u) => u.id === userId);
-    if (foundDemo) {
-      return {
-        ...foundDemo,
-        createdAt: new Date().toISOString(),
-        businessProfile: {
-          businessName: 'Pocket Demo Store',
-          socialPlatforms: [],
-        },
-      };
-    }
-    throw error;
+  if (!user) {
+    throw new AppError('User not found', 404);
   }
+
+  return user;
 }
 
 const MANAGED_SOCIAL_PLATFORMS = [

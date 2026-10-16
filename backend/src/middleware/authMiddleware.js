@@ -2,6 +2,7 @@ const prisma = require('../config/prisma');
 const { verifyToken } = require('../utils/jwt');
 const { fail } = require('../utils/response');
 const { AppError } = require('./errorHandler');
+const { isDemoAuthEnabled, getDemoUserById } = require('../services/demoAuth');
 
 function createAuthMiddleware(prismaClient = prisma) {
   return async function authMiddleware(req, res, next) {
@@ -13,6 +14,16 @@ function createAuthMiddleware(prismaClient = prisma) {
 
     const token = authHeader.slice(7);
     const decoded = verifyToken(token);
+
+    if (decoded.demo === true) {
+      const demoUser = isDemoAuthEnabled() ? getDemoUserById(decoded.userId) : null;
+      if (!demoUser || demoUser.role !== decoded.role) {
+        return fail(res, 'Invalid or expired demo session', 401);
+      }
+
+      req.user = { ...demoUser, isDemo: true };
+      return next();
+    }
 
     const user = await prismaClient.user.findUnique({
       where: { id: decoded.userId },

@@ -21,6 +21,17 @@ async function login(req, res, next) {
 
 async function me(req, res, next) {
   try {
+    if (req.user.isDemo) {
+      return success(res, {
+        ...req.user,
+        createdAt: new Date().toISOString(),
+        businessProfile: {
+          businessName: 'Pocket Demo Store',
+          socialPlatforms: [],
+        },
+      });
+    }
+
     const user = await authService.getMe(req.user.id);
     return success(res, user);
   } catch (err) {
