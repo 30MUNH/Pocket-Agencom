@@ -174,11 +174,7 @@ export default function ManageUsers() {
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
             <input
               type="text"
-<<<<<<< HEAD
-              placeholder="Tìm kiếm theo tên, email, vai trò, trạng thái..."
-=======
-              placeholder="Tìm theo tên hoặc email..."
->>>>>>> 6b2a9987a450497035b79aa8c236aab5078c3a35
+              placeholder="Tìm kiếm theo tên hoặc email..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full bg-white border border-slate-200 rounded-xl py-2.5 pl-9 pr-4 text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10 outline-none transition-all"
@@ -251,17 +247,10 @@ export default function ManageUsers() {
                   </th>
                 </tr>
               </thead>
-<<<<<<< HEAD
-              <tbody className="divide-y divide-surface-container dark:divide-outline-variant/10">
-                {paginatedUsers.map((user) => (
-                  <tr key={user.id} className="hover:bg-surface-container-low/30 dark:hover:bg-surface-variant/20 transition-colors group">
-                    <td className="py-4 px-6 md:px-8">
-=======
               <tbody className="divide-y divide-slate-100">
-                {users.map((user) => (
+                {paginatedUsers.map((user) => (
                   <tr key={user.id} className="hover:bg-slate-50/70 transition-colors group">
                     <td className="py-3.5 px-6">
->>>>>>> 6b2a9987a450497035b79aa8c236aab5078c3a35
                       <div className="flex items-center gap-3">
                         <AuthorizedMediaImage
                           assetId={user.avatarMediaAssetId ? user.id : null}
@@ -353,22 +342,21 @@ export default function ManageUsers() {
           )}
         </div>
 
-<<<<<<< HEAD
         {/* Footer with Pagination */}
-        <div className="p-4 md:p-6 border-t border-surface-container dark:border-outline-variant/20 bg-surface-container-lowest dark:bg-tertiary-container flex flex-col md:flex-row justify-between items-center gap-4">
-          <div className="flex flex-wrap items-center gap-4 text-label-sm font-label-sm text-on-surface-variant">
+        <div className="p-4 md:p-6 border-t border-slate-100 bg-white flex flex-col md:flex-row justify-between items-center gap-4">
+          <div className="flex flex-wrap items-center gap-4 text-xs font-medium text-slate-500">
             <span>
-              Hiển thị <strong>{users.length === 0 ? 0 : startIndex + 1}</strong> - <strong>{Math.min(startIndex + pageSize, users.length)}</strong> trên tổng số <strong>{users.length}</strong> người dùng
+              Hiển thị <strong className="text-slate-800">{users.length === 0 ? 0 : startIndex + 1}</strong> - <strong className="text-slate-800">{Math.min(startIndex + pageSize, users.length)}</strong> trên tổng số <strong className="text-slate-800">{users.length}</strong> người dùng
             </span>
             <div className="flex items-center gap-1.5">
-              <span className="text-xs text-on-surface-variant">Mỗi trang:</span>
+              <span className="text-xs text-slate-500">Mỗi trang:</span>
               <select
                 value={pageSize}
                 onChange={(e) => {
                   setPageSize(Number(e.target.value));
                   setCurrentPage(1);
                 }}
-                className="bg-surface-container-low dark:bg-surface-variant/30 border border-surface-container-high rounded-lg px-2 py-1 text-xs text-primary font-medium focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer"
+                className="bg-white border border-slate-200 rounded-lg px-2 py-1 text-xs text-slate-800 font-medium focus:outline-none focus:border-slate-900 cursor-pointer"
               >
                 <option value={8}>8</option>
                 <option value={10}>10</option>
@@ -383,7 +371,7 @@ export default function ManageUsers() {
               <button
                 onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                 disabled={safeCurrentPage === 1}
-                className="p-2 rounded-lg border border-surface-container text-on-surface-variant hover:bg-surface-container-low disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                className="p-2 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                 title="Trang trước"
               >
                 <ChevronLeft size={16} />
@@ -392,7 +380,7 @@ export default function ManageUsers() {
               <div className="flex items-center gap-1">
                 {getPageNumbers().map((page, idx) =>
                   page === '...' ? (
-                    <span key={`dots-${idx}`} className="px-2 py-1 text-xs text-on-surface-variant">
+                    <span key={`dots-${idx}`} className="px-2 py-1 text-xs text-slate-400">
                       ...
                     </span>
                   ) : (
@@ -401,8 +389,8 @@ export default function ManageUsers() {
                       onClick={() => setCurrentPage(page)}
                       className={`min-w-[32px] h-8 rounded-lg text-xs font-semibold transition-all ${
                         safeCurrentPage === page
-                          ? 'bg-primary text-on-primary shadow-sm'
-                          : 'text-on-surface-variant hover:bg-surface-container-low'
+                          ? 'bg-slate-900 text-white shadow-xs'
+                          : 'text-slate-600 hover:bg-slate-100'
                       }`}
                     >
                       {page}
@@ -414,20 +402,13 @@ export default function ManageUsers() {
               <button
                 onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                 disabled={safeCurrentPage === totalPages}
-                className="p-2 rounded-lg border border-surface-container text-on-surface-variant hover:bg-surface-container-low disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                className="p-2 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                 title="Trang sau"
               >
                 <ChevronRight size={16} />
               </button>
             </div>
           )}
-=======
-        {/* Footer */}
-        <div className="p-4 md:p-5 border-t border-slate-100 bg-white flex flex-col sm:flex-row justify-between items-center gap-4">
-          <p className="text-xs text-slate-500">
-            Tổng cộng: <strong className="text-slate-800">{totalUsers}</strong> người dùng trong hệ thống
-          </p>
->>>>>>> 6b2a9987a450497035b79aa8c236aab5078c3a35
         </div>
       </div>
 
