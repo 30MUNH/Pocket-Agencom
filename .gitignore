@@ -55,3 +55,6 @@ Thumbs.db
 /AGENTS.md
 /skills-lock.json
 /backend/skills-lock.json
+
+# Generated browser test artifacts
+/test-results/screenshots/
