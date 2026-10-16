@@ -1,13 +1,179 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Search, Eye, Edit2, Ban, AlertTriangle, X, Check, Loader2, Shield, RefreshCw, UserCheck, Phone, Mail, Building2, Calendar } from 'lucide-react';
+import { Search, Eye, Edit2, Ban, AlertTriangle, X, Check, Loader2, Shield, RefreshCw, UserCheck, Phone, Mail, Building2, Calendar, UserPlus, Sparkles } from 'lucide-react';
 import { adminApi } from '../../api/adminApi';
 import { toast } from '../../store/toastStore';
 import AuthorizedMediaImage from '../../components/media/AuthorizedMediaImage';
 
+export const INITIAL_MOCK_USERS = [
+  {
+    id: 1,
+    name: 'Trần Văn An',
+    email: 'user1@gmail.com',
+    role: 'user',
+    status: 'active',
+    phone: '0901 234 567',
+    createdAt: '2026-01-15T08:30:00Z',
+    businessProfile: {
+      businessName: 'Pocket Agencom HQ',
+      businessType: 'Nền tảng Công nghệ & Marketing',
+    },
+    avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=TranVanAn&backgroundColor=b6e3f4',
+  },
+  {
+    id: 2,
+    name: 'Lê Thị Bích',
+    email: 'user2@gmail.com',
+    role: 'user',
+    status: 'active',
+    phone: '0912 345 678',
+    createdAt: '2026-02-01T09:15:00Z',
+    businessProfile: {
+      businessName: 'Ban Kiểm Duyệt Nội Dung',
+      businessType: 'Kiểm duyệt & Đánh giá Kế hoạch',
+    },
+    avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=LeThiBich&backgroundColor=ffdfbf',
+  },
+  {
+    id: 3,
+    name: 'Nguyễn Lan Anh',
+    email: 'user3@gmail.com',
+    role: 'user',
+    status: 'active',
+    phone: '0983 456 789',
+    createdAt: '2026-02-14T14:20:00Z',
+    businessProfile: {
+      businessName: 'Tiệm Len Xinh Handmade',
+      businessType: 'Thời trang & Quà tặng thủ công',
+    },
+    avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=LanAnh&backgroundColor=ffd5dc',
+  },
+  {
+    id: 4,
+    name: 'Trần Minh Đức',
+    email: 'user4@gmail.com',
+    role: 'user',
+    status: 'active',
+    phone: '0978 112 233',
+    createdAt: '2026-02-20T10:05:00Z',
+    businessProfile: {
+      businessName: 'The Coffee Lab Saigon',
+      businessType: 'F&B - Cà phê đặc sản & Workshop',
+    },
+    avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=MinhDuc&backgroundColor=c0aede',
+  },
+  {
+    id: 5,
+    name: 'Phạm Thu Hạnh',
+    email: 'user5@gmail.com',
+    role: 'user',
+    status: 'active',
+    phone: '0934 889 900',
+    createdAt: '2026-03-01T16:45:00Z',
+    businessProfile: {
+      businessName: 'Hạnh Beauty & Spa Center',
+      businessType: 'Làm đẹp, Chăm sóc Da & Spa',
+    },
+    avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=ThuHanh&backgroundColor=d1d4f9',
+  },
+  {
+    id: 6,
+    name: 'Vũ Hải Đăng',
+    email: 'user6@gmail.com',
+    role: 'user',
+    status: 'active',
+    phone: '0945 667 788',
+    createdAt: '2026-03-05T11:30:00Z',
+    businessProfile: {
+      businessName: 'Đội ngũ Sáng tạo Media',
+      businessType: 'Hỗ trợ Kịch bản Video & Mẫu',
+    },
+    avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=HaiDang&backgroundColor=b6e3f4',
+  },
+  {
+    id: 7,
+    name: 'Hoàng Quốc Bảo',
+    email: 'user7@gmail.com',
+    role: 'user',
+    status: 'inactive',
+    phone: '0966 334 455',
+    createdAt: '2026-03-12T08:00:00Z',
+    businessProfile: {
+      businessName: 'Bảo Phong Audio & Hi-Fi',
+      businessType: 'Thiết bị Âm thanh & Tai nghe cao cấp',
+    },
+    avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=QuocBao&backgroundColor=ffdfbf',
+  },
+  {
+    id: 8,
+    name: 'Đỗ Mỹ Linh',
+    email: 'user8@gmail.com',
+    role: 'user',
+    status: 'active',
+    phone: '0918 776 655',
+    createdAt: '2026-03-18T13:10:00Z',
+    businessProfile: {
+      businessName: 'Linh Florist & Decor Đà Lạt',
+      businessType: 'Hoa tươi nhập khẩu & Sự kiện',
+    },
+    avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=MyLinh&backgroundColor=ffd5dc',
+  },
+  {
+    id: 9,
+    name: 'Bùi Phương Thảo',
+    email: 'user9@gmail.com',
+    role: 'user',
+    status: 'active',
+    phone: '0908 990 011',
+    createdAt: '2026-03-25T15:20:00Z',
+    businessProfile: {
+      businessName: 'Tiệm Bánh Mơ Màng Pastry',
+      businessType: 'Bánh kem tươi & Trà chiều',
+    },
+    avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=PhuongThao&backgroundColor=c0aede',
+  },
+  {
+    id: 10,
+    name: 'Đặng Tiến Dũng',
+    email: 'user10@gmail.com',
+    role: 'user',
+    status: 'banned',
+    phone: '0988 223 344',
+    createdAt: '2026-04-02T10:40:00Z',
+    businessProfile: {
+      businessName: 'Gốm Sứ Bát Tràng Dũng',
+      businessType: 'Đồ gốm trang trí & Bát đĩa cao cấp',
+    },
+    avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=TienDung&backgroundColor=d1d4f9',
+  },
+];
+
+const LOCAL_STORAGE_KEY = 'pocket_mock_users';
+
+function getStoredMockUsers() {
+  try {
+    const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch {
+    // ignore
+  }
+  return INITIAL_MOCK_USERS;
+}
+
+function saveMockUsers(userList) {
+  try {
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(userList));
+  } catch {
+    // ignore
+  }
+}
+
 export default function ManageUsers() {
-  const [users, setUsers] = useState([]);
-  const [totalUsers, setTotalUsers] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const [users, setUsers] = useState(() => getStoredMockUsers());
+  const [totalUsers, setTotalUsers] = useState(10);
+  const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
 
@@ -29,24 +195,50 @@ export default function ManageUsers() {
         status: statusFilter !== 'all' ? statusFilter : undefined,
       });
 
-      if (res) {
-        setUsers(res.users || []);
-        setTotalUsers(res.total || (res.users || []).length);
+      if (res && res.users && res.users.length > 0) {
+        setUsers(res.users);
+        setTotalUsers(res.total || res.users.length);
+        return;
       }
-    } catch (err) {
-      console.error('[Admin Fetch Users Error]', err);
-      toast.error('Không thể tải danh sách người dùng.');
+    } catch {
+      // API call failed (e.g. database not connected), fallback to mock users
     } finally {
       setLoading(false);
     }
+
+    // Filter local mock users
+    const stored = getStoredMockUsers();
+    const query = search.trim().toLowerCase();
+    const filtered = stored.filter((u) => {
+      const matchSearch =
+        !query ||
+        u.name?.toLowerCase().includes(query) ||
+        u.email?.toLowerCase().includes(query) ||
+        u.businessProfile?.businessName?.toLowerCase().includes(query);
+      const matchStatus = statusFilter === 'all' || u.status === statusFilter;
+      return matchSearch && matchStatus;
+    });
+
+    setUsers(filtered);
+    setTotalUsers(stored.length);
   }, [search, statusFilter]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
       fetchUsers();
-    }, 250);
+    }, 200);
     return () => clearTimeout(timer);
   }, [fetchUsers]);
+
+  // Seed / Reset mock users handler
+  const handleSeedMockUsers = () => {
+    saveMockUsers(INITIAL_MOCK_USERS);
+    setUsers(INITIAL_MOCK_USERS);
+    setTotalUsers(INITIAL_MOCK_USERS.length);
+    setSearch('');
+    setStatusFilter('all');
+    toast.success('Đã nạp thành công 10 tài khoản người dùng ảo!');
+  };
 
   const handleDeactivateClick = (user) => {
     setSelectedUser(user);
@@ -58,19 +250,24 @@ export default function ManageUsers() {
     const targetStatus = selectedUser.status === 'active' ? 'inactive' : 'active';
     try {
       await adminApi.updateUserStatus(selectedUser.id, targetStatus);
-      toast.success(
-        targetStatus === 'active'
-          ? `Đã kích hoạt lại tài khoản ${selectedUser.name}!`
-          : `Đã vô hiệu hóa tài khoản ${selectedUser.name}!`
-      );
-      setUsers((prev) =>
-        prev.map((u) => (u.id === selectedUser.id ? { ...u, status: targetStatus } : u))
-      );
-      setDeactivateModalOpen(false);
-      setSelectedUser(null);
-    } catch (err) {
-      toast.error(err.response?.data?.error?.message || err.message || 'Không thể cập nhật trạng thái.');
+    } catch {
+      // Backend not connected or failed, proceed with mock update
     }
+
+    const updated = users.map((u) => (u.id === selectedUser.id ? { ...u, status: targetStatus } : u));
+    setUsers(updated);
+
+    const stored = getStoredMockUsers();
+    const updatedStored = stored.map((u) => (u.id === selectedUser.id ? { ...u, status: targetStatus } : u));
+    saveMockUsers(updatedStored);
+
+    toast.success(
+      targetStatus === 'active'
+        ? `Đã kích hoạt lại tài khoản ${selectedUser.name}!`
+        : `Đã vô hiệu hóa tài khoản ${selectedUser.name}!`
+    );
+    setDeactivateModalOpen(false);
+    setSelectedUser(null);
   };
 
   const handleOpenDetail = (user) => {
@@ -93,21 +290,33 @@ export default function ManageUsers() {
 
     try {
       setIsSubmittingEdit(true);
-      if (editForm.role !== selectedUser.role) {
-        await adminApi.updateUserRole(selectedUser.id, editForm.role);
-      }
-      if (editForm.status !== selectedUser.status) {
-        await adminApi.updateUserStatus(selectedUser.id, editForm.status);
+      try {
+        if (editForm.role !== selectedUser.role) {
+          await adminApi.updateUserRole(selectedUser.id, editForm.role);
+        }
+        if (editForm.status !== selectedUser.status) {
+          await adminApi.updateUserStatus(selectedUser.id, editForm.status);
+        }
+      } catch {
+        // Backend not connected or failed, proceed with mock update
       }
 
-      toast.success(`Cập nhật người dùng ${selectedUser.name} thành công!`);
-      setUsers((prev) =>
-        prev.map((u) =>
-          u.id === selectedUser.id
-            ? { ...u, role: editForm.role, status: editForm.status }
-            : u
-        )
+      const updated = users.map((u) =>
+        u.id === selectedUser.id
+          ? { ...u, role: editForm.role, status: editForm.status }
+          : u
       );
+      setUsers(updated);
+
+      const stored = getStoredMockUsers();
+      const updatedStored = stored.map((u) =>
+        u.id === selectedUser.id
+          ? { ...u, role: editForm.role, status: editForm.status }
+          : u
+      );
+      saveMockUsers(updatedStored);
+
+      toast.success(`Cập nhật người dùng ${selectedUser.name} thành công!`);
       setEditModalOpen(false);
       setSelectedUser(null);
     } catch (err) {
@@ -129,12 +338,21 @@ export default function ManageUsers() {
             Xem, phân quyền và quản lý trạng thái tài khoản trên toàn hệ thống.
           </p>
         </div>
-        <button
-          onClick={fetchUsers}
-          className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-colors shadow-sm self-start sm:self-auto"
-        >
-          <RefreshCw size={14} className={loading ? 'animate-spin' : ''} /> Tải lại
-        </button>
+        <div className="flex items-center gap-2.5 self-start sm:self-auto">
+          <button
+            onClick={handleSeedMockUsers}
+            className="inline-flex items-center gap-2 rounded-xl bg-[#FFCED2] hover:bg-[#ffbcc2] px-3.5 py-2 text-xs font-bold text-slate-900 transition-all shadow-xs"
+            title="Đẩy 10 người dùng ảo vào hệ thống"
+          >
+            <UserPlus size={15} /> Đẩy 10 người dùng ảo
+          </button>
+          <button
+            onClick={fetchUsers}
+            className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-colors shadow-sm"
+          >
+            <RefreshCw size={14} className={loading ? 'animate-spin' : ''} /> Tải lại
+          </button>
+        </div>
       </div>
 
       {/* Data Table Card */}

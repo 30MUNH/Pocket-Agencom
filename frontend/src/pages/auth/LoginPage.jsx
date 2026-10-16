@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Mail, Lock, ArrowLeft, Loader2, Eye, EyeOff } from 'lucide-react';
 import { useLogin } from '../../hooks/useAuth';
-import { useAuthStore } from '../../store/authStore';
 import { toast } from '../../store/toastStore';
 
 export default function LoginPage() {
@@ -24,36 +23,7 @@ export default function LoginPage() {
       const redirectTo = location.state?.from || '/dashboard';
       navigate(redirectTo, { replace: true });
     } catch (err) {
-      // Hỗ trợ đăng nhập trực tiếp (Fallback Offline) khi backend DB chưa kết nối
-      const trimmedEmail = email.trim().toLowerCase();
-      if (trimmedEmail.includes('admin')) {
-        useAuthStore.getState().setAuth(
-          { id: 1, name: 'Quản trị viên Hệ thống', email: trimmedEmail, role: 'admin', status: 'active' },
-          'mock-admin-token'
-        );
-        toast.success('Đã đăng nhập quyền Quản trị viên (Admin)!');
-        navigate('/dashboard', { replace: true });
-        return;
-      }
-      if (trimmedEmail.includes('staff')) {
-        useAuthStore.getState().setAuth(
-          { id: 2, name: 'Nhân viên Kiểm duyệt', email: trimmedEmail, role: 'staff', status: 'active' },
-          'mock-staff-token'
-        );
-        toast.success('Đã đăng nhập quyền Nhân viên (Staff)!');
-        navigate('/dashboard', { replace: true });
-        return;
-      }
-      if (trimmedEmail.includes('user') || trimmedEmail) {
-        useAuthStore.getState().setAuth(
-          { id: 3, name: 'Khách hàng Doanh nghiệp', email: trimmedEmail, role: 'user', status: 'active' },
-          'mock-user-token'
-        );
-        toast.success('Đã đăng nhập quyền Khách hàng (User)!');
-        navigate('/dashboard', { replace: true });
-        return;
-      }
-      toast.error(err.message || 'Đăng nhập thất bại');
+      toast.error(err.message || 'Login failed');
     }
   };
 
@@ -171,57 +141,6 @@ export default function LoginPage() {
               Đăng ký tại đây
             </Link>
           </p>
-        </div>
-
-        {/* Quick Demo Login Buttons */}
-        <div className="mt-6 pt-6 border-t border-slate-100 space-y-2">
-          <p className="text-xs text-center font-bold text-slate-400 uppercase tracking-wider mb-3">
-            Đăng nhập nhanh một chạm
-          </p>
-          <div className="grid grid-cols-3 gap-2">
-            <button
-              type="button"
-              onClick={() => {
-                useAuthStore.getState().setAuth(
-                  { id: 1, name: 'Quản trị viên Hệ thống', email: 'admin@pocketagencom.vn', role: 'admin', status: 'active' },
-                  'mock-admin-token'
-                );
-                toast.success('Đã đăng nhập quyền Quản trị viên (Admin)!');
-                navigate('/dashboard', { replace: true });
-              }}
-              className="py-2 px-2 rounded-xl border border-slate-200 bg-slate-50 hover:bg-black hover:text-white transition-all text-xs font-bold text-slate-800 text-center"
-            >
-              Vào Admin
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                useAuthStore.getState().setAuth(
-                  { id: 2, name: 'Nhân viên Kiểm duyệt', email: 'staff@pocketagencom.vn', role: 'staff', status: 'active' },
-                  'mock-staff-token'
-                );
-                toast.success('Đã đăng nhập quyền Nhân viên (Staff)!');
-                navigate('/dashboard', { replace: true });
-              }}
-              className="py-2 px-2 rounded-xl border border-slate-200 bg-slate-50 hover:bg-black hover:text-white transition-all text-xs font-bold text-slate-800 text-center"
-            >
-              Vào Staff
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                useAuthStore.getState().setAuth(
-                  { id: 3, name: 'Khách hàng Demo', email: 'user@pocketagencom.vn', role: 'user', status: 'active' },
-                  'mock-user-token'
-                );
-                toast.success('Đã đăng nhập quyền Khách hàng (User)!');
-                navigate('/dashboard', { replace: true });
-              }}
-              className="py-2 px-2 rounded-xl border border-slate-200 bg-slate-50 hover:bg-black hover:text-white transition-all text-xs font-bold text-slate-800 text-center"
-            >
-              Vào User
-            </button>
-          </div>
         </div>
       </div>
     </div>

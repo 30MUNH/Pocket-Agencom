@@ -22,7 +22,7 @@ cd ..
 npm run dev
 ```
 
-Configure `backend/.env` with `DATABASE_URL`, `DIRECT_URL`, `JWT_SECRET`, and optional test-only Gemini/Supabase credentials. Configure `frontend/.env` with `VITE_API_URL=http://localhost:5000/api`.
+Configure `backend/.env` with `DATABASE_URL`, `DIRECT_URL`, `JWT_SECRET`, and optional test-only Gemini/Supabase credentials. Configure `frontend/.env` with `VITE_API_URL=http://localhost:5000/api`. In production, set `VITE_API_URL` to the deployed backend origin ending in `/api`; if the frontend and API share an origin behind a `/api` reverse proxy, it can be omitted. Set backend `FRONTEND_URL` to the frontend origin (comma-separated for multiple origins).
 
 Do not use `prisma db push` for this project. Follow [deployment-guide.md](deployment-guide.md) for fresh and existing database migration paths. The destructive demo seed refuses to run unless `ALLOW_DESTRUCTIVE_SEED=true`; use it only with an approved disposable database.
 
