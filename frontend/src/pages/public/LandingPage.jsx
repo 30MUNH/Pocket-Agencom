@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from '../../store/toastStore';
 import {
@@ -66,6 +66,13 @@ const TESTIMONIALS = [
 export default function LandingPage() {
   const navigate = useNavigate();
   const [faqOpen, setFaqOpen] = useState({ 0: true, 1: false, 2: false });
+  const [selectedPlan, setSelectedPlan] = useState(null);
+
+  useEffect(() => {
+    if (selectedPlan) {
+      document.getElementById('checkout-panel')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, [selectedPlan]);
 
   const toggleFaq = (index) => {
     setFaqOpen({ ...faqOpen, [index]: !faqOpen[index] });
@@ -419,7 +426,12 @@ export default function LandingPage() {
                   </ul>
 
                   <button
-                    onClick={() => navigate('/register')}
+                    type="button"
+                    onClick={(event) => {
+                      event.preventDefault();
+                      event.stopPropagation();
+                      setSelectedPlan(plan);
+                    }}
                     className={`w-full py-2.5 rounded-full font-bold text-xs uppercase tracking-wider transition-all ${
                       plan.isPopular
                         ? 'bg-[#FFCED2] text-slate-900 hover:bg-[#ffbcc2] shadow-sm'
@@ -431,6 +443,54 @@ export default function LandingPage() {
                 </div>
               ))}
             </div>
+
+            {selectedPlan && (
+              <div id="checkout-panel" className="scroll-mt-24 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8">
+                <div className="mb-6 flex items-start justify-between gap-4">
+                  <div>
+                    <h3 className="text-xl font-bold text-slate-900">Thanh toán gói dịch vụ</h3>
+                    <p className="mt-1 text-sm text-slate-500">Quét mã QR để thanh toán trực tiếp, không cần đăng nhập.</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedPlan(null)}
+                    className="rounded-full px-3 py-1.5 text-sm font-semibold text-slate-500 hover:bg-slate-100"
+                  >
+                    Đóng
+                  </button>
+                </div>
+
+                <div className="grid gap-6 md:grid-cols-2 md:items-center">
+                  <div className="space-y-5">
+                    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Gói đã chọn</p>
+                      <p className="mt-1 font-bold text-slate-900">{selectedPlan.name}</p>
+                      <p className="text-sm text-slate-500">Thanh toán {selectedPlan.period.replace('/', '')}</p>
+                    </div>
+
+                    <div className="space-y-3 rounded-2xl border border-slate-200 p-4 text-sm">
+                      <p className="font-bold text-slate-900">Thông tin nhận thanh toán</p>
+                      <div className="flex justify-between gap-4"><span className="text-slate-500">Ngân hàng</span><span className="font-semibold text-slate-900">MB Bank</span></div>
+                      <div className="flex justify-between gap-4"><span className="text-slate-500">Chủ tài khoản</span><span className="text-right font-semibold text-slate-900">NGUYEN THI PHUONG ANH</span></div>
+                      <div className="flex justify-between gap-4"><span className="text-slate-500">Số tài khoản</span><span className="font-semibold text-slate-900">300120041306</span></div>
+                      <div className="flex justify-between gap-4 border-t border-slate-100 pt-3"><span className="font-bold text-slate-900">Tổng thanh toán</span><span className="font-bold text-slate-900">{selectedPlan.price}</span></div>
+                    </div>
+
+                    <p className="text-xs leading-relaxed text-slate-500">Mở ứng dụng ngân hàng, quét mã và kiểm tra đúng tên người nhận cùng số tiền trước khi chuyển khoản.</p>
+                  </div>
+
+                  <div className="flex flex-col items-center rounded-2xl border border-slate-200 bg-white p-4 sm:p-6">
+                    <img
+                      src="/images/payment-qr.png"
+                      alt="Mã QR nhận thanh toán MB Bank"
+                      className="h-60 w-60 max-w-full rounded-xl object-contain sm:h-72 sm:w-72"
+                    />
+                    <p className="mt-3 text-sm font-semibold text-slate-900">Quét mã QR để chuyển khoản</p>
+                    <span className="mt-1 rounded-full bg-[#FFCED2]/50 px-3 py-1 text-xs font-semibold text-slate-700">VietQR · MB Bank</span>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </section>
 

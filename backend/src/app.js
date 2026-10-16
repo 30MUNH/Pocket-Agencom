@@ -7,11 +7,19 @@ const { success } = require('./utils/response');
 
 function createApp() {
   const app = express();
+  const allowedOrigins = (process.env.FRONTEND_URL || '')
+    .split(',')
+    .map((value) => value.trim())
+    .filter(Boolean)
+    .map((value) => {
+      try {
+        return new URL(value).origin;
+      } catch {
+        return value.replace(/\/+$/, '');
+      }
+    });
   const corsOptions = {
     origin: (origin, callback) => {
-      const allowedOrigins = process.env.FRONTEND_URL
-        ? process.env.FRONTEND_URL.split(',').map((value) => value.trim())
-        : [];
       callback(null, !origin || allowedOrigins.includes(origin) || allowedOrigins.length === 0);
     },
     credentials: true,

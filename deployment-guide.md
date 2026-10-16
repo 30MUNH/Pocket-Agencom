@@ -58,6 +58,6 @@ Record the checksum and restore listing. On source and restored databases compar
 ## Application deployment
 
 - Backend: install dependencies, run `npx prisma generate`, then start `node index.js`.
-- Frontend: use Node.js 20.19+; set `VITE_API_URL`, run `npm run build`, and serve `dist` with SPA fallback enabled.
-- Configure `FRONTEND_URL`, `JWT_SECRET`, database URLs, and optional Gemini/Supabase secrets in the deployment platform.
+- Frontend: use Node.js 22.12+; set `VITE_API_URL` to the backend origin ending in `/api`, run `npm run build`, and serve `dist` with SPA fallback enabled. `frontend/vercel.json` configures the fallback for Vercel deep links such as `/calendar`. For a same-origin reverse proxy, route `/api` to the backend and `VITE_API_URL` may be omitted.
+- Configure `FRONTEND_URL` (the frontend origin, without a path), a persistent `JWT_SECRET`, database URLs, and optional Gemini/Supabase secrets in the deployment platform. Keep the JWT secret unchanged across backend instances and deployments so existing sessions remain valid.
 - Do not seed production. The seed requires `ALLOW_DESTRUCTIVE_SEED=true` by design.

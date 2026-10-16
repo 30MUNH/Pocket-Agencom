@@ -26,38 +26,87 @@ async function main() {
   await prisma.user.createMany({
     data: [
       {
-        name: 'Quản trị viên Hệ thống',
+        name: 'Trần Văn An',
         email: 'admin@pocketagencom.vn',
         passwordHash: demoPasswordHash,
         role: UserRole.admin,
         status: AccountStatus.active,
       },
       {
-        name: 'Nhân viên Kiểm duyệt',
+        name: 'Lê Thị Bích',
         email: 'staff@pocketagencom.vn',
         passwordHash: demoPasswordHash,
         role: UserRole.staff,
         status: AccountStatus.active,
       },
       {
-        name: 'Khách hàng Demo',
-        email: 'user@pocketagencom.vn',
+        name: 'Nguyễn Lan Anh',
+        email: 'lananh.tiemlen@gmail.com',
         passwordHash: demoPasswordHash,
         role: UserRole.user,
         status: AccountStatus.active,
       },
+      {
+        name: 'Trần Minh Đức',
+        email: 'duc.coffee@thecoffeelab.vn',
+        passwordHash: demoPasswordHash,
+        role: UserRole.user,
+        status: AccountStatus.active,
+      },
+      {
+        name: 'Phạm Thu Hạnh',
+        email: 'hanh.beauty@gmail.com',
+        passwordHash: demoPasswordHash,
+        role: UserRole.user,
+        status: AccountStatus.active,
+      },
+      {
+        name: 'Vũ Hải Đăng',
+        email: 'haidang.media@pocketagencom.vn',
+        passwordHash: demoPasswordHash,
+        role: UserRole.staff,
+        status: AccountStatus.active,
+      },
+      {
+        name: 'Hoàng Quốc Bảo',
+        email: 'baophong.audio@gmail.com',
+        passwordHash: demoPasswordHash,
+        role: UserRole.user,
+        status: AccountStatus.inactive,
+      },
+      {
+        name: 'Đỗ Mỹ Linh',
+        email: 'linh.florist@dalatflowers.vn',
+        passwordHash: demoPasswordHash,
+        role: UserRole.user,
+        status: AccountStatus.active,
+      },
+      {
+        name: 'Bùi Phương Thảo',
+        email: 'thaobakes@morangpastry.com',
+        passwordHash: demoPasswordHash,
+        role: UserRole.user,
+        status: AccountStatus.active,
+      },
+      {
+        name: 'Đặng Tiến Dũng',
+        email: 'gomsudung@battrangcraft.vn',
+        passwordHash: demoPasswordHash,
+        role: UserRole.user,
+        status: AccountStatus.banned,
+      },
     ],
   });
 
-  const user = await prisma.user.findUniqueOrThrow({
-    where: { email: 'user@pocketagencom.vn' },
+  const lanAnh = await prisma.user.findUniqueOrThrow({
+    where: { email: 'lananh.tiemlen@gmail.com' },
   });
   const businessProfile = await prisma.businessProfile.create({
     data: {
-      userId: user.id,
-      businessName: 'Pocket Demo Store',
-      businessType: 'Bán lẻ trực tuyến',
-      productDescription: 'Sản phẩm tiêu dùng dành cho khách hàng thành thị.',
+      userId: lanAnh.id,
+      businessName: 'Tiệm Len Xinh Handmade',
+      businessType: 'Thời trang & Quà tặng thủ công',
+      productDescription: 'Sản phẩm len đan móc thủ công tinh tế cho giới trẻ.',
       targetCustomer: 'Khách hàng 20–35 tuổi mua sắm trực tuyến.',
       marketingGoal: 'Tăng doanh số và tỷ lệ khách hàng quay lại.',
       budgetRange: '20M - 50M VNĐ',

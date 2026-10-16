@@ -1,11 +1,12 @@
 import axios from 'axios';
 import { useAuthStore } from '../store/authStore';
 
-let API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+let API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
 // Defensively append /api if it was omitted in Vercel configuration
-if (API_BASE_URL && !API_BASE_URL.endsWith('/api') && !API_BASE_URL.endsWith('/api/')) {
-  API_BASE_URL = `${API_BASE_URL.replace(/\/+$/, '')}/api`;
+API_BASE_URL = API_BASE_URL.trim().replace(/\/+$/, '');
+if (API_BASE_URL && !/\/api$/i.test(API_BASE_URL)) {
+  API_BASE_URL = `${API_BASE_URL}/api`;
 }
 
 const axiosClient = axios.create({
