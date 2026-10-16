@@ -89,6 +89,67 @@ class OpenRouterProvider {
     };
   }
 
+  async generateVision({
+    prompt,
+    systemPrompt = '',
+    imageBuffer,
+    mimeType = 'image/jpeg',
+    temperature = 0.7,
+    timeoutMs = aiConfig.limits.requestTimeoutMs,
+    signal,
+  }) {
+    if (!this.isAvailable()) {
+      throw new AppError('OpenRouter API Key is not configured.', 400);
+    }
+
+    const messages = [];
+    if (systemPrompt) {
+      messages.push({ role: 'system', content: systemPrompt });
+    }
+
+    const base64Data = imageBuffer.toString('base64');
+    const dataUrl = `data:${mimeType};base64,${base64Data}`;
+
+    messages.push({
+      role: 'user',
+      content: [
+        { type: 'text', text: prompt },
+        { type: 'image_url', image_url: { url: dataUrl } },
+      ],
+    });
+
+    const visionModel = process.env.OPENROUTER_VISION_MODEL || this.textModel || 'openrouter/free';
+
+    const payload = {
+      model: visionModel,
+      messages,
+      temperature,
+    };
+
+    const response = await axios.post(this.baseUrl, payload, {
+      headers: {
+        Authorization: `Bearer ${this.apiKey}`,
+        'Content-Type': 'application/json',
+        'HTTP-Referer': 'https://pocket-agencom.com',
+        'X-Title': 'Pocket Agencom Marketing SaaS',
+      },
+      timeout: timeoutMs,
+      signal,
+    });
+
+    const choice = response.data?.choices?.[0];
+    const text = choice?.message?.content;
+    if (typeof text !== 'string' || !text.trim()) {
+      throw new AppError('OpenRouter returned an empty response.', 502);
+    }
+    return {
+      text,
+      provider: this.name,
+      model: response.data?.model || visionModel,
+      usage: response.data?.usage || null,
+    };
+  }
+
   async generateImage() {
     if (aiConfig.freeOnlyMode && !aiConfig.allowPaidModels) {
       throw new AppError(
