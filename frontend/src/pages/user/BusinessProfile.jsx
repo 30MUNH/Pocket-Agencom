@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   Building2,
   Users,
@@ -13,7 +13,8 @@ import {
   ExternalLink,
   Share2,
   Volume2,
-  Award
+  Award,
+  ChevronDown
 } from 'lucide-react';
 import { authApi } from '../../api/authApi';
 import { toast } from '../../store/toastStore';
@@ -71,11 +72,39 @@ const SOCIAL_PLATFORMS = [
   { key: 'instagram', label: 'Instagram', placeholder: 'https://www.instagram.com/thuong.hieu' },
 ];
 
+export const BUSINESS_TYPE_SUGGESTIONS = [
+  'Thương mại điện tử & Bán lẻ',
+  'Thời trang & May mặc',
+  'Ẩm thực & Đồ uống (F&B)',
+  'Mỹ phẩm & Chăm sóc sắc đẹp',
+  'Sức khỏe & Thực phẩm chức năng',
+  'Công nghệ & Thiết bị điện tử',
+  'Đồ gia dụng & Trang trí nội thất',
+  'Mẹ & Bé',
+  'Phần mềm & Dịch vụ công nghệ (SaaS)',
+  'Giáo dục & Đào tạo',
+  'Dịch vụ cá nhân & Làm đẹp (Spa / Salon)',
+  'Bất động sản',
+  'Du lịch, Khách sạn & Nghỉ dưỡng',
+  'Nông sản & Thực phẩm sạch',
+  'Quảng cáo, Truyền thông & Agency',
+  'Sản xuất & Chế tạo',
+];
+
+export const getBusinessTypeLabel = (val) => {
+  if (!val) return 'Chưa phân loại';
+  if (val.toLowerCase() === 'ecommerce') return 'Thương mại điện tử & Bán lẻ';
+  if (val.toLowerCase() === 'saas') return 'Phần mềm & Dịch vụ công nghệ (SaaS)';
+  if (val.toLowerCase() === 'general') return 'Doanh nghiệp tổng hợp';
+  return val;
+};
+
 export default function BusinessProfile() {
   const [profile, setProfile] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [showTypeSuggestions, setShowTypeSuggestions] = useState(false);
 
   // Form states with all required fields
   const [form, setForm] = useState({
@@ -94,6 +123,14 @@ export default function BusinessProfile() {
 
   // Managed social platforms state for SocialLinksManager
   const [managedSocialLinks, setManagedSocialLinks] = useState([]);
+
+  const filteredTypeSuggestions = useMemo(() => {
+    const query = (form.businessType || '').trim().toLowerCase();
+    if (!query) return BUSINESS_TYPE_SUGGESTIONS.slice(0, 8);
+    return BUSINESS_TYPE_SUGGESTIONS.filter((item) =>
+      item.toLowerCase().includes(query)
+    );
+  }, [form.businessType]);
 
   // One URL input per major platform: { tiktok: '', facebook: '', instagram: '' }
   const [socialForm, setSocialForm] = useState(
@@ -273,7 +310,7 @@ export default function BusinessProfile() {
                   />
                 </div>
 
-                <div className="space-y-1">
+                <div className="space-y-1 relative">
                   <label className="block text-label-xs font-bold text-on-surface-variant uppercase tracking-wider">
                     Lĩnh vực kinh doanh <span className="text-red-500">*</span>
                   </label>
@@ -281,10 +318,39 @@ export default function BusinessProfile() {
                     type="text"
                     required
                     value={form.businessType}
-                    onChange={(e) => setForm({ ...form, businessType: e.target.value })}
+                    onChange={(e) => {
+                      setForm({ ...form, businessType: e.target.value });
+                      setShowTypeSuggestions(true);
+                    }}
+                    onFocus={() => setShowTypeSuggestions(true)}
+                    onBlur={() => setTimeout(() => setShowTypeSuggestions(false), 200)}
                     className="w-full bg-surface-container-lowest text-primary border border-surface-variant rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-secondary-container"
-                    placeholder="Ví dụ: Thời trang, F&B, Mỹ phẩm..."
+                    placeholder="Nhập lĩnh vực kinh doanh (ví dụ: Thời trang, F&B...)"
+                    autoComplete="off"
                   />
+                  {showTypeSuggestions && filteredTypeSuggestions.length > 0 && (
+                    <div className="absolute left-0 right-0 top-full mt-1.5 z-30 bg-surface-container-lowest border border-surface-variant/40 rounded-xl shadow-lg max-h-52 overflow-y-auto py-1 animate-in fade-in duration-150">
+                      <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-on-surface-variant/70 border-b border-surface-variant/20">
+                        Gợi ý lĩnh vực
+                      </div>
+                      {filteredTypeSuggestions.map((item) => (
+                        <button
+                          key={item}
+                          type="button"
+                          onMouseDown={() => {
+                            setForm((prev) => ({ ...prev, businessType: item }));
+                            setShowTypeSuggestions(false);
+                          }}
+                          className="w-full text-left px-3.5 py-2 text-xs text-primary hover:bg-surface-variant/25 transition-colors flex items-center justify-between group"
+                        >
+                          <span>{item}</span>
+                          <span className="text-[10px] text-on-surface-variant/60 group-hover:text-primary transition-colors">
+                            Chọn
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 <div className="space-y-1">
@@ -494,8 +560,8 @@ export default function BusinessProfile() {
                   <span className="text-body-xs font-bold text-on-surface-variant uppercase tracking-wider block mb-1">
                     Lĩnh vực kinh doanh
                   </span>
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-secondary-container text-primary font-bold text-xs uppercase tracking-wider">
-                    {profile?.businessType || 'Chưa phân loại'}
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-secondary-container text-primary font-bold text-xs">
+                    {getBusinessTypeLabel(profile?.businessType)}
                   </span>
                 </div>
 
