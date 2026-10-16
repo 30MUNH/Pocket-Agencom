@@ -172,57 +172,6 @@ export default function LoginPage() {
             </Link>
           </p>
         </div>
-
-        {/* Quick Demo Login Buttons */}
-        <div className="mt-6 pt-6 border-t border-slate-100 space-y-2">
-          <p className="text-xs text-center font-bold text-slate-400 uppercase tracking-wider mb-3">
-            Đăng nhập nhanh một chạm
-          </p>
-          <div className="grid grid-cols-3 gap-2">
-            <button
-              type="button"
-              onClick={() => {
-                useAuthStore.getState().setAuth(
-                  { id: 1, name: 'Quản trị viên Hệ thống', email: 'admin@pocketagencom.vn', role: 'admin', status: 'active' },
-                  'mock-admin-token'
-                );
-                toast.success('Đã đăng nhập quyền Quản trị viên (Admin)!');
-                navigate('/dashboard', { replace: true });
-              }}
-              className="py-2 px-2 rounded-xl border border-slate-200 bg-slate-50 hover:bg-black hover:text-white transition-all text-xs font-bold text-slate-800 text-center"
-            >
-              Vào Admin
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                useAuthStore.getState().setAuth(
-                  { id: 2, name: 'Nhân viên Kiểm duyệt', email: 'staff@pocketagencom.vn', role: 'staff', status: 'active' },
-                  'mock-staff-token'
-                );
-                toast.success('Đã đăng nhập quyền Nhân viên (Staff)!');
-                navigate('/dashboard', { replace: true });
-              }}
-              className="py-2 px-2 rounded-xl border border-slate-200 bg-slate-50 hover:bg-black hover:text-white transition-all text-xs font-bold text-slate-800 text-center"
-            >
-              Vào Staff
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                useAuthStore.getState().setAuth(
-                  { id: 3, name: 'Khách hàng Demo', email: 'user@pocketagencom.vn', role: 'user', status: 'active' },
-                  'mock-user-token'
-                );
-                toast.success('Đã đăng nhập quyền Khách hàng (User)!');
-                navigate('/dashboard', { replace: true });
-              }}
-              className="py-2 px-2 rounded-xl border border-slate-200 bg-slate-50 hover:bg-black hover:text-white transition-all text-xs font-bold text-slate-800 text-center"
-            >
-              Vào User
-            </button>
-          </div>
-        </div>
       </div>
     </div>
   );
