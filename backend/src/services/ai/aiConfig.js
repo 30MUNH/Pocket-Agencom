@@ -66,7 +66,7 @@ const aiConfig = {
   keys: {
     groq: process.env.GROQ_API_KEY || '',
     openrouter: process.env.OPENROUTER_API_KEY || '',
-    gemini: process.env.GEMINI_API_KEY || '',
+    gemini: process.env.GEMINI_API_KEYS || process.env.GEMINI_API_KEY || '',
     cloudflare: {
       accountId: process.env.CLOUDFLARE_ACCOUNT_ID || '',
       apiToken: process.env.CLOUDFLARE_API_TOKEN || '',

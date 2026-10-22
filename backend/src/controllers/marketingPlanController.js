@@ -90,7 +90,10 @@ async function generatePostWithImage(req, res, next) {
       throw new AppError('Validation failed', 422, details);
     }
 
-    if (!aiService.gemini.isAvailable()) {
+    const hasVision =
+      (typeof aiService.isVisionAvailable === 'function' ? aiService.isVisionAvailable() : false) ||
+      Boolean(aiService.gemini?.isAvailable?.() || aiService.openrouter?.isAvailable?.());
+    if (!hasVision) {
       throw new AppError('Gemini Vision is unavailable because free-tier eligibility is not confirmed.', 503);
     }
 
