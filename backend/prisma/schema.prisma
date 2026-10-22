@@ -103,8 +103,80 @@ model User {
   mediaAssets      MediaAsset[] @relation("MediaAssetOwner")
   avatarMediaAsset MediaAsset?  @relation("UserAvatarAsset", fields: [id, avatarMediaAssetId], references: [userId, id], onDelete: Restrict)
   aiQuotaUsage     AiQuotaUsage[]
+  paymentOrders    PaymentOrder[]
+  subscription     UserSubscription?
+  subscriptionUsage SubscriptionUsage[]
 
   @@map("users")
+}
+
+model PaymentOrder {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId         Int       @map("user_id")
+  planId         String    @map("plan_id")
+  paymentCode    String    @unique @map("payment_code")
+  amount         Int
+  durationDays   Int       @map("duration_days")
+  status         String    @default("pending")
+  bank           String
+  accountNumber  String    @map("account_number")
+  virtualAccount String    @map("virtual_account")
+  accountName    String    @map("account_name")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  expiresAt      DateTime  @map("expires_at")
+  paidAt         DateTime? @map("paid_at")
+  bankPaidAt     DateTime? @map("bank_paid_at")
+
+  user           User @relation(fields: [userId], references: [id], onDelete: Restrict)
+  events         SepayWebhookEvent[]
+  subscriptions  UserSubscription[]
+
+  @@index([userId, createdAt])
+  @@map("payment_orders")
+}
+
+model UserSubscription {
+  userId      Int      @id @map("user_id")
+  planId      String   @map("plan_id")
+  startsAt    DateTime @map("starts_at")
+  expiresAt   DateTime @map("expires_at")
+  lastOrderId String   @unique @map("last_order_id") @db.Uuid
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at")
+
+  user      User         @relation(fields: [userId], references: [id], onDelete: Restrict)
+  lastOrder PaymentOrder @relation(fields: [lastOrderId], references: [id], onDelete: Restrict)
+
+  @@map("user_subscriptions")
+}
+
+model SepayWebhookEvent {
+  transactionId  String    @id @map("transaction_id")
+  orderId        String?   @map("order_id") @db.Uuid
+  paymentCode    String?   @map("payment_code")
+  amount         BigInt
+  accountNumber  String    @map("account_number")
+  virtualAccount String?   @map("virtual_account")
+  referenceCode  String?   @map("reference_code")
+  transactionAt  DateTime  @map("transaction_at")
+  outcome        String
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  order PaymentOrder? @relation(fields: [orderId], references: [id], onDelete: Restrict)
+
+  @@index([outcome, createdAt])
+  @@map("sepay_webhook_events")
+}
+
+model SubscriptionUsage {
+  userId    Int      @map("user_id")
+  periodKey String   @map("period_key")
+  count     Int      @default(0)
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@id([userId, periodKey])
+  @@map("subscription_usage")
 }
 
 model BusinessProfile {

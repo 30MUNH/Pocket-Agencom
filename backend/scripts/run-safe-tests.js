@@ -10,11 +10,12 @@ const suites = {
   all: allTestFiles,
   unit: ['ai-provider.test.js', 'domain-removal.test.js', 'test-database-guard.test.js'],
   api: ['application-integration.test.js'],
+  payments: ['sepay-payments.test.js', 'payment-completion.test.js', 'sepay-gateway.test.js'],
 };
 const suiteName = process.argv[2] || 'all';
 
 if (!suites[suiteName]) {
-  process.stderr.write(`Unknown test suite "${suiteName}". Use all, unit, or api.\n`);
+  process.stderr.write(`Unknown test suite "${suiteName}". Use all, unit, api, or payments.\n`);
   process.exit(2);
 }
 

@@ -18,7 +18,11 @@ function createApp() {
   };
 
   app.use(cors(corsOptions));
-  app.use(express.json());
+  app.use(express.json({
+    verify: (req, res, buffer) => {
+      if (/^\/api\/payments\/webhooks\/sepay\/?$/i.test(req.path)) req.rawBody = Buffer.from(buffer);
+    },
+  }));
   app.get('/api/health', (req, res) => {
     success(res, { status: 'UP', message: 'Pocket Agencom API is healthy!' });
   });

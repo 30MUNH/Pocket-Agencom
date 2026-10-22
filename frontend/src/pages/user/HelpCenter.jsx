@@ -17,6 +17,7 @@ import {
 import { useAuthStore } from '../../store/authStore';
 import { toast } from '../../store/toastStore';
 import { supportTicketApi } from '../../api/supportTicketApi';
+import { useSearchParams } from 'react-router-dom';
 
 const FAQS = [
   {
@@ -42,7 +43,7 @@ const FAQS = [
   {
     id: 5,
     question: 'Tôi có mất chi phí phát sinh nào khi sử dụng AI không?',
-    answer: 'Pocket Agencom áp dụng cơ chế 100% Zero-Cost Free-Tier AI với các mô hình nguồn mở. Hạn mức sử dụng hàng ngày (50 lượt văn bản, 20 lượt tạo ảnh) được cấp mới mỗi 24 giờ hoàn toàn miễn phí.',
+    answer: 'Bạn cần gói dịch vụ còn hiệu lực để tạo bộ Marketing. Starter gồm 3 bộ mỗi kỳ 30 ngày; Pro và Advanced không giới hạn số bộ. Các yêu cầu AI vẫn tuân theo hạn mức sử dụng hằng ngày của hệ thống. Thanh toán chuyển khoản một lần, không tự động trừ tiền gia hạn.',
   },
 ];
 
@@ -63,6 +64,9 @@ const STATUS_MAP = {
 };
 
 export default function HelpCenter() {
+  const [searchParams] = useSearchParams();
+  const requestedCode = searchParams.get('paymentCode');
+  const paymentCode = /^PA\d{12}$/.test(requestedCode || '') ? requestedCode : null;
   const user = useAuthStore((s) => s.user);
   const [openId, setOpenId] = useState(1);
   const [isChatOpen, setIsChatOpen] = useState(false);
@@ -70,9 +74,9 @@ export default function HelpCenter() {
   // Form states
   const [name, setName] = useState(user?.name || '');
   const [email, setEmail] = useState(user?.email || '');
-  const [subject, setSubject] = useState('');
-  const [category, setCategory] = useState('technical');
-  const [message, setMessage] = useState('');
+  const [subject, setSubject] = useState(paymentCode ? `Đối soát thanh toán ${paymentCode}` : '');
+  const [category, setCategory] = useState(paymentCode ? 'payment' : 'technical');
+  const [message, setMessage] = useState(paymentCode ? `Tôi cần hỗ trợ kiểm tra giao dịch cho đơn ${paymentCode}.` : '');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [createdTicket, setCreatedTicket] = useState(null);
 

@@ -2,8 +2,15 @@ import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Mail, Lock, ArrowLeft, Loader2, Eye, EyeOff } from 'lucide-react';
 import { useLogin } from '../../hooks/useAuth';
-import { useAuthStore } from '../../store/authStore';
 import { toast } from '../../store/toastStore';
+
+const demoAuthEnabled = import.meta.env.DEV && import.meta.env.VITE_DEMO_AUTH_ENABLED === 'true';
+
+const DEMO_ACCOUNTS = [
+  { label: 'Vào Admin', email: 'admin@pocketagencom.vn' },
+  { label: 'Vào Staff', email: 'staff@pocketagencom.vn' },
+  { label: 'Vào User', email: 'user@pocketagencom.vn' },
+];
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -24,36 +31,20 @@ export default function LoginPage() {
       const redirectTo = location.state?.from || '/dashboard';
       navigate(redirectTo, { replace: true });
     } catch (err) {
-      // Hỗ trợ đăng nhập trực tiếp (Fallback Offline) khi backend DB chưa kết nối
-      const trimmedEmail = email.trim().toLowerCase();
-      if (trimmedEmail.includes('admin')) {
-        useAuthStore.getState().setAuth(
-          { id: 1, name: 'Quản trị viên Hệ thống', email: trimmedEmail, role: 'admin', status: 'active' },
-          'mock-admin-token'
-        );
-        toast.success('Đã đăng nhập quyền Quản trị viên (Admin)!');
-        navigate('/dashboard', { replace: true });
-        return;
-      }
-      if (trimmedEmail.includes('staff')) {
-        useAuthStore.getState().setAuth(
-          { id: 2, name: 'Nhân viên Kiểm duyệt', email: trimmedEmail, role: 'staff', status: 'active' },
-          'mock-staff-token'
-        );
-        toast.success('Đã đăng nhập quyền Nhân viên (Staff)!');
-        navigate('/dashboard', { replace: true });
-        return;
-      }
-      if (trimmedEmail.includes('user') || trimmedEmail) {
-        useAuthStore.getState().setAuth(
-          { id: 3, name: 'Khách hàng Doanh nghiệp', email: trimmedEmail, role: 'user', status: 'active' },
-          'mock-user-token'
-        );
-        toast.success('Đã đăng nhập quyền Khách hàng (User)!');
-        navigate('/dashboard', { replace: true });
-        return;
-      }
       toast.error(err.message || 'Đăng nhập thất bại');
+    }
+  };
+
+  const handleDemoLogin = async (demoEmail) => {
+    try {
+      const data = await loginMutation.mutateAsync({
+        email: demoEmail,
+        password: 'demo-password',
+      });
+      toast.success(`Đã đăng nhập demo với quyền ${data.user.role}.`);
+      navigate('/dashboard', { replace: true });
+    } catch (err) {
+      toast.error(err.message || 'Không thể đăng nhập tài khoản demo');
     }
   };
 
@@ -172,6 +163,26 @@ export default function LoginPage() {
             </Link>
           </p>
         </div>
+        {demoAuthEnabled && (
+          <div className="mt-6 pt-6 border-t border-slate-100 space-y-2">
+            <p className="text-xs text-center font-bold text-slate-400 uppercase tracking-wider mb-3">
+              Đăng nhập nhanh môi trường local
+            </p>
+            <div className="grid grid-cols-3 gap-2">
+              {DEMO_ACCOUNTS.map((account) => (
+                <button
+                  key={account.email}
+                  type="button"
+                  disabled={loginMutation.isPending}
+                  onClick={() => handleDemoLogin(account.email)}
+                  className="py-2 px-2 rounded-xl border border-slate-200 bg-slate-50 hover:bg-black hover:text-white transition-all text-xs font-bold text-slate-800 text-center disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {account.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

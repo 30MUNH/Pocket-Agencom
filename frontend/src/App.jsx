@@ -13,6 +13,7 @@ const NotFoundPage = lazy(() => import('./pages/public/NotFoundPage'));
 const UserDashboard = lazy(() => import('./pages/user/UserDashboard'));
 const MyPlans = lazy(() => import('./pages/user/MyPlans'));
 const TemplateLibrary = lazy(() => import('./pages/user/TemplateLibrary'));
+const UpgradePlan = lazy(() => import('./pages/user/UpgradePlan'));
 const HelpCenter = lazy(() => import('./pages/user/HelpCenter'));
 const UserSettings = lazy(() => import('./pages/user/UserSettings'));
 const BusinessProfile = lazy(() => import('./pages/user/BusinessProfile'));
@@ -53,6 +54,7 @@ function App() {
             <Route path="/media" element={<MediaLibrary />} />
             <Route path="/plans" element={<MyPlans />} />
             <Route path="/templates" element={<TemplateLibrary />} />
+            <Route path="/upgrade" element={<ProtectedRoute roles={['user']}><UpgradePlan /></ProtectedRoute>} />
             <Route path="/help" element={<HelpCenter />} />
             <Route path="/settings" element={<UserSettings />} />
             <Route path="/business-profile" element={<BusinessProfile />} />

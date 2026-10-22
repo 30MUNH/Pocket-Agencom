@@ -578,6 +578,10 @@ YÊU CẦU NỘI DUNG:
 - Tài nguyên hiện có: ${data.existingResources || 'Ảnh chụp sản phẩm'}
 - Lý do chiến dịch: ${data.campaignReason || 'Tăng doanh số bán hàng'}`;
 
+    if (data.strategyLevel === 'custom') {
+      userPrompt += '\nLỘ TRÌNH RIÊNG: Xây dựng playbook 30 ngày thành ít nhất 4 giai đoạn, mỗi giai đoạn có thời gian, mục tiêu đo được, hành động cụ thể và kênh triển khai. Cá nhân hóa theo USP, giọng thương hiệu, ngân sách và tài nguyên đã cung cấp; không bịa dữ liệu kinh doanh.';
+    }
+
     // RAG Enrichment: find similar past successful strategies
     try {
       const similar = await findSimilarStrategies(

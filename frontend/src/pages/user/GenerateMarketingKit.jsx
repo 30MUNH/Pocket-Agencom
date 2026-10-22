@@ -6,11 +6,18 @@ import { toast } from '../../store/toastStore';
 import { authApi } from '../../api/authApi';
 import AILoadingScreen from '../../components/ai/AILoadingScreen';
 import MoneyInput from '../../components/ui/MoneyInput';
+import { useQuery } from '@tanstack/react-query';
+import { paymentApi } from '../../api/paymentApi';
+import { useAuthStore } from '../../store/authStore';
+import { paymentErrorMessage } from '../../utils/paymentState';
 
 export default function GenerateMarketingKit() {
   const navigate = useNavigate();
   const location = useLocation();
   const generatePlan = useGeneratePlan();
+  const user = useAuthStore((state) => state.user);
+  const access = useQuery({ queryKey: ['subscription-access', user?.id], queryFn: paymentApi.access,
+    enabled: user?.role === 'user', retry: false, staleTime: 15000 });
   const [activeStep, setActiveStep] = useState(2);
   const [profileData, setProfileData] = useState(null);
   const [checkingProfile, setCheckingProfile] = useState(true);
@@ -50,13 +57,25 @@ export default function GenerateMarketingKit() {
     verifyProfile();
   }, []);
 
-  if (checkingProfile) {
+  if (checkingProfile || (user?.role === 'user' && access.isPending)) {
     return (
       <div className="flex-1 w-full flex flex-col items-center justify-center py-20 gap-3 text-on-surface-variant">
         <Loader2 className="animate-spin text-secondary" size={32} />
         <span className="text-body-md font-medium">Đang xác thực thông tin doanh nghiệp...</span>
       </div>
     );
+  }
+
+  if (user?.role === 'user' && (access.error || !access.data?.canGenerate)) {
+    return <div className="mx-auto w-full max-w-xl space-y-4 rounded-2xl border border-slate-200 bg-white p-8 text-center">
+      <Sparkles size={32} aria-hidden="true" className="mx-auto text-slate-900" />
+      <h1 className="text-2xl font-bold text-slate-900">{access.error ? 'Chưa tải được gói dịch vụ' : 'Chọn gói để tạo bộ Marketing'}</h1>
+      <p className="text-sm leading-6 text-slate-600">{access.error ? paymentErrorMessage(access.error) : access.data?.reason === 'SUBSCRIPTION_QUOTA_EXCEEDED'
+        ? 'Bạn đã dùng hết số bộ Marketing trong kỳ. Hãy nâng cấp hoặc chờ kỳ tiếp theo.'
+        : 'Bạn cần gói dịch vụ còn hiệu lực để tạo bộ Marketing. Các kế hoạch đã tạo vẫn được lưu trong tài khoản.'}</p>
+      {access.error ? <button type="button" onClick={() => access.refetch()} className="rounded-full bg-slate-900 px-6 py-3 font-semibold text-white">Thử lại</button>
+        : <button type="button" onClick={() => navigate('/upgrade')} className="rounded-full bg-slate-900 px-6 py-3 font-semibold text-white">Xem gói dịch vụ</button>}
+    </div>;
   }
 
   const isProfileIncomplete = !profileData || !profileData.usp || !profileData.brandVoice;

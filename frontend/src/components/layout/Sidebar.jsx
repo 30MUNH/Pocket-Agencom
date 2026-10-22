@@ -11,6 +11,7 @@ import {
   Users,
   Building2,
   FolderKanban,
+  Crown,
 } from 'lucide-react';
 
 export default function Sidebar({ isOpen, onClose, userRole = 'user' }) {
@@ -58,6 +59,7 @@ export default function Sidebar({ isOpen, onClose, userRole = 'user' }) {
           { path: '/calendar', label: 'Lịch đăng bài tự động', icon: CalendarDays },
           { path: '/media-library', label: 'Kho dữ liệu Media', icon: FolderKanban },
           { path: '/templates', label: 'Thư viện mẫu', icon: Library },
+          { path: '/upgrade', label: 'Nâng cấp gói', icon: Crown },
           { path: '/help', label: 'Trung tâm trợ giúp', icon: HelpCircle },
         ];
     }
