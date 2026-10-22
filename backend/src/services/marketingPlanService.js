@@ -6,6 +6,7 @@ const { isValidPlanTransition } = require('../validators/marketingPlan.validator
 const aiService = require('./ai/aiService');
 const { validateExternalMediaUrl } = require('./externalMediaUrl');
 const { requireOwnedBusinessProfile } = require('./businessProfileAccess');
+const subscriptionService = require('./subscriptionService').createSubscriptionService();
 
 function assertNoInternalStorageUrls(value, seen = new Set()) {
   if (value == null || typeof value !== 'object') {
@@ -48,14 +49,16 @@ function formatPlan(plan) {
   };
 }
 
-async function generatePlan(userId, data) {
+async function generatePlan(userId, data, subscriptionContext) {
   let profile = await prisma.businessProfile.findUnique({ where: { userId } });
   
   assertNoInternalStorageUrls(data);
-  const aiContent = await generateAIContent(data, profile, userId);
+  const aiRequest = subscriptionContext ? { ...data, strategyLevel: subscriptionContext.access.features.customStrategy ? 'custom' : 'standard' } : data;
+  const aiContent = await generateAIContent(aiRequest, profile, userId);
   assertNoInternalStorageUrls(aiContent);
 
   const plan = await prisma.$transaction(async (tx) => {
+    const access = subscriptionContext ? await subscriptionService.consumeKit(tx, subscriptionContext.user) : null;
     let profileTx = await tx.businessProfile.findUnique({ where: { userId } });
 
     if (profileTx) {
@@ -93,7 +96,7 @@ async function generatePlan(userId, data) {
         existingResources: data.existingResources || null,
         campaignReason: data.campaignReason || null,
         contentIdeas: JSON.stringify(aiContent.contentIdeas),
-        videoScripts: JSON.stringify(aiContent.videoScripts),
+        videoScripts: JSON.stringify(access && !access.features.videoScripts ? [] : aiContent.videoScripts),
         checklist: JSON.stringify(aiContent.checklist),
         playbook: JSON.stringify(aiContent.playbook),
         seoKeywords: JSON.stringify(aiContent.seoKeywords),

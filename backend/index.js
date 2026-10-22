@@ -1,8 +1,10 @@
-require('dotenv').config();
+const path = require('node:path');
+require('dotenv').config({ path: path.join(__dirname, '.env') });
 
 const prisma = require('./src/config/prisma');
 const setupStorage = require('./src/utils/setupStorage');
 const { createApp } = require('./src/app');
+const { isDatabaseUnavailable } = require('./src/utils/databaseError');
 
 const app = createApp();
 const PORT = process.env.PORT || 5000;
@@ -29,7 +31,12 @@ app.listen(PORT, async () => {
     console.log('');
   } catch (err) {
     console.error(`❌ Database connection FAILED!`);
-    console.error(`   Error: ${err.message}`);
-    console.error(`   Hint: Check DATABASE_URL in .env file\n`);
+    if (isDatabaseUnavailable(err)) {
+      console.error('   PostgreSQL is unreachable; API is listening but database requests cannot succeed.');
+      console.error('   Run npm run check:db in backend, then verify Supabase Connect and network restrictions.\n');
+    } else {
+      console.error(`   Error: ${err.message}`);
+      console.error(`   Hint: Check DATABASE_URL in backend/.env\n`);
+    }
   }
 });

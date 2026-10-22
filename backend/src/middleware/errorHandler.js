@@ -1,4 +1,5 @@
 const { fail } = require('../utils/response');
+const { isDatabaseUnavailable } = require('../utils/databaseError');
 
 class AppError extends Error {
   constructor(message, statusCode = 400, details = null) {
@@ -16,6 +17,13 @@ function errorHandler(err, req, res, next) {
 
   if (err.isOperational) {
     return fail(res, err.message, err.statusCode, err.details);
+  }
+
+  if (isDatabaseUnavailable(err)) {
+    console.error('[Database] PostgreSQL connection unavailable. Check Supabase Connect settings and network access.');
+    return fail(res, 'Không thể kết nối cơ sở dữ liệu Supabase. Vui lòng kiểm tra kết nối mạng và cấu hình database.', 503, {
+      code: 'DATABASE_UNAVAILABLE',
+    });
   }
 
   if (err.name === 'MulterError') {

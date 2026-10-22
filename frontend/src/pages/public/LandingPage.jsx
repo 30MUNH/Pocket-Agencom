@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from '../../store/toastStore';
+import { PRICING_PLANS } from '../../data/pricingPlans';
 import {
   CheckCircle2,
   UserX,
@@ -14,33 +15,6 @@ import {
   Star,
   ChevronDown,
 } from 'lucide-react';
-
-const PRICING_PLANS = [
-  {
-    name: 'Cơ bản (Starter)',
-    price: '199.000 VND',
-    period: '/tháng',
-    features: ['3 Bộ công cụ Marketing', 'Ý tưởng Nội dung', 'Hỗ trợ qua Email'],
-    isPopular: false,
-    btnText: 'Chọn gói',
-  },
-  {
-    name: 'Chuyên nghiệp (Pro)',
-    price: '499.000 VND',
-    period: '/tháng',
-    features: ['Không giới hạn Bộ công cụ', 'Kịch bản Video AI', 'Phân tích hiệu quả', 'Hỗ trợ Ưu tiên'],
-    isPopular: true,
-    btnText: 'Chọn gói',
-  },
-  {
-    name: 'Nâng cao (Advanced)',
-    price: '890.000 VND',
-    period: '/tháng',
-    features: ['Tất cả tính năng gói Pro', 'Lộ trình tiếp thị riêng', 'Quản lý nội dung đa kênh'],
-    isPopular: false,
-    btnText: 'Chọn gói',
-  },
-];
 
 const TESTIMONIALS = [
   {

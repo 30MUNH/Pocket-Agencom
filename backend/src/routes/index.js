@@ -10,6 +10,7 @@ const budgetRoutes = require('./budgetRoutes');
 const adminRoutes = require('./adminRoutes');
 const supportTicketRoutes = require('./supportTicketRoutes');
 const analyticsController = require('../controllers/analyticsController');
+const { createPaymentRouter } = require('./paymentRoutes');
 
 const router = express.Router();
 
@@ -26,6 +27,7 @@ router.use('/scheduled-posts', scheduledPostRoutes);
 router.use('/media', mediaRoutes);
 router.use('/admin', adminRoutes);
 router.use('/support/tickets', supportTicketRoutes);
+router.use('/payments', createPaymentRouter());
 router.use('/', budgetRoutes);
 
 module.exports = router;

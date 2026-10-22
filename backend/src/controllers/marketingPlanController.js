@@ -4,15 +4,20 @@ const aiService = require('../services/ai/aiService');
 const { AppError } = require('../middleware/errorHandler');
 const { generatePostWithImageSchema } = require('../validators/marketingPlan.validator');
 const { success } = require('../utils/response');
+const subscriptionService = require('../services/subscriptionService').createSubscriptionService();
 
-async function generate(req, res, next) {
-  try {
-    const plan = await marketingPlanService.generatePlan(req.user.id, req.body);
-    return success(res, plan, 201);
-  } catch (err) {
-    next(err);
-  }
+function createGenerateHandler({ marketing = marketingPlanService, subscriptions = subscriptionService } = {}) {
+  return async function generate(req, res, next) {
+    try {
+      const access = await subscriptions.requireAccess(req.user);
+      const plan = await marketing.generatePlan(req.user.id, req.body, { user: req.user, access });
+      return success(res, plan, 201);
+    } catch (err) {
+      next(err);
+    }
+  };
 }
+const generate = createGenerateHandler();
 
 async function list(req, res, next) {
   try {
@@ -181,6 +186,7 @@ async function refreshTrends(req, res, next) {
 }
 
 module.exports = {
+  createGenerateHandler,
   generate,
   list,
   getById,

@@ -20,7 +20,11 @@ export function useGeneratePlan() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: marketingPlanApi.generate,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['marketing-plans'] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['marketing-plans'] });
+      queryClient.invalidateQueries({ queryKey: ['subscription-access'] });
+      queryClient.invalidateQueries({ queryKey: ['billing'] });
+    },
   });
 }
 

@@ -30,6 +30,7 @@ export default function Header({ onMenuClick, isMenuOpen, user, userRole }) {
         '/media': 'Thư viện Media',
         '/plans': 'Kế hoạch của tôi',
         '/templates': 'Thư viện mẫu',
+        '/upgrade': 'Nâng cấp gói',
         '/help': 'Trung tâm trợ giúp',
         '/settings': 'Cài đặt',
         '/business-profile': 'Hồ sơ doanh nghiệp',

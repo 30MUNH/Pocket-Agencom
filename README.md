@@ -44,3 +44,7 @@ External Gemini/RAG and Supabase Storage smoke tests require explicitly identifi
 - Content scheduling, media assets, uploads, analytics, social/e-commerce links, and budgets
 
 See [INTEGRATION.md](INTEGRATION.md) for application contracts and [ai-architecture.md](ai-architecture.md) for the AI data flow.
+
+## SePay VA payments
+
+The `/upgrade` page supports bank-transfer checkout through a shared SePay MBBank VA, authenticated webhooks, transaction deduplication, cancellation of unpaid orders, and persisted subscriptions. Users need an active paid subscription to generate Marketing Kits. Starter allows three completed kits per 30-day cycle; Pro/Advanced have no kit cap. Daily AI safety limits still apply. Follow [docs/SEPAY_SETUP.md](docs/SEPAY_SETUP.md) for the complete Supabase SQL file, local HTTPS tunnel, webhook settings, and frontend/backend configuration.
